@@ -1,0 +1,852 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unit 2 – Present Simple · Bài tập về nhà</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff8ef; --card:#fff; --ink:#2b2d42; --muted:#6b7080; --line:#ece3d6;
+  --brand:#14866d; --brand-soft:#dff3ee; --accent:#ff8c42;
+  --chip:#fff1bf; --chip-b:#f2b705; --blue:#3a6df0;
+  --ok:#1f8a4c; --ok-bg:#e7f7ee; --bad:#d64045; --bad-bg:#fdecec;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:17px;line-height:1.6}
+.hero{background:linear-gradient(135deg,#14866d,#2bb39a);color:#fff;padding:26px 16px 44px;text-align:center}
+.hero h1{margin:0;font-size:clamp(23px,5vw,34px);font-weight:800;letter-spacing:.2px}
+.hero p{margin:4px 0 0;opacity:.93;font-size:15.5px}
+main{max-width:880px;margin:-26px auto 0;padding:0 16px 130px}
+.card{background:var(--card);border-radius:18px;box-shadow:0 4px 18px rgba(60,40,10,.07);padding:20px;margin-bottom:18px;border:1px solid var(--line)}
+@media (max-width:520px){.card{padding:16px 14px}}
+h2,h3{line-height:1.3}
+
+/* start */
+.start h2{margin:0 0 4px;font-size:21px}
+.field{display:flex;flex-direction:column;gap:4px;margin:12px 0}
+.field label{font-weight:700;font-size:15px}
+.field input{font:inherit;padding:10px 12px;border:2px solid #e2d9cb;border-radius:12px;outline:none;background:#fffdf9}
+.field input:focus{border-color:var(--brand)}
+.btn{font:inherit;font-weight:800;border:none;border-radius:14px;padding:12px 22px;cursor:pointer;background:var(--brand);color:#fff;box-shadow:0 3px 0 #0d5e4c}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #0d5e4c}
+.btn.orange{background:var(--accent);box-shadow:0 3px 0 #c9661f}
+.btn:disabled{opacity:.6;cursor:default}
+.err-msg{color:var(--bad);font-weight:700;font-size:14.5px;min-height:1em}
+.who{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:15.5px}
+.who b{color:var(--brand)}
+.linkbtn{background:none;border:none;color:var(--blue);font:inherit;font-size:14.5px;cursor:pointer;text-decoration:underline;padding:0}
+
+/* exercise head */
+.ex-head{display:flex;gap:12px;align-items:flex-start;margin-bottom:4px}
+.badge{background:var(--brand);color:#fff;font-weight:800;border-radius:10px;padding:3px 10px;font-size:16px;flex:none}
+.ex-head h2{font-size:19px;margin:2px 0 0}
+.how{color:var(--muted);font-size:14.5px;margin:4px 0 14px;background:#f6f3ee;border-radius:10px;padding:8px 12px}
+
+/* bank & chips */
+.bank{display:flex;flex-wrap:wrap;gap:8px;padding:12px;border:2px dashed #e7c96b;border-radius:14px;background:#fffbea;min-height:60px;margin-bottom:12px;position:sticky;top:8px;z-index:5;box-shadow:0 4px 10px rgba(255,248,239,.9)}
+.bank .empty{color:var(--muted);font-size:14.5px;align-self:center}
+.chip{display:inline-flex;align-items:center;gap:4px;background:var(--chip);border:2px solid var(--chip-b);border-radius:999px;padding:4px 14px;font-weight:700;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;font-size:16px;line-height:1.35;white-space:nowrap;color:var(--ink)}
+.chip.sel{background:#ffd84d;box-shadow:0 0 0 3px rgba(242,183,5,.4)}
+.chip.dragging{opacity:.3}
+.chip .q{font-weight:600;color:var(--accent);font-size:13px}
+.suf{color:var(--blue)}
+.locked .chip{cursor:default}
+
+ol.items{list-style:none;padding:0;margin:0}
+.item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f1ebe1}
+.item:last-child{border-bottom:none}
+.num{font-weight:800;color:var(--brand);min-width:20px;flex:none}
+.ibody{flex:1;min-width:0}
+.example{color:var(--muted)}
+.example .fill{color:var(--blue);font-weight:700;text-decoration:underline dotted}
+.example .tag{font-size:12px;background:#eee8dd;border-radius:6px;padding:1px 6px;margin-left:4px;font-weight:700}
+.hint{color:var(--muted);font-style:italic}
+
+.slot{display:inline}
+.drop{display:inline-flex;align-items:center;justify-content:center;min-width:104px;min-height:38px;border-bottom:2.5px solid #b9b2a6;background:#f5f1ea;border-radius:10px 10px 4px 4px;padding:2px 5px;vertical-align:middle;margin:2px;transition:background .15s,border-color .15s}
+.drop.hover{background:var(--brand-soft);border-color:var(--brand)}
+.pickmode .drop:not(.filled){outline:2px dashed var(--accent);outline-offset:2px}
+.drop.ok{background:var(--ok-bg);border-color:var(--ok)}
+.drop.bad{background:var(--bad-bg);border-color:var(--bad)}
+.drop.ok .chip{border-color:var(--ok);background:#fff}
+.drop.bad .chip{border-color:var(--bad);background:#fff}
+.ends{display:inline-flex;gap:4px;margin:2px 4px;vertical-align:middle}
+.ends button{border:1.5px solid #cfc7ba;background:#fff;border-radius:8px;padding:3px 8px;font:inherit;font-size:13.5px;font-weight:800;cursor:pointer;color:var(--muted);line-height:1.4}
+.ends button.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.ends.need button{border-color:var(--accent)}
+.arrow{border:2px solid var(--blue);background:#fff;color:var(--blue);border-radius:10px;width:34px;height:34px;font-size:18px;font-weight:800;cursor:pointer;vertical-align:middle;margin:2px 4px 2px 0;line-height:1}
+.arrow.need{background:var(--accent);border-color:var(--accent);color:#fff;animation:pulse 1.4s infinite}
+.arrow:disabled{opacity:.5;cursor:default;animation:none}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,140,66,.5)}50%{box-shadow:0 0 0 7px rgba(255,140,66,0)}}
+
+.menu{position:absolute;z-index:60;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 30px rgba(0,0,0,.18);padding:6px;min-width:190px}
+.menu .mt{font-size:13px;color:var(--muted);padding:4px 8px;font-weight:700}
+.menu button{display:block;width:100%;text-align:left;border:none;background:none;font:inherit;font-weight:700;padding:9px 12px;border-radius:10px;cursor:pointer;color:var(--ink)}
+.menu button:hover,.menu button:focus{background:var(--brand-soft);outline:none}
+.menu button.on{background:var(--blue);color:#fff}
+
+input.txt{font:inherit;font-weight:700;color:var(--blue);border:none;border-bottom:2.5px solid #b9b2a6;background:#f5f1ea;border-radius:8px 8px 3px 3px;padding:4px 8px;max-width:100%;outline:none;vertical-align:middle;margin:2px}
+input.txt:focus{border-color:var(--brand);background:#eefaf7}
+input.txt.full{width:100%;display:block;margin-top:6px}
+input.txt.ok{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+input.txt.bad{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
+input.txt:disabled{opacity:1;-webkit-text-fill-color:currentColor}
+
+/* 2.4 situations */
+.sit{display:grid;grid-template-columns:190px 1fr;gap:16px;align-items:center;padding:12px 0;border-bottom:1px solid #f1ebe1}
+.sit:last-child{border-bottom:none}
+.sit svg{width:100%;height:auto;display:block;border-radius:14px}
+.sit .stext{font-size:16px}
+@media (max-width:560px){.sit{grid-template-columns:1fr}.sit svg{max-width:300px}}
+
+/* feedback */
+.fb{display:none;margin-top:8px;border-radius:12px;padding:10px 12px;font-size:15px;line-height:1.55}
+.fb.show{display:block}
+.fb.ok{background:var(--ok-bg);border-left:4px solid var(--ok)}
+.fb.bad{background:var(--bad-bg);border-left:4px solid var(--bad)}
+.fb .h{font-weight:800}
+.fb.ok .h{color:var(--ok)} .fb.bad .h{color:var(--bad)}
+.fb s{opacity:.75}
+.fb ul{margin:6px 0 4px;padding-left:20px}
+.fb .why{margin-top:4px;color:#3b3f52}
+.fb .part + .part{margin-top:8px;padding-top:8px;border-top:1px dashed rgba(0,0,0,.12)}
+.note{background:#eef3ff;border-radius:12px;padding:10px 12px;font-size:15px;margin-top:10px}
+
+/* summary */
+.summary{display:flex;gap:18px;align-items:center;flex-wrap:wrap;border:2px solid var(--brand)}
+.score{font-size:46px;font-weight:800;color:var(--brand);line-height:1}
+.score span{font-size:24px;color:var(--muted)}
+.secs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.sec{background:#f4efe6;border-radius:999px;padding:2px 10px;font-weight:700;font-size:14px}
+.sec.full{background:var(--ok-bg);color:var(--ok)}
+.status{font-weight:700;font-size:15px;margin-top:4px}
+.status.ok{color:var(--ok)} .status.err,.status.warn{color:var(--bad)} .status.sending{color:var(--muted)}
+
+/* bottom bar */
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));z-index:40;backdrop-filter:blur(6px)}
+.bar-in{max-width:880px;margin:0 auto;display:flex;align-items:center;gap:14px}
+.prog{flex:1;min-width:0}
+.prog .t{font-size:14px;font-weight:700;color:var(--muted)}
+.prog .track{height:10px;background:#eee6d8;border-radius:99px;overflow:hidden;margin-top:3px}
+.prog .fill{height:100%;background:linear-gradient(90deg,#2bb39a,#14866d);width:0;transition:width .3s}
+
+#ghost{position:fixed;left:0;top:0;pointer-events:none;z-index:100;display:none;transform:translate(-50%,-70%) scale(1.08);box-shadow:0 8px 18px rgba(0,0,0,.2)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header class="hero">
+  <h1>Unit 2 · Present Simple</h1>
+  <p>Bài tập về nhà 2.1 – 2.5 · I do / work / like…</p>
+</header>
+
+<main>
+  <!-- Màn hình nhập tên -->
+  <section class="card start" id="start">
+    <h2>👋 Chào em!</h2>
+    <p style="margin:0;color:var(--muted)">Nhập họ tên và lớp để bắt đầu. Bài làm được tự động lưu trên máy em. Khi nộp, bài sẽ được gửi cho cô.</p>
+    <div class="field"><label for="inName">Họ và tên</label><input id="inName" autocomplete="name" placeholder="VD: Nguyễn Minh Anh"></div>
+    <div class="field"><label for="inCls">Lớp</label><input id="inCls" placeholder="VD: 7A"></div>
+    <div class="err-msg" id="startErr"></div>
+    <button class="btn" id="startBtn" type="button">Bắt đầu làm bài →</button>
+  </section>
+
+  <div id="work" hidden>
+    <div id="summaryBox"></div>
+    <div class="card who" id="whoBar"></div>
+
+    <!-- 2.1 -->
+    <section class="card ex" id="ex1">
+      <div class="ex-head"><span class="badge">2.1</span><h2>Complete the sentences using the following verbs</h2></div>
+      <p class="how">🖐️ Kéo động từ thả vào chỗ trống (hoặc chạm vào từ rồi chạm vào chỗ trống). Sau đó chọn <b>không thêm</b>, <b>+s</b> hoặc <b>+es</b>. Chạm vào từ đã điền để trả nó về.</p>
+      <div class="bank" id="bank1"></div>
+      <ol class="items" id="list1"></ol>
+    </section>
+
+    <!-- 2.2 -->
+    <section class="card ex" id="ex2">
+      <div class="ex-head"><span class="badge">2.2</span><h2>Put the verb into the correct form</h2></div>
+      <p class="how">⌨️ Gõ dạng đúng của động từ vào ô trống, dùng gợi ý trong ngoặc. Chỉ gõ phần còn thiếu.</p>
+      <ol class="items" id="list2"></ol>
+    </section>
+
+    <!-- 2.3 -->
+    <section class="card ex" id="ex3">
+      <div class="ex-head"><span class="badge">2.3</span><h2>Complete the sentences using these verbs. Sometimes you need the negative.</h2></div>
+      <p class="how">🖐️ Kéo động từ vào chỗ trống, rồi bấm mũi tên <b>▾</b> để chọn dạng đúng: thêm -s/-es, nguyên mẫu, <i>doesn’t</i> hay <i>don’t</i>.</p>
+      <div class="bank" id="bank3"></div>
+      <ol class="items" id="list3"></ol>
+    </section>
+
+    <!-- 2.4 -->
+    <section class="card ex" id="ex4">
+      <div class="ex-head"><span class="badge">2.4</span><h2>You ask Lisa questions about herself and her family. Write the questions.</h2></div>
+      <p class="how">⌨️ Đọc tình huống, nhìn tranh, rồi tự gõ câu hỏi bằng tiếng Anh.</p>
+      <div id="list4"></div>
+    </section>
+
+    <!-- 2.5 -->
+    <section class="card ex" id="ex5">
+      <div class="ex-head"><span class="badge">2.5</span><h2>Complete using the following</h2></div>
+      <p class="how">🖐️ Kéo cụm từ thích hợp vào chỗ trống.</p>
+      <div class="bank" id="bank5"></div>
+      <ol class="items" id="list5"></ol>
+    </section>
+  </div>
+</main>
+
+<div class="bar" id="bar" hidden>
+  <div class="bar-in">
+    <div class="prog"><div class="t" id="progT">Đã làm 0/0 câu</div><div class="track"><div class="fill" id="progF"></div></div></div>
+    <button class="btn orange" id="submitBtn" type="button">Nộp bài ✔</button>
+  </div>
+</div>
+
+<div id="ghost" class="chip"></div>
+<div id="menu" class="menu" hidden></div>
+
+<script>
+/* ============ CẤU HÌNH ============ */
+// Dán URL Web App của Google Apps Script vào đây (xem HUONG-DAN-CAI-DAT.md)
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyAom9bBpL0ms0VD7_bz5w691011llkFzttYSjKDyRyMCjLLeUZ4EZGGJLtLMFWuiV4sA/exec';
+const STORE_KEY = 'btvn-unit02-present-simple-v1';
+const UNIT = 'Unit 2';
+const TITLE = 'Unit 2 – Present Simple (2.1–2.5)';
+
+/* ============ TIỆN ÍCH ============ */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const plain = t => t.replace(/<[^>]+>/g, '').replace(/___/g, '_____');
+function sForm(v){
+  if (/(o|s|sh|ch|x|z)$/.test(v)) return v + 'es';
+  if (/[^aeiou]y$/.test(v)) return v.slice(0, -1) + 'ies';
+  return v + 's';
+}
+const needsEs = v => /(o|s|sh|ch|x|z)$/.test(v);
+const forms3 = v => [sForm(v), v, 'doesn’t ' + v, 'don’t ' + v];
+function norm(s){
+  s = (s || '').toLowerCase().replace(/[’‘`´]/g, "'").replace(/[?.!,;:"“”]/g, ' ').replace(/\s+/g, ' ').trim();
+  return s.replace(/\bdoesn't\b/g, 'does not').replace(/\bdon't\b/g, 'do not')
+          .replace(/\bwhat's\b/g, 'what is').replace(/\bi'm\b/g, 'i am');
+}
+
+/* ============ DỮ LIỆU BÀI TẬP ============ */
+const EX1 = {
+  bank: ['cause', 'close', 'connect', 'go', 'live', 'take'],
+  example: {t: 'Tanya ___ German very well.', w: 'speaks'},
+  mean: {cause:'gây ra', close:'đóng cửa', connect:'nối liền', go:'đi', live:'sống', take:'lấy, cầm / (take place) diễn ra'},
+  items: [
+    {id:'2', t:'Ben and Jack ___ to the same school.', v:'go', e:'', subj:'“Ben and Jack” là 2 người → số nhiều (= they)', mean:'go to school = đi học'},
+    {id:'3', t:'Bad driving ___ many accidents.', v:'cause', e:'s', subj:'“Bad driving” (việc lái xe ẩu) là chủ ngữ số ít (= it)', mean:'cause accidents = gây ra tai nạn'},
+    {id:'4', t:'The museum ___ at 4 o’clock on Sundays.', v:'close', e:'s', subj:'“The museum” số ít (= it)', mean:'close = đóng cửa'},
+    {id:'5', t:'My parents ___ in a very small flat.', v:'live', e:'', subj:'“My parents” (bố mẹ tôi) số nhiều (= they)', mean:'live in a flat = sống trong căn hộ'},
+    {id:'6', t:'The Olympic Games ___ place every four years.', v:'take', e:'', subj:'“The Olympic Games” là danh từ số nhiều (Games có -s) (= they)', mean:'take place = diễn ra, được tổ chức'},
+    {id:'7', t:'The Panama Canal ___ the Atlantic and Pacific oceans.', v:'connect', e:'s', subj:'“The Panama Canal” (kênh đào Panama) số ít (= it)', mean:'connect A and B = nối liền A và B'},
+  ]
+};
+
+const EX2 = {
+  sentences: [
+    {id:'2', parts:['What time ', '2', ' <span class="hint">(the banks / close)</span> here?']},
+    {id:'3', parts:['I have a car, but I ', '3', ' <span class="hint">(not / use)</span> it much.']},
+    {id:'4', parts:['Where ', '4', ' <span class="hint">(Maria / come)</span> from? Is she Spanish?']},
+    {id:'5', parts:['‘What ', '5', ' <span class="hint">(you / do)</span>?’ ‘I’m an electrician.’']},
+    {id:'6', parts:['Look at this sentence. What ', '6', ' <span class="hint">(this word / mean)</span>?']},
+    {id:'7', parts:['David isn’t very fit. He ', '7', ' <span class="hint">(not / do)</span> any sport.']},
+    {id:'8', parts:['It ', '8a', ' <span class="hint">(take)</span> me an hour to get to work in the morning. How long ', '8b', ' <span class="hint">(it / take)</span> you?']},
+  ],
+  blanks: {
+    '2':  {w:17, show:'do the banks close', ans:['do the banks close'], m:{type:'q', pre:'what time', aux:'do', subj:'the banks', verb:'close', vs:'closes', sd:'“The banks” số nhiều (= they)'},
+           why:'Câu hỏi có từ để hỏi: <b>What time + do/does + S + V nguyên mẫu?</b> “The banks” số nhiều → <b>do</b>. → What time <b>do the banks close</b> here?'},
+    '3':  {w:11, show:'don’t use', ans:['do not use'], m:{type:'neg', pre:'i', aux:'do', subj:'i', verb:'use', vs:'uses', sd:'Chủ ngữ I'},
+           why:'Chủ ngữ <b>I</b> → phủ định dùng <b>don’t + V nguyên mẫu</b>. → I <b>don’t use</b> it much.'},
+    '4':  {w:15, show:'does Maria come', ans:['does maria come'], m:{type:'q', pre:'where', aux:'does', subj:'maria', verb:'come', vs:'comes', sd:'“Maria” là một người (= she)'},
+           why:'“Maria” (= she) → <b>does</b>; sau does, động từ giữ nguyên: <b>come</b>. → Where <b>does Maria come</b> from? (Maria đến từ đâu?)'},
+    '5':  {w:11, show:'do you do', ans:['do you do'], m:{type:'q', pre:'what', aux:'do', subj:'you', verb:'do', vs:'does', sd:'Chủ ngữ you'},
+           why:'<b>What do you do?</b> = Em làm nghề gì? “do” thứ nhất là <i>trợ động từ</i>, “do” thứ hai là <i>động từ chính</i> (làm). Chủ ngữ you → <b>do</b>.'},
+    '6':  {w:18, show:'does this word mean', ans:['does this word mean'], m:{type:'q', pre:'what', aux:'does', subj:'this word', verb:'mean', vs:'means', sd:'“This word” số ít (= it)'},
+           why:'“This word” số ít (= it) → <b>does</b> + <b>mean</b> (nguyên mẫu). → What <b>does this word mean</b>? (Từ này nghĩa là gì?)'},
+    '7':  {w:12, show:'doesn’t do', ans:['does not do'], m:{type:'neg', pre:'he', aux:'does', subj:'he', verb:'do', vs:'does', sd:'Chủ ngữ He'},
+           why:'<b>He</b> → <b>doesn’t</b> + V nguyên mẫu. “do sport” có “do” là động từ chính nên vẫn cần trợ động từ: He <b>doesn’t do</b> any sport.'},
+    '8a': {w:9, show:'takes', ans:['takes'], m:{type:'aff', pre:'it', aux:'does', subj:'it', verb:'take', vs:'takes', sd:'Chủ ngữ It (số ít)'},
+           why:'Câu khẳng định, chủ ngữ <b>It</b> (số ít) → thêm -s: <b>takes</b>. Cấu trúc <i>It takes + (ai) + thời gian + to V</i> = ai đó mất bao lâu để làm gì.'},
+    '8b': {w:13, show:'does it take', ans:['does it take'], m:{type:'q', pre:'how long', aux:'does', subj:'it', verb:'take', vs:'takes', sd:'Chủ ngữ It (số ít)'},
+           why:'Câu hỏi: How long + <b>does</b> + it + <b>take</b> (nguyên mẫu) + you? → How long <b>does it take</b> you?'},
+  }
+};
+
+const EX3 = {
+  bank: ['believe', 'eat', 'flow', 'make', 'rise', 'tell', 'translate'],
+  examples: [{n:'1', t:'The earth ___ round the sun.', w:'goes'}, {n:'2', t:'Rice ___ in cold climates.', w:'doesn’t grow'}],
+  mean: {believe:'tin', eat:'ăn', flow:'chảy', make:'làm ra', rise:'mọc, nhô lên', tell:'nói, kể', translate:'dịch'},
+  items: [
+    {id:'3', t:'The sun ___ in the east.', v:'rise', f:0, subj:'“The sun” số ít (= it)', pol:'Mặt trời mọc ở hướng đông, là sự thật hiển nhiên nên dùng câu khẳng định'},
+    {id:'4', t:'Bees ___ honey.', v:'make', f:1, subj:'“Bees” (những con ong) số nhiều (= they)', pol:'Ong làm ra mật nên dùng câu khẳng định'},
+    {id:'5', t:'Vegetarians ___ meat.', v:'eat', f:3, subj:'“Vegetarians” (người ăn chay) số nhiều (= they)', pol:'Người ăn chay KHÔNG ăn thịt nên dùng câu phủ định'},
+    {id:'6', t:'An atheist ___ in God.', v:'believe', f:2, subj:'“An atheist” (một người vô thần) số ít (= he/she)', pol:'Người vô thần KHÔNG tin vào Chúa nên dùng câu phủ định'},
+    {id:'7', t:'An interpreter ___ from one language into another.', v:'translate', f:0, subj:'“An interpreter” (một phiên dịch viên) số ít (= he/she)', pol:'Phiên dịch viên dịch từ ngôn ngữ này sang ngôn ngữ khác nên dùng câu khẳng định'},
+    {id:'8', t:'Liars are people who ___ the truth.', v:'tell', f:3, subj:'“who” thay cho “people” → số nhiều (= they)', pol:'Kẻ nói dối là người KHÔNG nói sự thật nên dùng câu phủ định'},
+    {id:'9', t:'The River Amazon ___ into the Atlantic Ocean.', v:'flow', f:0, subj:'“The River Amazon” (sông Amazon) số ít (= it)', pol:'Sông Amazon chảy ra Đại Tây Dương nên dùng câu khẳng định'},
+  ]
+};
+
+const EX4 = {
+  example: {t:'You know that Lisa plays tennis. You want to know how often. Ask her.', a:'How often <span class="fill">do you play tennis</span>?'},
+  items: [
+    {id:'2', t:'Perhaps Lisa’s sister plays tennis too. You want to know. Ask Lisa.', two:true, show:'Does your sister play tennis?',
+     ans:['does your sister play tennis', 'does your sister play tennis too'],
+     m:{type:'q', wh:'', aux:'does', subj:'your sister', verb:'play', vs:'plays', sd:'“Your sister” (= she)'},
+     why:'Em chỉ đoán (“Perhaps”) nên hỏi câu Yes/No: <b>Does + S + V nguyên mẫu?</b> “your sister” (= she) → <b>Does</b>; play giữ nguyên.'},
+    {id:'3', t:'You know that Lisa goes to the cinema a lot. You want to know how often. Ask her.', show:'How often do you go to the cinema?',
+     ans:['how often do you go to the cinema', 'how often do you go to the movies'],
+     m:{type:'q', wh:'how often', aux:'do', subj:'you', verb:'go', vs:'goes', sd:'Hỏi trực tiếp Lisa → chủ ngữ you'},
+     why:'Muốn biết mức độ thường xuyên → <b>How often + do + you + V?</b> Hỏi trực tiếp Lisa nên chủ ngữ là <b>you</b>.'},
+    {id:'4', t:'You know that Lisa’s brother works. You want to know what he does. Ask Lisa.', show:'What does your brother do?',
+     ans:['what does your brother do', 'what does your brother do for a living', "what is your brother's job", 'what job does your brother do'],
+     m:{type:'q', wh:'what', aux:'does', subj:'your brother', verb:'do', vs:'does', sd:'“Your brother” (= he)'},
+     why:'Hỏi nghề nghiệp → <b>What + does + S + do?</b> “your brother” (= he) → <b>does</b>; động từ chính <b>do</b> giữ nguyên.'},
+    {id:'5', t:'You’re not sure whether Lisa speaks Spanish. You want to know. Ask her.', show:'Do you speak Spanish?',
+     ans:['do you speak spanish'],
+     m:{type:'q', wh:'', aux:'do', subj:'you', verb:'speak', vs:'speaks', sd:'Hỏi trực tiếp Lisa → chủ ngữ you'},
+     why:'Không chắc nên hỏi câu Yes/No: <b>Do + you + V?</b> → Do you speak Spanish?'},
+    {id:'6', t:'You don’t know where Lisa’s grandparents live. You want to know. Ask Lisa.', show:'Where do your grandparents live?',
+     ans:['where do your grandparents live'],
+     m:{type:'q', wh:'where', aux:'do', subj:'your grandparents', verb:'live', vs:'lives', sd:'“Your grandparents” số nhiều (= they)'},
+     why:'Hỏi nơi chốn → <b>Where + do + S + V?</b> “your grandparents” (ông bà, số nhiều) → <b>do</b>.'},
+  ]
+};
+
+const EX5 = {
+  bank: ['I agree', 'I apologise', 'I insist', 'I promise', 'I recommend'],
+  example: {t:'Mr Evans is not in the office today. ___ you try calling him tomorrow.', w:'I suggest'},
+  mean: {'I agree':'tôi đồng ý', 'I apologise':'tôi xin lỗi', 'I insist':'tôi nhất quyết (nài nỉ)', 'I promise':'tôi hứa', 'I recommend':'tôi giới thiệu / khuyên dùng'},
+  items: [
+    {id:'2', t:'I won’t tell anybody what you said. ___.', a:'I promise', why:'Người nói cam kết giữ bí mật → <b>I promise</b> (tôi hứa).'},
+    {id:'3', t:'<i>(in a restaurant)</i> You must let me pay for the meal. ___.', a:'I insist', why:'Người nói nhất quyết đòi trả tiền (“You must let me…”) → <b>I insist</b> (tôi nhất định trả đấy).'},
+    {id:'4', t:'___ for what I said. I shouldn’t have said it.', a:'I apologise', why:'Người nói hối hận vì đã nói điều không nên nói → <b>I apologise for</b> + điều đã làm (tôi xin lỗi vì…).'},
+    {id:'5', t:'The new restaurant in Baker Street is very good. ___ it.', a:'I recommend', why:'Khen nhà hàng ngon và khuyên người khác đến → <b>I recommend it</b> (tôi giới thiệu / khuyên bạn thử).'},
+    {id:'6', t:'I think you’re absolutely right. ___ with you.', a:'I agree', why:'“You’re absolutely right” thể hiện sự đồng tình → <b>I agree with you</b> (tôi đồng ý với bạn).'},
+  ],
+  note:'💡 Với các động từ <i>promise, insist, apologise, recommend, agree, suggest</i>, ta dùng thì hiện tại đơn khi chính lời nói là hành động. Nói “I promise” nghĩa là đang hứa.'
+};
+
+const SECTIONS = [
+  {id:'2.1', title:'2.1 Verbs + s/es'},
+  {id:'2.2', title:'2.2 Correct form'},
+  {id:'2.3', title:'2.3 Positive / negative'},
+  {id:'2.4', title:'2.4 Questions'},
+  {id:'2.5', title:'2.5 I agree / I promise…'},
+];
+const CFG = {1: EX1, 3: EX3, 5: EX5};
+
+/* ============ TRANH SVG (2.4) ============ */
+function person(x, y, o = {}){
+  const {hair='#6b3e26', shirt='#ef6f8e', skin='#f6c7a1', long=false, arm='down', glasses=false, tie=false, s=1, bun=false} = o;
+  const armL = `<path d="M-12 26 Q-20 36 -22 46" stroke="${skin}" stroke-width="5.5" fill="none" stroke-linecap="round"/>`;
+  const armR = arm === 'up'
+    ? `<path d="M12 26 Q22 20 26 8" stroke="${skin}" stroke-width="5.5" fill="none" stroke-linecap="round"/>`
+    : `<path d="M12 26 Q20 36 22 46" stroke="${skin}" stroke-width="5.5" fill="none" stroke-linecap="round"/>`;
+  return `<g transform="translate(${x} ${y}) scale(${s})">
+    ${long ? `<path d="M-17 2 Q-19 30 -9 33 L9 33 Q19 30 17 2 Q17 -19 0 -19 Q-17 -19 -17 2Z" fill="${hair}"/>` : ''}
+    ${bun ? `<circle cx="0" cy="-19" r="7" fill="${hair}"/>` : ''}
+    <rect x="-10" y="46" width="8" height="22" rx="4" fill="#3d405b"/><rect x="2" y="46" width="8" height="22" rx="4" fill="#3d405b"/>
+    ${armL}${armR}
+    <path d="M-14 50 L-14 30 Q-14 18 0 18 Q14 18 14 30 L14 50Z" fill="${shirt}"/>
+    ${tie ? `<path d="M0 19 L-3 25 L0 40 L3 25Z" fill="#e63946"/>` : ''}
+    <circle r="15" fill="${skin}"/>
+    <path d="M-15 -1 Q-15 -17 0 -17 Q15 -17 15 -1 Q9 -10 -2 -8 Q-10 -8 -15 -1Z" fill="${hair}"/>
+    <circle cx="-5" cy="2" r="1.8" fill="#2b2d42"/><circle cx="5" cy="2" r="1.8" fill="#2b2d42"/>
+    <circle cx="-9" cy="7" r="2.6" fill="#ff8fa3" opacity=".55"/><circle cx="9" cy="7" r="2.6" fill="#ff8fa3" opacity=".55"/>
+    <path d="M-4 8 Q0 11.5 4 8" stroke="#2b2d42" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    ${glasses ? `<g fill="none" stroke="#2b2d42" stroke-width="1.3"><circle cx="-5.5" cy="2" r="4.2"/><circle cx="5.5" cy="2" r="4.2"/><path d="M-1.3 2h2.6"/></g>` : ''}
+  </g>`;
+}
+const racket = (x, y, r = 0, s = 1) => `<g transform="translate(${x} ${y}) rotate(${r}) scale(${s})"><rect x="-2" y="11" width="4" height="16" rx="2" fill="#7a5230"/><ellipse rx="10" ry="13" fill="#fff" fill-opacity=".7" stroke="#e63946" stroke-width="3"/><path d="M-5 -10v20M0 -12v24M5 -10v20M-9 -5h18M-10 0h20M-9 5h18" stroke="#e63946" stroke-width=".7" opacity=".55"/></g>`;
+const ball = (x, y, r = 5) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#d7f205" stroke="#9fb300" stroke-width="1.2"/>`;
+const calendar = (x, y) => `<g transform="translate(${x} ${y})"><rect x="-17" y="-15" width="34" height="32" rx="5" fill="#fff" stroke="#2b2d42" stroke-width="1.5"/><path d="M-17 -10 Q-17 -15 -12 -15 H12 Q17 -15 17 -10 V-5 H-17Z" fill="#e63946"/><text y="13" text-anchor="middle" font-size="18" font-weight="800" fill="#3a6df0" font-family="Nunito,sans-serif">?</text></g>`;
+const bubble = (x, y, w, h, inner) => `<g transform="translate(${x} ${y})"><path d="M${-w/4} ${h/2-2} l-9 12 l17 -12Z" fill="#fff" stroke="#2b2d42" stroke-width="1.5" stroke-linejoin="round"/><rect x="${-w/2}" y="${-h/2}" width="${w}" height="${h}" rx="${h/2}" fill="#fff" stroke="#2b2d42" stroke-width="1.5"/><path d="M${-w/4+1} ${h/2-1.6} l11 0" stroke="#fff" stroke-width="2.5"/>${inner}</g>`;
+const label = (x, y, t) => `<text x="${x}" y="${y}" text-anchor="middle" font-size="10.5" font-weight="800" fill="#2b2d42" font-family="Nunito,sans-serif">${t}</text>`;
+const qmark = (x, y, size = 18, c = '#3a6df0') => `<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" font-weight="800" fill="${c}" font-family="Nunito,sans-serif">?</text>`;
+function scene(bg, ground, inner, alt){
+  return `<svg viewBox="0 0 200 130" role="img" aria-label="${alt}"><rect width="200" height="130" rx="16" fill="${bg}"/><path d="M0 110H200V114Q200 130 184 130H16Q0 130 0 114Z" fill="${ground}"/>${inner}</svg>`;
+}
+const LISA = {hair:'#8a4b2a', shirt:'#ef6f8e', long:true};
+const SVG4 = {
+  '1': scene('#e3f4ea', '#7cc79a',
+        `<path d="M10 118H190" stroke="#fff" stroke-width="2"/>${person(78, 40, {...LISA, arm:'up'})}${racket(106, 0, 25)}${ball(132, 22)}${calendar(165, 52)}${label(78, 124, 'Lisa')}`,
+        'Lisa chơi tennis – how often?'),
+  '2': scene('#f1ecfb', '#b9a5e8',
+        `${person(50, 40, LISA)}${person(130, 42, {hair:'#2b2118', shirt:'#7b5cd6', long:true, s:.95})}${bubble(168, 20, 46, 30, racket(-7, -1, 20, .55) + qmark(11, 6, 17))}${label(50, 124, 'Lisa')}${label(130, 124, 'Lisa’s sister')}`,
+        'Chị gái của Lisa có chơi tennis không?'),
+  '3': scene('#fdeee4', '#f2b48c',
+        `<rect x="104" y="12" width="84" height="50" rx="6" fill="#2b2d42"/><path d="M140 26 L156 37 L140 48Z" fill="#ffd166"/><rect x="104" y="62" width="84" height="5" fill="#c1121f"/>
+         ${person(58, 40, {...LISA, arm:'down'})}
+         <g transform="translate(80 78)"><path d="M-9 0 L9 0 L6 18 L-6 18Z" fill="#fff" stroke="#e63946" stroke-width="1.3"/><path d="M-4 0 L-3 18 M4 0 L3 18" stroke="#e63946" stroke-width="2.6"/><circle cx="-5" cy="-2" r="3.6" fill="#fff6d5"/><circle cx="1" cy="-4" r="3.8" fill="#fff6d5"/><circle cx="6" cy="-1.5" r="3.4" fill="#fff6d5"/></g>
+         ${calendar(160, 90)}${label(58, 124, 'Lisa')}`,
+        'Lisa đi xem phim – how often?'),
+  '4': scene('#e7f0fb', '#9cbbe0',
+        `<rect x="132" y="22" width="52" height="88" rx="4" fill="#6c8ebf"/>${[0,1,2,3].map(r => [0,1].map(c => `<rect x="${140 + c*22}" y="${30 + r*19}" width="14" height="12" rx="2" fill="#fff5c2"/>`).join('')).join('')}
+         ${person(66, 40, {hair:'#3b2a20', shirt:'#4f8ff0', tie:true})}
+         <g transform="translate(88 82)"><rect x="-10" y="0" width="22" height="16" rx="3" fill="#7a4f2a"/><path d="M-3 0 v-4 h8 v4" fill="none" stroke="#7a4f2a" stroke-width="2"/></g>
+         ${bubble(104, 14, 40, 26, qmark(0, 6, 18))}${label(66, 124, 'Lisa’s brother')}`,
+        'Anh trai của Lisa làm nghề gì?'),
+  '5': scene('#fff4dc', '#f5c96b',
+        `${person(58, 40, LISA)}${bubble(130, 26, 84, 34, `<text y="5" text-anchor="middle" font-size="14" font-weight="800" fill="#c1121f" font-family="Nunito,sans-serif">¡Hola! 🇪🇸</text>`)}
+         <g transform="translate(150 78)"><rect x="-20" y="-13" width="40" height="27" rx="3" fill="#c1121f"/><rect x="-20" y="-6.5" width="40" height="13.5" fill="#ffc400"/></g>${qmark(184, 90, 22, '#3a6df0')}${label(58, 124, 'Lisa')}`,
+        'Lisa có nói tiếng Tây Ban Nha không?'),
+  '6': scene('#eaf6f1', '#96d1b4',
+        `${person(42, 46, {hair:'#cfcfcf', shirt:'#d96f9a', bun:true, glasses:true, s:.9})}${person(82, 44, {hair:'#bdbdbd', shirt:'#5aa36f', glasses:true, s:.93})}
+         <g transform="translate(152 76)"><path d="M-30 -8 L0 -32 L30 -8Z" fill="#e76f51"/><rect x="-24" y="-8" width="48" height="42" fill="#fff3e0" stroke="#b9764f" stroke-width="1.2"/><rect x="-6" y="12" width="12" height="22" fill="#9c6644"/><rect x="-19" y="0" width="10" height="9" fill="#9ad1f5"/><rect x="9" y="0" width="10" height="9" fill="#9ad1f5"/></g>
+         <g transform="translate(152 14)"><path d="M0 18 C-12 4 -11 -9 0 -9 C11 -9 12 4 0 18Z" fill="#3a6df0"/><text y="5" text-anchor="middle" font-size="12" font-weight="800" fill="#fff" font-family="Nunito,sans-serif">?</text></g>
+         ${label(62, 124, 'Lisa’s grandparents')}`,
+        'Ông bà của Lisa sống ở đâu?'),
+};
+
+/* ============ TRẠNG THÁI ============ */
+const blankState = () => ({name:'', cls:'', d1:{}, e1:{}, t:{}, d3:{}, f3:{}, d5:{}, submitted:false, sent:false, submittedAt:null});
+let S = (() => { try { return Object.assign(blankState(), JSON.parse(localStorage.getItem(STORE_KEY)) || {}); } catch (e) { return blankState(); } })();
+function save(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch (e) {} }
+let RES = null;  // kết quả chấm (sau khi nộp)
+let sel = null;  // chip đang được chọn (chế độ chạm)
+
+/* ============ DỰNG GIAO DIỆN ============ */
+function sentence(t, slotHtml){ const [a, b] = t.split('___'); return `${a}${slotHtml}${b ?? ''}`; }
+function exampleLi(n, html){ return `<li class="item"><span class="num">${n}</span><div class="ibody example">${html} <span class="tag">ví dụ</span></div></li>`; }
+
+function build(){
+  // 2.1
+  $('#list1').innerHTML = exampleLi('1', sentence(EX1.example.t, `<span class="fill">${EX1.example.w}</span>`)) +
+    EX1.items.map(it => `<li class="item"><span class="num">${it.id}</span><div class="ibody">${sentence(it.t, `<span class="slot" id="slot-1-${it.id}"></span>`)}<div class="fb" id="fb-1-${it.id}"></div></div></li>`).join('');
+  // 2.2
+  $('#list2').innerHTML = exampleLi('1', 'Julia <span class="fill">doesn’t drink</span> <span class="hint">(not / drink)</span> tea very often.') +
+    EX2.sentences.map(s => `<li class="item"><span class="num">${s.id}</span><div class="ibody">${s.parts.map((p, i) => i % 2 ? `<input class="txt" data-k="2-${p}" style="width:calc(${EX2.blanks[p].w}ch + 16px)" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Câu ${s.id}">` : p).join('')}<div class="fb" id="fb-2-${s.id}"></div></div></li>`).join('');
+  // 2.3
+  $('#list3').innerHTML = EX3.examples.map(e => exampleLi(e.n, sentence(e.t, `<span class="fill">${e.w}</span>`))).join('') +
+    EX3.items.map(it => `<li class="item"><span class="num">${it.id}</span><div class="ibody">${sentence(it.t, `<span class="slot" id="slot-3-${it.id}"></span>`)}<div class="fb" id="fb-3-${it.id}"></div></div></li>`).join('');
+  // 2.4
+  const ia = `autocomplete="off" autocapitalize="sentences" spellcheck="false"`;
+  $('#list4').innerHTML =
+    `<div class="sit">${SVG4['1']}<div class="stext"><b class="num">1</b> ${EX4.example.t}<div class="example" style="margin-top:6px">${EX4.example.a} <span class="tag">ví dụ</span></div></div></div>` +
+    EX4.items.map(it => `<div class="sit">${SVG4[it.id]}<div class="stext"><b class="num">${it.id}</b> ${it.t}
+      ${it.two
+        ? `<div style="margin-top:6px"><input class="txt" data-k="4-2a" style="width:calc(7ch + 16px)" ${ia} aria-label="Câu 2, chỗ trống 1"> your sister <input class="txt" data-k="4-2b" style="width:calc(13ch + 16px)" ${ia} aria-label="Câu 2, chỗ trống 2"> ?</div>`
+        : `<input class="txt full" data-k="4-${it.id}" placeholder="Gõ câu hỏi…" ${ia} aria-label="Câu ${it.id}">`}
+      <div class="fb" id="fb-4-${it.id}"></div></div></div>`).join('');
+  // 2.5
+  $('#list5').innerHTML = exampleLi('1', sentence(EX5.example.t, `<span class="fill">${EX5.example.w}</span>`)) +
+    EX5.items.map(it => `<li class="item"><span class="num">${it.id}</span><div class="ibody">${sentence(it.t, `<span class="slot" id="slot-5-${it.id}"></span>`)}<div class="fb" id="fb-5-${it.id}"></div></div></li>`).join('') +
+    `<li><div class="note">${EX5.note}</div></li>`;
+
+  // ô nhập liệu
+  document.querySelectorAll('input.txt').forEach(inp => {
+    inp.value = S.t[inp.dataset.k] || '';
+    inp.addEventListener('input', () => { S.t[inp.dataset.k] = inp.value; save(); progress(); });
+  });
+  [1, 3, 5].forEach(renderDrag);
+}
+
+function renderDrag(ex){
+  const cfg = CFG[ex], D = S['d' + ex], used = new Set(Object.values(D));
+  const free = cfg.bank.filter(w => !used.has(w));
+  const bank = $('#bank' + ex);
+  bank.hidden = S.submitted;
+  bank.innerHTML = free.length
+    ? free.map(w => `<span class="chip${sel && sel.ex === ex && sel.w === w ? ' sel' : ''}" data-w="${esc(w)}">${esc(w)}</span>`).join('')
+    : `<span class="empty">Đã dùng hết từ 👍 Chạm vào từ đã điền để đổi.</span>`;
+  bank.querySelectorAll('.chip').forEach(c => bindChip(c, ex, c.dataset.w, null));
+  $('#ex' + ex).classList.toggle('pickmode', !!(sel && sel.ex === ex));
+  $('#ex' + ex).classList.toggle('locked', S.submitted);
+  cfg.items.forEach(it => renderSlot(ex, it.id));
+}
+
+function renderSlot(ex, id){
+  const host = $(`#slot-${ex}-${id}`);
+  const w = S['d' + ex][id];
+  const r = RES && RES.map[`${ex}-${id}`];
+  const st = r ? (r.ok ? ' ok' : ' bad') : '';
+  let chip = '';
+  if (w){
+    let lab = esc(w);
+    if (ex === 1){ const e = S.e1[id]; lab = esc(w) + (e ? `<b class="suf">${e}</b>` : ''); }
+    if (ex === 3){ const f = S.f3[id]; lab = f == null ? `${esc(w)} <span class="q">chọn dạng ▸</span>` : esc(forms3(w)[f]); }
+    chip = `<span class="chip in" data-w="${esc(w)}">${lab}</span>`;
+  }
+  let h = `<span class="drop${w ? ' filled' : ''}${st}" data-ex="${ex}" data-id="${id}">${chip}</span>`;
+  if (ex === 1 && w){
+    const e = S.e1[id];
+    h += `<span class="ends${e == null ? ' need' : ''}">${[['', 'không thêm'], ['s', '+s'], ['es', '+es']].map(([v, l]) =>
+      `<button type="button" class="${e === v ? 'on' : ''}" data-end="${v}" ${S.submitted ? 'disabled' : ''}>${l}</button>`).join('')}</span>`;
+  }
+  if (ex === 3 && w){
+    h += `<button type="button" class="arrow${S.f3[id] == null ? ' need' : ''}" aria-label="Chọn dạng động từ" ${S.submitted ? 'disabled' : ''}>▾</button>`;
+  }
+  host.innerHTML = h;
+  host.querySelectorAll('.chip').forEach(c => bindChip(c, ex, c.dataset.w, id));
+  host.querySelector('.drop').addEventListener('click', () => {
+    if (!S.submitted && sel && sel.ex === ex && !S['d' + ex][id]) place(ex, id, sel.w, null);
+  });
+  host.querySelectorAll('.ends button').forEach(b => b.addEventListener('click', () => {
+    S.e1[id] = b.dataset.end; save(); renderSlot(1, id); progress();
+  }));
+  const arrow = host.querySelector('.arrow');
+  if (arrow) arrow.addEventListener('click', e => { e.stopPropagation(); toggleMenu(arrow, id); });
+}
+
+function clearExtra(ex, id){ if (ex === 1) delete S.e1[id]; if (ex === 3) delete S.f3[id]; }
+function place(ex, id, w, from){
+  const D = S['d' + ex];
+  if (from === id){ renderDrag(ex); return; }
+  const prev = D[id];
+  D[id] = w; clearExtra(ex, id);
+  if (from != null){ if (prev) D[from] = prev; else delete D[from]; clearExtra(ex, from); }
+  sel = null; save(); renderDrag(ex); progress();
+}
+function removeFrom(ex, id){ delete S['d' + ex][id]; clearExtra(ex, id); save(); renderDrag(ex); progress(); }
+
+/* ============ KÉO THẢ (Pointer Events – chạy cả điện thoại) ============ */
+let drag = null, hoverEl = null, scrollV = 0, rafId = 0;
+const ghost = $('#ghost');
+function bindChip(el, ex, w, from){
+  el.addEventListener('pointerdown', e => {
+    if (S.submitted || (e.button !== undefined && e.button !== 0)) return;
+    e.preventDefault();
+    drag = {ex, w, from, el, x0:e.clientX, y0:e.clientY, moved:false};
+    try { el.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+}
+function dropTarget(x, y, ex){
+  const el = document.elementFromPoint(x, y);
+  const d = el && el.closest('.drop');
+  return d && +d.dataset.ex === ex ? d : null;
+}
+function autoScroll(){
+  if (!drag || !drag.moved || !scrollV){ rafId = 0; return; }
+  window.scrollBy(0, scrollV);
+  rafId = requestAnimationFrame(autoScroll);
+}
+document.addEventListener('pointermove', e => {
+  if (!drag) return;
+  if (!drag.moved && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 6){
+    drag.moved = true; sel = null;
+    ghost.textContent = drag.el.textContent.replace('chọn dạng ▸', '').trim();
+    ghost.style.display = 'inline-flex';
+    drag.el.classList.add('dragging');
+    $('#ex' + drag.ex).classList.remove('pickmode');
+  }
+  if (!drag.moved) return;
+  ghost.style.left = e.clientX + 'px'; ghost.style.top = e.clientY + 'px';
+  const t = dropTarget(e.clientX, e.clientY, drag.ex);
+  if (t !== hoverEl){ hoverEl && hoverEl.classList.remove('hover'); hoverEl = t; t && t.classList.add('hover'); }
+  const H = window.innerHeight;
+  scrollV = e.clientY < 70 ? -10 : e.clientY > H - 110 ? 10 : 0;
+  if (scrollV && !rafId) rafId = requestAnimationFrame(autoScroll);
+});
+function endDrag(e, cancel){
+  if (!drag) return;
+  const d = drag; drag = null; scrollV = 0;
+  ghost.style.display = 'none'; d.el.classList.remove('dragging');
+  hoverEl && hoverEl.classList.remove('hover'); hoverEl = null;
+  if (cancel) return;
+  if (!d.moved){ onTap(d); return; }
+  const t = dropTarget(e.clientX, e.clientY, d.ex);
+  if (t) place(d.ex, t.dataset.id, d.w, d.from);
+  else if (d.from != null) removeFrom(d.ex, d.from);
+}
+document.addEventListener('pointerup', e => endDrag(e, false));
+document.addEventListener('pointercancel', e => endDrag(e, true));
+function onTap(d){
+  if (d.from == null){                       // chạm chip trong ngân hàng → chọn / bỏ chọn
+    sel = sel && sel.ex === d.ex && sel.w === d.w ? null : {ex:d.ex, w:d.w};
+    [1, 3, 5].forEach(renderDrag);
+  } else if (sel && sel.ex === d.ex){         // đang chọn chip khác → thay vào ô này
+    place(d.ex, d.from, sel.w, null);
+  } else {                                     // chạm chip trong ô → trả về ngân hàng
+    removeFrom(d.ex, d.from);
+  }
+}
+
+/* ============ MENU CHỌN DẠNG (2.3) ============ */
+const menu = $('#menu'); let menuFor = null;
+function toggleMenu(btn, id){
+  if (!menu.hidden && menuFor === id){ closeMenu(); return; }
+  menuFor = id;
+  const w = S.d3[id];
+  menu.innerHTML = `<div class="mt">Chọn dạng đúng của “${esc(w)}”:</div>` +
+    forms3(w).map((f, i) => `<button type="button" data-i="${i}" class="${S.f3[id] === i ? 'on' : ''}">${esc(f)}</button>`).join('');
+  menu.hidden = false;
+  const r = btn.getBoundingClientRect();
+  const vw = document.documentElement.clientWidth;
+  let left = Math.min(r.left, vw - menu.offsetWidth - 8);
+  menu.style.left = Math.max(8, left) + window.scrollX + 'px';
+  menu.style.top = r.bottom + window.scrollY + 6 + 'px';
+  menu.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    S.f3[id] = +b.dataset.i; save(); closeMenu(); renderSlot(3, id); progress();
+  }));
+}
+function closeMenu(){ menu.hidden = true; menuFor = null; }
+document.addEventListener('pointerdown', e => { if (!menu.hidden && !e.target.closest('#menu') && !e.target.closest('.arrow')) closeMenu(); });
+window.addEventListener('resize', closeMenu);
+
+/* ============ TIẾN ĐỘ ============ */
+function answeredList(){
+  const a = [];
+  EX1.items.forEach(it => a.push(!!S.d1[it.id] && S.e1[it.id] != null));
+  Object.keys(EX2.blanks).forEach(k => a.push(!!(S.t['2-' + k] || '').trim()));
+  EX3.items.forEach(it => a.push(!!S.d3[it.id] && S.f3[it.id] != null));
+  EX4.items.forEach(it => a.push(it.two ? !!((S.t['4-2a'] || '').trim() && (S.t['4-2b'] || '').trim()) : !!(S.t['4-' + it.id] || '').trim()));
+  EX5.items.forEach(it => a.push(!!S.d5[it.id]));
+  return a;
+}
+function progress(){
+  const a = answeredList(), done = a.filter(Boolean).length;
+  $('#progT').textContent = S.submitted ? `Đã nộp · ${RES ? RES.score : ''}/${a.length} câu đúng` : `Đã làm ${done}/${a.length} câu`;
+  $('#progF').style.width = (S.submitted && RES ? RES.score : done) / a.length * 100 + '%';
+}
+
+/* ============ CHẨN ĐOÁN LỖI CHO CÂU GÕ ============ */
+function diag(raw, m){
+  const out = [];
+  if (/\b(doesnt|dont)\b/i.test(raw || '')) out.push('Nhớ viết dấu nháy: <b>doesn’t</b> / <b>don’t</b>.');
+  let a = norm((raw || '').replace(/\bdoesnt\b/gi, "doesn't").replace(/\bdont\b/gi, "don't"));
+  if (m.pre && (a === m.pre || a.startsWith(m.pre + ' '))){
+    out.push(`Không cần gõ lại “${cap(m.pre)}” vì từ này đã có sẵn trong câu. Chỉ điền phần còn thiếu.`);
+    a = a.slice(m.pre.length).trim();
+  }
+  const w = a.split(' ').filter(Boolean);
+  const neg = m.aux === 'does' ? 'doesn’t' : 'don’t';
+  if (m.type === 'aff'){
+    if (w.includes(m.verb)) out.push(`${m.sd} + câu khẳng định → động từ phải thêm -s: <b>${m.vs}</b>.`);
+    if (w.includes('do') || w.includes('does')) out.push('Câu khẳng định không dùng trợ động từ do/does.');
+  } else if (m.type === 'neg'){
+    const ni = w.indexOf('not');
+    if (ni < 0) out.push(`Đề cho “not” nên đây là câu phủ định: <b>${neg} + ${m.verb}</b>.`);
+    else {
+      const aux = w[ni - 1];
+      if (aux !== 'do' && aux !== 'does') out.push(`Phủ định thì hiện tại đơn cần trợ động từ: <b>${neg}</b> + V nguyên mẫu.`);
+      else if (aux !== m.aux) out.push(`${m.sd} → dùng <b>${neg}</b>, không dùng ${aux === 'does' ? 'doesn’t' : 'don’t'}.`);
+      if (w.slice(ni + 1).includes(m.vs) && m.vs !== m.verb) out.push(`Sau ${neg}, động từ giữ nguyên mẫu: <b>${m.verb}</b> (không phải ${m.vs}).`);
+    }
+  } else {
+    if (m.wh && !(a === m.wh || a.startsWith(m.wh + ' '))) out.push(`Câu hỏi cần bắt đầu bằng từ để hỏi <b>${cap(m.wh)}</b>.`);
+    const ai = w.findIndex(x => x === 'do' || x === 'does');
+    const sw = m.subj.split(' ');
+    const si = w.findIndex((x, i) => sw.every((y, j) => w[i + j] === y));
+    if (ai < 0) out.push(`Câu hỏi thì hiện tại đơn cần trợ động từ <b>${m.aux === 'does' ? 'Does/does' : 'Do/do'}</b> đứng TRƯỚC chủ ngữ: ${m.wh ? '(Wh-) + ' : ''}do/does + S + V?`);
+    else {
+      if (si >= 0 && si < ai) out.push('Sai trật tự từ: trợ động từ do/does phải đứng <b>trước</b> chủ ngữ.');
+      if (w[ai] !== m.aux) out.push(`${m.sd} → dùng <b>${m.aux}</b>, không dùng ${w[ai]}.`);
+      if (w.slice(ai + 1).includes(m.vs)) out.push(`Sau do/does, động từ chính trở về nguyên mẫu: <b>${m.verb}</b> (không phải ${m.vs}).`);
+    }
+    if (si < 0) out.push(`Chủ ngữ của câu hỏi phải là <b>${m.subj === 'maria' ? 'Maria' : m.subj}</b>.`);
+  }
+  return out;
+}
+
+/* ============ CHẤM ĐIỂM ============ */
+function grade(){
+  const items = [];
+  const push = (o) => items.push(o);
+
+  EX1.items.forEach(it => {
+    const w = S.d1[it.id], e = S.e1[it.id];
+    const correct = it.v + it.e;
+    const ans = w ? w + (e || '') : '';
+    const ok = w === it.v && e === it.e;
+    const msgs = [];
+    if (!w) msgs.push('Em chưa điền chỗ này.');
+    else {
+      if (w !== it.v) msgs.push(`Em chọn <b>${w}</b> (${EX1.mean[w]}), không hợp nghĩa câu. Câu này cần: <i>${it.mean}</i>.`);
+      if (e == null) msgs.push('Em chưa chọn đuôi (không thêm / +s / +es).');
+      else if (e !== it.e){
+        if (it.e === '') msgs.push(`${it.subj} → động từ <b>giữ nguyên</b>, không thêm -s/-es.`);
+        else if (e === '') msgs.push(`${it.subj} → động từ phải <b>thêm -s/-es</b>.`);
+        else msgs.push(`“${it.v}” không tận cùng bằng o, s, sh, ch, x, z nên chỉ thêm <b>-s</b> (${sForm(it.v)}), không thêm -es.`);
+      }
+    }
+    const rule = it.e ? (needsEs(it.v) ? ` “${it.v}” tận cùng bằng ${it.v.slice(-1)} nên thêm -es.` : ' Chủ ngữ số ít (he/she/it) → thêm -s.') : ' Chủ ngữ số nhiều (they) → giữ nguyên động từ.';
+    push({sec:'2.1', key:'1-' + it.id, fb:'fb-1-' + it.id, n:it.id, q:plain(it.t), ans, correct, ok, msgs,
+          why:`${it.subj} → <b>${correct}</b>.${rule} (${it.mean})`});
+  });
+
+  Object.entries(EX2.blanks).forEach(([k, b]) => {
+    const raw = (S.t['2-' + k] || '').trim();
+    const ok = !!raw && b.ans.map(norm).includes(norm(raw));
+    let msgs = [];
+    if (!raw) msgs = ['Em chưa điền chỗ này.'];
+    else if (!ok){ msgs = diag(raw, b.m); if (!msgs.length) msgs = ['Đối chiếu với đáp án: kiểm tra chính tả và từ bị thiếu/thừa.']; }
+    const s = EX2.sentences.find(x => x.parts.includes(k));
+    const q = plain(s.parts.map((p, i) => i % 2 ? (p === k ? '___' : '…') : p).join(''));
+    push({sec:'2.2', key:'2-' + k, fb:'fb-2-' + s.id, n:k, q, ans:raw, correct:b.show, ok, msgs, why:b.why, label:k.length > 1 ? `Chỗ trống ${k === '8a' ? '1' : '2'}: ` : ''});
+  });
+
+  EX3.items.forEach(it => {
+    const w = S.d3[it.id], f = S.f3[it.id];
+    const correct = forms3(it.v)[it.f];
+    const ans = w ? (f == null ? w + ' (chưa chọn dạng)' : forms3(w)[f]) : '';
+    const ok = w === it.v && f === it.f;
+    const msgs = [];
+    if (!w) msgs.push('Em chưa điền chỗ này.');
+    else {
+      if (w !== it.v) msgs.push(`Em chọn <b>${w}</b> (${EX3.mean[w]}), không hợp nghĩa câu. Động từ đúng là <b>${it.v}</b> (${EX3.mean[it.v]}).`);
+      if (f == null) msgs.push('Em chưa bấm ▾ để chọn dạng động từ.');
+      else if (f !== it.f){
+        const wantNeg = it.f >= 2, gotNeg = f >= 2, wantSing = it.f === 0 || it.f === 2, gotSing = f === 0 || f === 2;
+        if (wantNeg !== gotNeg) msgs.push(`${it.pol}. Vì vậy cần <b>${wantNeg ? 'dạng phủ định' : 'dạng khẳng định'}</b>.`);
+        if (wantSing !== gotSing) msgs.push(`${it.subj} → ${wantNeg ? `dùng <b>${wantSing ? 'doesn’t' : 'don’t'}</b>` : (wantSing ? '<b>thêm -s/-es</b>' : '<b>giữ nguyên</b> động từ')}.`);
+      }
+    }
+    push({sec:'2.3', key:'3-' + it.id, fb:'fb-3-' + it.id, n:it.id, q:plain(it.t), ans, correct, ok, msgs,
+          why:`${it.pol}. ${it.subj} → <b>${correct}</b>.`});
+  });
+
+  EX4.items.forEach(it => {
+    const raw = it.two
+      ? (((S.t['4-2a'] || '').trim() || (S.t['4-2b'] || '').trim()) ? `${(S.t['4-2a'] || '').trim()} your sister ${(S.t['4-2b'] || '').trim()}?` : '')
+      : (S.t['4-' + it.id] || '').trim();
+    const ok = !!raw && it.ans.map(norm).includes(norm(raw));
+    let msgs = [];
+    if (!raw) msgs = ['Em chưa viết câu hỏi.'];
+    else if (!ok){ msgs = diag(raw, it.m); if (!msgs.length) msgs = ['Đối chiếu với đáp án: kiểm tra chính tả và từ bị thiếu/thừa.']; }
+    push({sec:'2.4', key:'4-' + it.id, fb:'fb-4-' + it.id, n:it.id, q:it.t, ans:raw, correct:it.show, ok, msgs, why:it.why});
+  });
+
+  EX5.items.forEach(it => {
+    const w = S.d5[it.id];
+    const ok = w === it.a;
+    const msgs = [];
+    if (!w) msgs.push('Em chưa điền chỗ này.');
+    else if (!ok) msgs.push(`Em chọn <b>${w}</b> (${EX5.mean[w]}), không hợp ngữ cảnh.`);
+    push({sec:'2.5', key:'5-' + it.id, fb:'fb-5-' + it.id, n:it.id, q:plain(it.t), ans:w || '', correct:it.a, ok, msgs, why:it.why});
+  });
+
+  const sections = SECTIONS.map(s => {
+    const its = items.filter(i => i.sec === s.id);
+    return {...s, score:its.filter(i => i.ok).length, total:its.length};
+  });
+  const map = {}; items.forEach(i => map[i.key] = i);
+  return {items, map, sections, score:items.filter(i => i.ok).length, total:items.length};
+}
+
+/* ============ HIỂN THỊ KẾT QUẢ ============ */
+function fbHtml(i){
+  const head = i.ok
+    ? `<div class="h">${i.label || ''}✅ Đúng rồi! <b>${esc(i.correct)}</b></div>`
+    : `<div class="h">${i.label || ''}❌ ${i.ans ? `Em trả lời: <s>${esc(i.ans)}</s>` : 'Em bỏ trống'} → Đáp án: <b>${esc(i.correct)}</b></div>`;
+  const errs = i.ok ? '' : `<ul>${i.msgs.map(m => `<li>${m}</li>`).join('')}</ul>`;
+  return `<div class="part">${head}${errs}<div class="why">💡 ${i.why}</div></div>`;
+}
+function showResults(){
+  RES = grade();
+  // gom feedback theo khung
+  const byFb = {};
+  RES.items.forEach(i => (byFb[i.fb] = byFb[i.fb] || []).push(i));
+  Object.entries(byFb).forEach(([id, arr]) => {
+    const el = document.getElementById(id);
+    el.className = 'fb show ' + (arr.every(i => i.ok) ? 'ok' : 'bad');
+    el.innerHTML = arr.map(fbHtml).join('');
+  });
+  document.querySelectorAll('input.txt').forEach(inp => {
+    inp.disabled = true;
+    const k = inp.dataset.k;
+    const key = k.startsWith('4-2') ? '4-2' : k;
+    const r = RES.map[key];
+    if (r) inp.classList.add(r.ok ? 'ok' : 'bad');
+  });
+  [1, 3, 5].forEach(renderDrag);
+  $('#submitBtn').hidden = true;
+  renderWho();
+  renderSummary();
+  progress();
+}
+function renderSummary(){
+  $('#summaryBox').innerHTML = `<div class="card summary">
+    <div class="score">${RES.score}<span>/${RES.total}</span></div>
+    <div style="flex:1;min-width:220px">
+      <div style="font-weight:800;font-size:18px">${RES.score === RES.total ? '🎉 Xuất sắc! Em làm đúng tất cả!' : RES.score >= RES.total * .8 ? '👏 Làm tốt lắm!' : RES.score >= RES.total * .5 ? '💪 Khá ổn, cố gắng thêm nhé!' : '📚 Em xem kỹ phần giải thích bên dưới nhé!'}</div>
+      <div class="secs">${RES.sections.map(s => `<span class="sec${s.score === s.total ? ' full' : ''}">${s.id}: ${s.score}/${s.total}</span>`).join('')}</div>
+      <div style="font-size:14.5px;color:var(--muted)">Kéo xuống để xem đáp án và giải thích từng câu. Câu sai được tô đỏ.</div>
+      <div class="status" id="sendStatus"></div>
+    </div></div>`;
+  updateStatus();
+}
+
+/* ============ GỬI BÀI ============ */
+let sendState = null; // null | 'sending' | 'ok' | 'err' | 'warn'
+let sendErr = '';
+function updateStatus(){
+  const el = $('#sendStatus'); if (!el) return;
+  const st = S.sent ? 'ok' : sendState;
+  el.className = 'status ' + (st || '');
+  if (st === 'ok') el.innerHTML = '✅ Đã gửi bài cho cô!';
+  else if (st === 'sending') el.innerHTML = '⏳ Đang gửi bài cho cô…';
+  else if (st === 'warn') el.innerHTML = '⚠️ Trang chưa được cài địa chỉ gửi bài (SCRIPT_URL), nên bài chưa được gửi cho cô.';
+  else el.innerHTML = `⚠️ Chưa gửi được bài cho cô${sendErr ? ` (${esc(sendErr)})` : ''}. Kiểm tra mạng rồi bấm: <button class="btn" type="button" id="resendBtn" style="padding:6px 14px;font-size:14px;margin-left:4px">Gửi lại</button>`;
+  const rb = $('#resendBtn'); if (rb) rb.onclick = send;
+}
+function payload(){
+  return {
+    app:'btvn', unit:UNIT, title:TITLE, name:S.name, cls:S.cls, submittedAt:S.submittedAt,
+    score:RES.score, total:RES.total,
+    sections:RES.sections.map(s => ({id:s.id, title:s.title, score:s.score, total:s.total})),
+    items:RES.items.map(i => ({sec:i.sec, n:i.n, q:i.q, ans:i.ans, correct:i.correct, ok:i.ok})),
+  };
+}
+async function send(){
+  if (!SCRIPT_URL || SCRIPT_URL.includes('PASTE_')){ sendState = 'warn'; updateStatus(); return; }
+  sendState = 'sending'; updateStatus();
+  try {
+    const r = await fetch(SCRIPT_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(payload())});
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'máy chủ báo lỗi');
+    S.sent = true; save(); sendState = 'ok';
+  } catch (err){
+    sendState = 'err'; sendErr = err && err.message ? err.message : String(err);
+  }
+  updateStatus();
+}
+
+/* ============ NỘP BÀI ============ */
+$('#submitBtn').addEventListener('click', () => {
+  if (S.submitted) return;
+  const a = answeredList(), left = a.filter(x => !x).length;
+  if (left && !confirm(`Em còn ${left} câu chưa làm. Vẫn nộp bài chứ?\n(Sau khi nộp sẽ không sửa được nữa.)`)) return;
+  if (!left && !confirm('Nộp bài? Sau khi nộp sẽ không sửa được nữa.')) return;
+  closeMenu(); sel = null;
+  S.submitted = true; S.submittedAt = new Date().toISOString(); save();
+  showResults();
+  window.scrollTo({top:0, behavior:'smooth'});
+  send();
+});
+
+/* ============ TÊN HỌC SINH ============ */
+function renderWho(){
+  $('#whoBar').innerHTML = `<span>👤 <b>${esc(S.name)}</b> · Lớp <b>${esc(S.cls)}</b></span>` +
+    (S.submitted ? `<span style="color:var(--muted);font-size:14px">Nộp lúc ${new Date(S.submittedAt).toLocaleString('vi-VN')}</span>` : `<button class="linkbtn" type="button" id="editName">Sửa tên / lớp</button>`);
+  const b = $('#editName'); if (b) b.onclick = () => { $('#work').hidden = true; $('#bar').hidden = true; $('#start').hidden = false; $('#inName').focus(); };
+}
+function showWork(){
+  $('#start').hidden = true; $('#work').hidden = false; $('#bar').hidden = false;
+  renderWho(); progress();
+}
+$('#inName').value = S.name; $('#inCls').value = S.cls;
+$('#startBtn').addEventListener('click', () => {
+  const n = $('#inName').value.trim(), c = $('#inCls').value.trim();
+  if (n.length < 2){ $('#startErr').textContent = 'Em hãy nhập họ và tên.'; return; }
+  if (!c){ $('#startErr').textContent = 'Em hãy nhập lớp.'; return; }
+  $('#startErr').textContent = '';
+  S.name = n.slice(0, 80); S.cls = c.slice(0, 30); save();
+  showWork(); window.scrollTo({top:0});
+});
+['inName', 'inCls'].forEach(id => $('#' + id).addEventListener('keydown', e => { if (e.key === 'Enter') $('#startBtn').click(); }));
+
+/* ============ KHỞI ĐỘNG ============ */
+build();
+if (S.name) showWork();
+if (S.submitted) showResults();
+</script>
+</body>
+</html>
