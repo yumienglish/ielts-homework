@@ -1,0 +1,967 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unit 1 – MS-Foundation-LS · Bài tập về nhà</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff8ef; --card:#fff; --ink:#2b2d42; --muted:#6b7080; --line:#ece3d6;
+  --brand:#14866d; --brand-soft:#dff3ee; --accent:#ff8c42;
+  --chip:#fff1bf; --chip-b:#f2b705; --blue:#3a6df0;
+  --ok:#1f8a4c; --ok-bg:#e7f7ee; --bad:#d64045; --bad-bg:#fdecec; --wait:#b7791f; --wait-bg:#fff6e0;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:17px;line-height:1.6}
+.hero{background:linear-gradient(135deg,#14866d,#2bb39a);color:#fff;padding:26px 16px 44px;text-align:center}
+.hero h1{margin:0;font-size:clamp(23px,5vw,34px);font-weight:800;letter-spacing:.2px}
+.hero p{margin:4px 0 0;opacity:.93;font-size:15.5px}
+main{max-width:880px;margin:-26px auto 0;padding:0 16px 130px}
+.card{background:var(--card);border-radius:18px;box-shadow:0 4px 18px rgba(60,40,10,.07);padding:20px;margin-bottom:18px;border:1px solid var(--line)}
+@media (max-width:520px){.card{padding:16px 14px}}
+h2,h3{line-height:1.3}
+
+/* start */
+.start h2{margin:0 0 4px;font-size:21px}
+.field{display:flex;flex-direction:column;gap:4px;margin:12px 0}
+.field label{font-weight:700;font-size:15px}
+.field input{font:inherit;padding:10px 12px;border:2px solid #e2d9cb;border-radius:12px;outline:none;background:#fffdf9}
+.field input:focus{border-color:var(--brand)}
+.btn{font:inherit;font-weight:800;border:none;border-radius:14px;padding:12px 22px;cursor:pointer;background:var(--brand);color:#fff;box-shadow:0 3px 0 #0d5e4c}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #0d5e4c}
+.btn.orange{background:var(--accent);box-shadow:0 3px 0 #c9661f}
+.btn.red{background:var(--bad);box-shadow:0 3px 0 #9e2a2e}
+.btn.ghost{background:#fff;color:var(--brand);border:2px solid var(--brand);box-shadow:none}
+.btn:disabled{opacity:.6;cursor:default}
+.err-msg{color:var(--bad);font-weight:700;font-size:14.5px;min-height:1em}
+.who{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:15.5px}
+.who b{color:var(--brand)}
+.linkbtn{background:none;border:none;color:var(--blue);font:inherit;font-size:14.5px;cursor:pointer;text-decoration:underline;padding:0}
+
+/* exercise head */
+.ex-head{display:flex;gap:12px;align-items:flex-start;margin-bottom:4px}
+.badge{background:var(--brand);color:#fff;font-weight:800;border-radius:10px;padding:3px 10px;font-size:16px;flex:none}
+.ex-head h2{font-size:19px;margin:2px 0 0}
+.how{color:var(--muted);font-size:14.5px;margin:4px 0 14px;background:#f6f3ee;border-radius:10px;padding:8px 12px}
+
+/* audio */
+.player{display:block;width:100%;max-width:360px;height:40px;margin:6px 0 2px}
+.listen{background:#eef3ff;border-radius:14px;padding:10px 12px;margin-bottom:14px}
+.listen .lt{font-weight:800;font-size:15px;color:var(--blue)}
+.listen .player{max-width:none}
+details.script{margin-top:14px;background:#f6f3ee;border-radius:12px;padding:8px 12px;font-size:15px}
+details.script summary{font-weight:800;cursor:pointer;color:var(--brand)}
+details.script p{margin:6px 0}
+
+/* bank & chips */
+.bank{display:flex;flex-wrap:wrap;gap:8px;padding:12px;border:2px dashed #e7c96b;border-radius:14px;background:#fffbea;min-height:60px;margin-bottom:12px;position:sticky;top:8px;z-index:5;box-shadow:0 4px 10px rgba(255,248,239,.9)}
+.bank .empty{color:var(--muted);font-size:14.5px;align-self:center}
+.chip{display:inline-flex;align-items:center;justify-content:center;gap:4px;background:var(--chip);border:2px solid var(--chip-b);border-radius:999px;padding:4px 14px;font-weight:700;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;font-size:16px;line-height:1.35;color:var(--ink);text-align:center;max-width:100%}
+.chip.sel{background:#ffd84d;box-shadow:0 0 0 3px rgba(242,183,5,.4)}
+.chip.dragging{opacity:.3}
+.locked .chip{cursor:default}
+
+ol.items{list-style:none;padding:0;margin:0}
+.item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f1ebe1}
+.item:last-child{border-bottom:none}
+.num{font-weight:800;color:var(--brand);min-width:20px;flex:none}
+.ibody{flex:1;min-width:0}
+
+.slot{display:inline}
+.drop{display:inline-flex;align-items:center;justify-content:center;min-width:110px;min-height:38px;border-bottom:2.5px solid #b9b2a6;background:#f5f1ea;border-radius:10px 10px 4px 4px;padding:2px 5px;vertical-align:middle;margin:2px;transition:background .15s,border-color .15s}
+.drop.hover{background:var(--brand-soft);border-color:var(--brand)}
+.pickmode .drop:not(.filled){outline:2px dashed var(--accent);outline-offset:2px}
+.drop.ok{background:var(--ok-bg);border-color:var(--ok)}
+.drop.bad{background:var(--bad-bg);border-color:var(--bad)}
+.drop.wait{background:var(--wait-bg);border-color:var(--wait)}
+.drop.ok .chip{border-color:var(--ok);background:#fff}
+.drop.bad .chip{border-color:var(--bad);background:#fff}
+.drop.wait .chip{border-color:var(--wait);background:#fff}
+
+/* Ex1 pictures */
+.pics{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:640px){.pics{grid-template-columns:repeat(2,1fr);gap:10px}}
+.pic{border:1px solid var(--line);border-radius:14px;padding:8px;background:#fffdf9}
+.pic .ph{position:relative}
+.pic img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;display:block}
+.pic .pn{position:absolute;left:6px;top:6px;background:var(--brand);color:#fff;font-weight:800;border-radius:8px;padding:0 8px;font-size:15px}
+.pic .slot{display:block}
+.pic .drop{display:flex;width:100%;min-width:0;margin:8px 0 0}
+.pic .fb{font-size:14px}
+
+/* Ex4 match */
+.match{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.match .who4{font-weight:800;min-width:64px}
+.match .slot{flex:1;min-width:220px;display:block}
+.match .drop{display:flex;width:100%;margin:0}
+
+/* Ex5 multiple choice */
+.mcq{font-weight:700}
+.opts{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.opt{display:flex;gap:10px;align-items:center;text-align:left;font:inherit;border:2px solid #e2d9cb;background:#fffdf9;border-radius:12px;padding:7px 12px;cursor:pointer;color:var(--ink)}
+.opt .l{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid #cfc7ba;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:13.5px;color:var(--muted)}
+.opt.on{border-color:var(--blue);background:#eef3ff}
+.opt.on .l{background:var(--blue);border-color:var(--blue);color:#fff}
+.opt.right{border-color:var(--ok);background:var(--ok-bg)}
+.opt.right .l{background:var(--ok);border-color:var(--ok);color:#fff}
+.opt.wrong{border-color:var(--bad);background:var(--bad-bg)}
+.opt.wrong .l{background:var(--bad);border-color:var(--bad);color:#fff}
+.opt:disabled{cursor:default;opacity:1}
+
+/* Ex7 word order */
+.wo-ans{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:46px;border-bottom:2.5px solid #b9b2a6;background:#f5f1ea;border-radius:10px 10px 4px 4px;padding:5px 8px}
+.wo-ans .ph{color:var(--muted);font-size:14.5px}
+.wo-ans .end{font-weight:800;font-size:20px}
+.wo-ans.ok{background:var(--ok-bg);border-color:var(--ok)}
+.wo-ans.bad{background:var(--bad-bg);border-color:var(--bad)}
+.wo-bank{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+.wo .chip{cursor:pointer;touch-action:manipulation}
+.wo-ans .chip{background:#fff;border-color:var(--blue);color:var(--blue)}
+.wo-reset{border:1.5px solid #cfc7ba;background:#fff;border-radius:999px;padding:3px 12px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;color:var(--muted)}
+
+/* Ex8 recorder */
+.prompt{background:#f6f3ee;border-radius:12px;padding:10px 14px;margin-bottom:12px}
+.prompt ul{margin:4px 0;padding-left:22px}
+.rec{border:2px dashed #b9cff9;border-radius:16px;padding:16px;text-align:center;background:#f8faff}
+.rec .tm{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink)}
+.rec .tm span{font-size:16px;color:var(--muted)}
+.rec .track{height:8px;background:#e3e9f7;border-radius:99px;overflow:hidden;margin:8px auto 12px;max-width:360px}
+.rec .track div{height:100%;background:var(--bad);width:0}
+.rec .dot{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--bad);margin-right:6px;animation:blink 1s infinite;vertical-align:middle}
+@keyframes blink{50%{opacity:.25}}
+.rec .player{margin:6px auto 10px}
+.rec .msg{color:var(--muted);font-size:14.5px;margin-top:8px}
+.rec .msg.err{color:var(--bad);font-weight:700}
+.rec .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+/* feedback */
+.fb{display:none;margin-top:8px;border-radius:12px;padding:10px 12px;font-size:15px;line-height:1.55}
+.fb.show{display:block}
+.fb.ok{background:var(--ok-bg);border-left:4px solid var(--ok)}
+.fb.bad{background:var(--bad-bg);border-left:4px solid var(--bad)}
+.fb.wait{background:var(--wait-bg);border-left:4px solid var(--wait)}
+.fb .h{font-weight:800}
+.fb.ok .h{color:var(--ok)} .fb.bad .h{color:var(--bad)} .fb.wait .h{color:var(--wait)}
+.fb s{opacity:.75}
+.fb ul{margin:6px 0 4px;padding-left:20px}
+.fb .why{margin-top:4px;color:#3b3f52}
+.note{background:#eef3ff;border-radius:12px;padding:10px 12px;font-size:15px;margin-top:10px}
+
+/* summary */
+.summary{display:flex;gap:18px;align-items:center;flex-wrap:wrap;border:2px solid var(--brand)}
+.score{font-size:46px;font-weight:800;color:var(--brand);line-height:1}
+.score span{font-size:24px;color:var(--muted)}
+.secs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.sec{background:#f4efe6;border-radius:999px;padding:2px 10px;font-weight:700;font-size:14px}
+.sec.full{background:var(--ok-bg);color:var(--ok)}
+.sec.wait{background:var(--wait-bg);color:var(--wait)}
+.status{font-weight:700;font-size:15px;margin-top:4px}
+.status.ok{color:var(--ok)} .status.err,.status.warn{color:var(--bad)} .status.sending{color:var(--muted)}
+
+/* bottom bar */
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));z-index:40;backdrop-filter:blur(6px)}
+.bar-in{max-width:880px;margin:0 auto;display:flex;align-items:center;gap:14px}
+.prog{flex:1;min-width:0}
+.prog .t{font-size:14px;font-weight:700;color:var(--muted)}
+.prog .track{height:10px;background:#eee6d8;border-radius:99px;overflow:hidden;margin-top:3px}
+.prog .fill{height:100%;background:linear-gradient(90deg,#2bb39a,#14866d);width:0;transition:width .3s}
+
+#ghost{position:fixed;left:0;top:0;pointer-events:none;z-index:100;display:none;transform:translate(-50%,-70%) scale(1.08);box-shadow:0 8px 18px rgba(0,0,0,.2)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header class="hero">
+  <h1>Unit 1 · Daily routines</h1>
+  <p>MS-Foundation-LS · Bài tập về nhà Exercise 1 – 8 · nghe, ghép tranh, xếp câu, ghi âm</p>
+</header>
+
+<main>
+  <!-- Màn hình nhập tên -->
+  <section class="card start" id="start">
+    <h2>👋 Chào em!</h2>
+    <p style="margin:0;color:var(--muted)">Điền tên và lớp rồi bắt đầu nha. Bài làm tự lưu, xong bấm <b>Nộp bài</b> là cô nhận được (kể cả bài ghi âm). Nhớ đeo tai nghe hoặc bật loa để nghe bài nhé 🎧</p>
+    <div class="field"><label for="inName">Họ và tên</label><input id="inName" autocomplete="name" placeholder="VD: Nguyễn Minh Anh"></div>
+    <div class="field"><label for="inCls">Lớp</label><input id="inCls" placeholder="VD: 7A"></div>
+    <div class="err-msg" id="startErr"></div>
+    <button class="btn" id="startBtn" type="button">Bắt đầu làm bài →</button>
+  </section>
+
+  <div id="work" hidden>
+    <div id="summaryBox"></div>
+    <div class="card who" id="whoBar"></div>
+
+    <!-- Ex 1 -->
+    <section class="card ex" id="ex1">
+      <div class="ex-head"><span class="badge">Ex 1</span><h2>Match the activities with the pictures. Use the phrases in the box.</h2></div>
+      <p class="how">👉 Kéo cụm từ vào ô dưới mỗi tranh. Hoặc chạm vào cụm từ, rồi chạm vào ô. Đặt nhầm thì chạm vào cụm từ đó để gỡ ra.</p>
+      <div class="bank" id="bank1"></div>
+      <div class="pics" id="list1"></div>
+    </section>
+
+    <!-- Ex 2 -->
+    <section class="card ex" id="ex2">
+      <div class="ex-head"><span class="badge">Ex 2</span><h2>Listen to five people talking about doing activities. Complete the sentences with the words in the box.</h2></div>
+      <p class="how">👉 Bấm ▶ nghe từng câu (nghe lại bao nhiêu lần cũng được), rồi kéo từ vào chỗ trống.</p>
+      <div class="bank" id="bank2"></div>
+      <ol class="items" id="list2"></ol>
+    </section>
+
+    <!-- Ex 3 -->
+    <section class="card ex" id="ex3">
+      <div class="ex-head"><span class="badge">Ex 3</span><h2>Listen to five people talking about things they do every day. Complete the sentences with the verbs in the box.</h2></div>
+      <p class="how">👉 Bấm ▶ nghe từng câu, rồi kéo động từ vào chỗ trống.</p>
+      <div class="bank" id="bank3"></div>
+      <ol class="items" id="list3"></ol>
+    </section>
+
+    <!-- Ex 4 -->
+    <section class="card ex" id="ex4">
+      <div class="ex-head"><span class="badge">Ex 4</span><h2>Listen to Sanjay talking to a friend, Tom, about his flatmates’ daily routines. Match each person to the activity.</h2></div>
+      <div class="listen"><div class="lt">🎧 Sanjay &amp; Tom</div><audio class="player" controls preload="none" src="audio/ex4.mp3"></audio></div>
+      <p class="how">👉 Nghe đoạn hội thoại, rồi kéo hoạt động vào đúng người.</p>
+      <div class="bank" id="bank4"></div>
+      <ol class="items" id="list4"></ol>
+      <details class="script" id="script4" hidden><summary>📜 Lời thoại (transcript)</summary><div id="scriptBody4"></div></details>
+    </section>
+
+    <!-- Ex 5 -->
+    <section class="card ex" id="ex5">
+      <div class="ex-head"><span class="badge">Ex 5</span><h2>Listen to Mary talking about what her family does every day. Choose the correct answers.</h2></div>
+      <div class="listen"><div class="lt">🎧 Mary’s family</div><audio class="player" controls preload="none" src="audio/ex5.mp3"></audio></div>
+      <p class="how">👉 Nghe Mary kể, rồi chọn 1 đáp án đúng cho mỗi câu.</p>
+      <ol class="items" id="list5"></ol>
+      <details class="script" id="script5" hidden><summary>📜 Lời thoại (transcript)</summary><div id="scriptBody5"></div></details>
+    </section>
+
+    <!-- Ex 7 -->
+    <section class="card ex" id="ex7">
+      <div class="ex-head"><span class="badge">Ex 7</span><h2>Put the words in the correct order to complete the sentences.</h2></div>
+      <p class="how">👉 Chạm lần lượt vào các từ theo đúng thứ tự để xếp thành câu. Chạm vào từ đã xếp để bỏ ra, bấm <b>↺</b> để xếp lại từ đầu.</p>
+      <ol class="items wo" id="list7"></ol>
+    </section>
+
+    <!-- Ex 8 -->
+    <section class="card ex" id="ex8">
+      <div class="ex-head"><span class="badge">Ex 8</span><h2>Describe what people in your family do every day.</h2></div>
+      <div class="prompt">
+        Look at the ideas below. Spend a few minutes thinking about what to say. Record your answer. Play to hear your answer.
+        <div style="margin-top:6px"><b>Talk about:</b></div>
+        <ul><li>what they do</li><li>who they do it with</li><li>where they do it</li><li>how often they do it.</li></ul>
+        <div style="font-size:14.5px;color:var(--muted)">💡 Gợi ý: <i>My mum usually gets up at six o’clock. She often goes to the market with my grandma…</i></div>
+      </div>
+      <p class="how">👉 Nghĩ trước 1–2 phút, rồi bấm <b>🎙 Bắt đầu ghi âm</b>. Ghi tối đa 3 phút. Ghi xong em nghe lại được, chưa ưng thì thu lại. Bản ghi cuối cùng sẽ được gửi cho cô khi em nộp bài.</p>
+      <div class="rec" id="rec"></div>
+    </section>
+  </div>
+</main>
+
+<div class="bar" id="bar" hidden>
+  <div class="bar-in">
+    <div class="prog"><div class="t" id="progT">Đã làm 0/0 câu</div><div class="track"><div class="fill" id="progF"></div></div></div>
+    <button class="btn orange" id="submitBtn" type="button">Nộp bài ✔</button>
+  </div>
+</div>
+
+<div id="ghost" class="chip"></div>
+
+<script>
+/* ============ CẤU HÌNH ============ */
+// Dán URL Web App của Google Apps Script vào đây (xem HUONG-DAN-CAI-DAT.md)
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyAom9bBpL0ms0VD7_bz5w691011llkFzttYSjKDyRyMCjLLeUZ4EZGGJLtLMFWuiV4sA/exec';
+const STORE_KEY = 'btvn-unit01-ms-foundation-ls-v1';
+const UNIT = 'Unit 1';
+const TITLE = 'MS-Foundation-LS – Unit 1 (Ex 1–8)';
+const REC_MAX = 180; // giây ghi âm tối đa
+
+// ĐÁP ÁN EXERCISE 2: điền 1 trong các từ always / never / often / sometimes / usually cho câu 1 → 5.
+// Câu nào để trống '' thì trang hiện "cô chấm sau" và không tính điểm câu đó.
+const EX2_KEY = ['never', 'often', 'sometimes', 'usually', 'always'];
+
+/* ============ TIỆN ÍCH ============ */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const plain = t => t.replace(/<[^>]+>/g, '').replace(/___/g, '_____');
+const clock = s => { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const normWords = s => String(s || '').toLowerCase().replace(/[’‘`´]/g, "'").replace(/[?.!,]/g, ' ').replace(/\s+/g, ' ').trim();
+
+/* ============ DỮ LIỆU BÀI TẬP ============ */
+const EX1 = {
+  bank: ['drive to work', 'go to the gym', 'have dinner', 'play chess', 'read in bed', 'use a computer'],
+  mean: {'drive to work':'lái xe đi làm', 'go to the gym':'đi tập gym', 'have dinner':'ăn tối', 'play chess':'chơi cờ vua', 'read in bed':'đọc sách trên giường', 'use a computer':'dùng máy tính'},
+  items: [
+    {id:'1', img:'img/ex1-1.jpg', a:'go to the gym', alt:'Người đàn ông tập thể dục với ghế và tạ', tip:'Anh ấy đang tập với ghế và tạ ở phòng tập: <b>go to the gym</b>.'},
+    {id:'2', img:'img/ex1-2.jpg', a:'play chess', alt:'Chàng trai ngồi suy nghĩ trước bàn cờ', tip:'Anh ấy ngồi trước bàn cờ: <b>play chess</b>.'},
+    {id:'3', img:'img/ex1-3.jpg', a:'read in bed', alt:'Người đàn ông nằm trên giường đọc sách', tip:'Anh ấy nằm trên giường đọc sách: <b>read in bed</b>.'},
+    {id:'4', img:'img/ex1-4.jpg', a:'use a computer', alt:'Chàng trai ngồi gõ máy tính xách tay', tip:'Anh ấy đang gõ laptop: <b>use a computer</b>.'},
+    {id:'5', img:'img/ex1-5.jpg', a:'drive to work', alt:'Cô gái mặc áo sơ mi đang lái ô tô', tip:'Cô ấy mặc đồ công sở và đang lái xe: <b>drive to work</b>.'},
+    {id:'6', img:'img/ex1-6.jpg', a:'have dinner', alt:'Gia đình ngồi ăn cơm quanh bàn', tip:'Cả nhà ngồi quanh bàn ăn: <b>have dinner</b>.'},
+  ]
+};
+
+const EX2 = {
+  bank: ['always', 'never', 'often', 'sometimes', 'usually'],
+  mean: {always:'luôn luôn (100%)', usually:'thường xuyên (khoảng 80%)', often:'hay, thường (khoảng 60%)', sometimes:'thỉnh thoảng (khoảng 30%)', never:'không bao giờ (0%)'},
+  items: [
+    {id:'1', t:'She ___ uses computers.', audio:'audio/ex2-1.mp3'},
+    {id:'2', t:'I ___ play chess.', audio:'audio/ex2-2.mp3'},
+    {id:'3', t:'I ___ go to the gym.', audio:'audio/ex2-3.mp3'},
+    {id:'4', t:'She ___ drives to work.', audio:'audio/ex2-4.mp3'},
+    {id:'5', t:'He ___ reads in bed.', audio:'audio/ex2-5.mp3'},
+  ].map((it, i) => ({...it, a:(EX2_KEY[i] || '').trim().toLowerCase()}))
+};
+
+const EX3 = {
+  bank: ['drives', 'makes', 'moves', 'play', 'reads'],
+  mean: {drives:'lái xe, chở', makes:'làm, nấu', moves:'chuyển, di chuyển', play:'chơi', reads:'đọc'},
+  items: [
+    {id:'1', t:'Every morning he ___ his children to school.', audio:'audio/ex3-1.mp3', a:'drives', tip:'Every morning he <b>drives</b> his children to school. (<i>drive … to school</i> = chở … đến trường)'},
+    {id:'2', t:'When she’s at the office she ___ her emails immediately.', audio:'audio/ex3-2.mp3', a:'reads', tip:'She <b>reads</b> her emails immediately. (<i>read emails</i> = đọc email)'},
+    {id:'3', t:'Every day she ___ computers from the storeroom to the shop.', audio:'audio/ex3-3.mp3', a:'moves', tip:'She <b>moves</b> computers from the storeroom to the shop. (<i>move</i> = chuyển đồ từ kho ra cửa hàng)'},
+    {id:'4', t:'Most evenings she ___ dinner.', audio:'audio/ex3-4.mp3', a:'makes', tip:'Most evenings she <b>makes</b> dinner. (<i>make dinner</i> = nấu bữa tối)'},
+    {id:'5', t:'Every lunchtime they ___ basketball.', audio:'audio/ex3-5.mp3', a:'play', tip:'Every lunchtime they <b>play</b> basketball. “They” là số nhiều nên <b>play</b> không thêm s.'},
+  ]
+};
+
+const EX4 = {
+  bank: ['studies in the afternoon', 'works part time in the evenings', 'teaches French classes in the morning', 'gets up early', 'cooks every evening'],
+  items: [
+    {id:'1', who:'Marc', a:'works part time in the evenings', tip:'“Marc has a <b>part time job in a restaurant</b>, so he’s not there <b>in the evenings</b>.”'},
+    {id:'2', who:'Blas', a:'cooks every evening', tip:'“Blas <b>cooks dinner every day</b>, so he’s always in the kitchen.”'},
+    {id:'3', who:'Luke', a:'gets up early', tip:'“Luke leaves the house very early, so he <b>gets up before everyone else</b>.”'},
+    {id:'4', who:'John', a:'studies in the afternoon', tip:'“He doesn’t get up early because he <b>studies in the afternoon</b>.”'},
+    {id:'5', who:'Sam', a:'teaches French classes in the morning', tip:'“That’s Sam, he <b>teaches French in the morning</b>.”'},
+  ],
+  script: [
+    ['Tom', 'How many people live in your house, Sanjay?'],
+    ['Sanjay', 'Six. Me and five friends from college.'],
+    ['Tom', 'Wow! That’s a lot! Is it difficult?'],
+    ['Sanjay', 'Not really, because it’s a big house and we all have different daily routines.'],
+    ['Tom', 'OK.'],
+    ['Sanjay', 'For example, I’m the only one who has lunch at home, so at that time of day, I have the house to myself. It’s quiet so I usually use the computer and check my emails, or sometimes I watch TV.'],
+    ['Tom', 'I see.'],
+    ['Sanjay', 'Marc has a part time job in a restaurant, so he’s not there in the evenings. I only really see him in the mornings. And Blas cooks dinner every day, so he’s always in the kitchen.'],
+    ['Tom', 'That’s nice for you!'],
+    ['Sanjay', 'Yes, he’s a great cook. But he doesn’t usually do the washing up afterwards! Luke leaves the house very early, so he gets up before everyone else, to catch the bus.'],
+    ['Tom', 'So, I suppose he goes to bed early as well.'],
+    ['Sanjay', 'No, he doesn’t. In fact, Luke goes to bed very late so he doesn’t sleep very much. John is the same, he stays up late and plays chess with Luke, but he doesn’t get up early because he studies in the afternoon.'],
+    ['Tom', 'Oh? I thought you told me he teaches in the morning.'],
+    ['Sanjay', 'No that’s Sam, he teaches French in the morning; I’m not sure what he does in the afternoon …'],
+  ]
+};
+
+const EX5 = {
+  items: [
+    {id:'1', q:'Mary gets up at …', opts:['7 o’clock.', '7:15.', '7:30.'], a:2,
+     why:'“Jack brings me a cup of tea at about 7:15 and then <b>I get up at 7:30</b>.” Bẫy: 7 giờ là lúc Mary <i>thức giấc</i> (wake up), chưa ra khỏi giường (get up).'},
+    {id:'2', q:'Julia is usually late for college because she always …', opts:['does the washing up after breakfast.', 'gets up late.', 'watches TV after breakfast.'], a:2,
+     why:'“Julia is often late because <b>she always watches TV after breakfast</b>.” Người rửa bát là Simon.'},
+    {id:'3', q:'Mary’s office is …', opts:['at home.', 'in a bank.', 'in the city centre.'], a:0,
+     why:'“I have an office <b>here in the house</b>.” Người làm ở ngân hàng trong trung tâm thành phố là Jack, chồng Mary.'},
+    {id:'4', q:'On his way home from work, Mary’s husband, Jack, often …', opts:['goes shopping.', 'goes to the gym.', 'plays chess.'], a:0,
+     why:'“My husband <b>often goes shopping</b> on the way home.” Đi gym là Simon, chơi cờ là Julia.'},
+    {id:'5', q:'Jack goes to watch Simon play …', opts:['basketball.', 'football.', 'tennis.'], a:0,
+     why:'“Sometimes Jack goes to watch Simon play <b>basketball</b> at the sports centre.”'},
+    {id:'6', q:'Before going to bed Julia usually …', opts:['takes out the bins.', 'uses her computer.', 'watches TV.'], a:1,
+     why:'“Julia chats with her friends online <b>on her laptop</b>.” Laptop là máy tính. Người đổ rác là Simon, còn xem TV là Jack, Mary và Simon.'},
+  ],
+  script: [
+    'I wake up at 7 o’clock. My husband, Jack, wakes up at the same time. He gets up immediately but I stay in bed. Jack brings me a cup of tea at about 7:15 and then I get up at 7:30. We have a son, Simon, and a daughter, Julia. They get up at about 8 o’clock. Julia has a shower first, then Simon. We usually have breakfast together and then Simon and Julia leave for college. Julia is often late because she always watches TV after breakfast, but Simon always catches the bus on time, even though he always does the washing-up before he leaves the house.',
+    'I’m a designer and I don’t need to travel to work because I have an office here in the house. Jack works in a bank. It’s in the city centre so he drives to work, but if the weather’s nice, he sometimes walks. He has lunch with colleagues. I have lunch at home; I make something simple because we usually have a big meal in the evening for dinner. And of course, Simon and Julia have lunch at college.',
+    'After college, Simon usually goes to the gym and Julia sometimes plays chess with a friend. My husband often goes shopping on the way home and buys something for dinner, and I usually clean the house and then I often read the newspaper, or sometimes, if I have time, I phone a friend for a chat.',
+    'We prepare dinner together. Jack’s an excellent cook. Simon and Julia like cooking too. I don’t like it as much, but I’m quite good. Sometimes Jack goes to watch Simon play basketball at the sports centre. But Simon usually takes the bins out and Julia usually does the washing up. Later, before we go to bed, Jack and I watch TV for a while, usually with Simon, and Julia chats with her friends online on her laptop. We all go to bed at about 11 o’clock but I don’t go to sleep immediately. I always read for at least half an hour before I turn off the light!',
+  ]
+};
+
+const BE = 'Trạng từ tần suất (always, usually, often, sometimes, never) đứng <b>sau động từ “be”</b>';
+const VB = 'Trạng từ tần suất đứng <b>trước động từ thường</b>';
+const EX7 = {
+  items: [
+    {id:'1', words:['for', 'often', 'late', 'college', 'I’m'], end:'.', show:'I’m often late for college.',
+     ans:['i\'m often late for college'], why:`${BE}: I’m <b>often</b> late for college.`},
+    {id:'2', words:['go', 'sometimes', 'do', 'the', 'you', 'gym', 'to'], end:'?', show:'Do you sometimes go to the gym?',
+     ans:['do you sometimes go to the gym'], why:'Câu hỏi: <b>Do + you + sometimes + go</b> …? Trạng từ vẫn đứng trước động từ chính.'},
+    {id:'3', words:['work', 'usually', 'drives', 'he', 'to'], end:'.', show:'He usually drives to work.',
+     ans:['he usually drives to work'], why:`${VB}: He <b>usually</b> drives to work.`},
+    {id:'4', words:['he', 'early', 'always', 'tries', 'to', 'arrive'], end:'.', show:'He always tries to arrive early.',
+     ans:['he always tries to arrive early'], why:`${VB}: He <b>always</b> tries to arrive early.`},
+    {id:'5', words:['in', 'evenings', 'watches', 'TV', 'she', 'the', 'never'], end:'.', show:'She never watches TV in the evenings.',
+     ans:['she never watches tv in the evenings', 'in the evenings she never watches tv'], why:`${VB}: She <b>never</b> watches TV in the evenings.`},
+    {id:'6', words:['always', 'prepare', 'together', 'dinner', 'we'], end:'.', show:'We always prepare dinner together.',
+     ans:['we always prepare dinner together'], why:`${VB}: We <b>always</b> prepare dinner together.`},
+    {id:'7', words:['I', 'the', 'never', 'in', 'study', 'library'], end:'.', show:'I never study in the library.',
+     ans:['i never study in the library'], why:`${VB}: I <b>never</b> study in the library.`},
+    {id:'8', words:['catch', 'bus', 'they', 'sometimes', 'the', 'home'], end:'.', show:'They sometimes catch the bus home.',
+     ans:['they sometimes catch the bus home', 'sometimes they catch the bus home'], why:`${VB}: They <b>sometimes</b> catch the bus home. (Riêng “sometimes” cũng có thể đứng đầu câu.)`},
+    {id:'9', words:['always', 'in', 'teaches', 'morning', 'the', 'he'], end:'.', show:'He always teaches in the morning.',
+     ans:['he always teaches in the morning'], why:`${VB}: He <b>always</b> teaches in the morning.`},
+  ]
+};
+
+const SECTIONS = [
+  {id:'1', title:'Ex 1 Activities – pictures'},
+  {id:'2', title:'Ex 2 Listening – how often'},
+  {id:'3', title:'Ex 3 Listening – verbs'},
+  {id:'4', title:'Ex 4 Listening – flatmates'},
+  {id:'5', title:'Ex 5 Listening – Mary’s family'},
+  {id:'7', title:'Ex 7 Word order'},
+];
+const CFG = {1:EX1, 2:EX2, 3:EX3, 4:EX4};
+const DRAG = [1, 2, 3, 4];
+
+/* ============ TRẠNG THÁI ============ */
+const blankState = () => ({name:'', cls:'', d:{1:{}, 2:{}, 3:{}, 4:{}}, mc:{}, wo:{}, rec:null,
+  submitted:false, sent:false, submittedAt:null, startedAt:null, leaves:0});
+let S = (() => {
+  try {
+    const o = Object.assign(blankState(), JSON.parse(localStorage.getItem(STORE_KEY)) || {});
+    DRAG.forEach(ex => { o.d[ex] = o.d[ex] || {}; });
+    return o;
+  } catch (e) { return blankState(); }
+})();
+function save(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch (e) {} }
+let RES = null;  // kết quả chấm (sau khi nộp)
+let sel = null;  // chip đang được chọn (chế độ chạm)
+
+/* ============ DỰNG GIAO DIỆN ============ */
+function sentence(t, slotHtml){ const [a, b] = t.split('___'); return `${esc(a)}${slotHtml}${esc(b ?? '')}`; }
+const slotHtml = (ex, id) => `<span class="slot" id="slot-${ex}-${id}"></span>`;
+const player = src => `<audio class="player" controls preload="none" src="${src}"></audio>`;
+
+function build(){
+  // Ex 1
+  $('#list1').innerHTML = EX1.items.map(it => `<div class="pic"><div class="ph"><img src="${it.img}" alt="${esc(it.alt)}" loading="lazy"><span class="pn">${it.id}</span></div>${slotHtml(1, it.id)}<div class="fb" id="fb-1-${it.id}"></div></div>`).join('');
+  // Ex 2, 3
+  [2, 3].forEach(ex => {
+    $('#list' + ex).innerHTML = CFG[ex].items.map(it => `<li class="item"><span class="num">${it.id}</span><div class="ibody">${sentence(it.t, slotHtml(ex, it.id))}${player(it.audio)}<div class="fb" id="fb-${ex}-${it.id}"></div></div></li>`).join('');
+  });
+  // Ex 4
+  $('#list4').innerHTML = EX4.items.map(it => `<li class="item"><span class="num">${it.id}</span><div class="ibody"><div class="match"><span class="who4">${it.who}</span>${slotHtml(4, it.id)}</div><div class="fb" id="fb-4-${it.id}"></div></div></li>`).join('');
+  $('#scriptBody4').innerHTML = EX4.script.map(([w, t]) => `<p><b>${w}:</b> ${esc(t)}</p>`).join('');
+  // Ex 5
+  $('#list5').innerHTML = EX5.items.map(it => `<li class="item"><span class="num">${it.id}</span><div class="ibody"><div class="mcq">${esc(it.q)}</div><div class="opts" data-id="${it.id}">${it.opts.map((o, i) => `<button type="button" class="opt" data-i="${i}"><span class="l">${'ABC'[i]}</span><span>${esc(o)}</span></button>`).join('')}</div><div class="fb" id="fb-5-${it.id}"></div></div></li>`).join('');
+  $('#scriptBody5').innerHTML = EX5.script.map(t => `<p>${esc(t)}</p>`).join('');
+  $('#list5').addEventListener('click', e => {
+    const b = e.target.closest('.opt'); if (!b || S.submitted) return;
+    const id = b.parentElement.dataset.id;
+    S.mc[id] = S.mc[id] === +b.dataset.i ? undefined : +b.dataset.i;
+    if (S.mc[id] === undefined) delete S.mc[id];
+    save(); renderMC(); progress();
+  });
+  // Ex 7
+  $('#list7').innerHTML = EX7.items.map(it => `<li class="item"><span class="num">${it.id}</span><div class="ibody" id="wo-${it.id}"></div></li>`).join('');
+  $('#list7').addEventListener('click', e => {
+    if (S.submitted) return;
+    const host = e.target.closest('.ibody'); if (!host) return;
+    const id = host.id.slice(3), cur = S.wo[id] = S.wo[id] || [];
+    const c = e.target.closest('.chip');
+    if (e.target.closest('.wo-reset')) S.wo[id] = [];
+    else if (c && c.closest('.wo-bank')) cur.push(+c.dataset.i);
+    else if (c && c.closest('.wo-ans')) cur.splice(cur.indexOf(+c.dataset.i), 1);
+    else return;
+    save(); renderWO(id); progress();
+  });
+
+  DRAG.forEach(renderDrag);
+  renderMC();
+  EX7.items.forEach(it => renderWO(it.id));
+  // chỉ phát 1 file âm thanh một lúc
+  document.addEventListener('play', e => document.querySelectorAll('audio').forEach(a => { if (a !== e.target) a.pause(); }), true);
+}
+
+function renderMC(){
+  document.querySelectorAll('#list5 .opts').forEach(box => {
+    const id = box.dataset.id, it = EX5.items.find(x => x.id === id), pick = S.mc[id];
+    box.querySelectorAll('.opt').forEach(b => {
+      const i = +b.dataset.i;
+      b.className = 'opt' + (S.submitted ? (i === it.a ? ' right' : i === pick ? ' wrong' : '') : (i === pick ? ' on' : ''));
+      b.disabled = S.submitted;
+    });
+  });
+}
+
+function renderWO(id){
+  const it = EX7.items.find(x => x.id === id), picked = S.wo[id] || [];
+  const r = RES && RES.map['7-' + id];
+  const chip = i => `<span class="chip" data-i="${i}">${esc(it.words[i])}</span>`;
+  const rest = it.words.map((_, i) => i).filter(i => !picked.includes(i));
+  $('#wo-' + id).innerHTML =
+    `<div class="wo-ans${r ? (r.ok ? ' ok' : ' bad') : ''}">${picked.length ? picked.map(chip).join('') : '<span class="ph">Chạm vào từ bên dưới để xếp câu…</span>'}<span class="end">${it.end}</span></div>` +
+    (S.submitted ? '' : `<div class="wo-bank">${rest.map(chip).join('')}${picked.length ? '<button type="button" class="wo-reset" aria-label="Xếp lại từ đầu">↺ xếp lại</button>' : ''}</div>`) +
+    `<div class="fb" id="fb-7-${id}"></div>`;
+  if (r) paintFb('fb-7-' + id, [r]);
+}
+
+function renderDrag(ex){
+  const cfg = CFG[ex], D = S.d[ex], used = new Set(Object.values(D));
+  const free = cfg.bank.filter(w => !used.has(w));
+  const bank = $('#bank' + ex);
+  bank.hidden = S.submitted;
+  bank.innerHTML = free.length
+    ? free.map(w => `<span class="chip${sel && sel.ex === ex && sel.w === w ? ' sel' : ''}" data-w="${esc(w)}">${esc(w)}</span>`).join('')
+    : `<span class="empty">Hết từ rồi 👍</span>`;
+  bank.querySelectorAll('.chip').forEach(c => bindChip(c, ex, c.dataset.w, null));
+  $('#ex' + ex).classList.toggle('pickmode', !!(sel && sel.ex === ex));
+  $('#ex' + ex).classList.toggle('locked', S.submitted);
+  cfg.items.forEach(it => renderSlot(ex, it.id));
+}
+
+function renderSlot(ex, id){
+  const host = $(`#slot-${ex}-${id}`);
+  const w = S.d[ex][id];
+  const r = RES && RES.map[`${ex}-${id}`];
+  const st = r ? (r.ok == null ? ' wait' : r.ok ? ' ok' : ' bad') : '';
+  const chip = w ? `<span class="chip in" data-w="${esc(w)}">${esc(w)}</span>` : '';
+  host.innerHTML = `<span class="drop${w ? ' filled' : ''}${st}" data-ex="${ex}" data-id="${id}">${chip}</span>`;
+  host.querySelectorAll('.chip').forEach(c => bindChip(c, ex, c.dataset.w, id));
+  host.querySelector('.drop').addEventListener('click', () => {
+    if (!S.submitted && sel && sel.ex === ex && !S.d[ex][id]) place(ex, id, sel.w, null);
+  });
+}
+
+function place(ex, id, w, from){
+  const D = S.d[ex];
+  if (from === id){ renderDrag(ex); return; }
+  const prev = D[id];
+  D[id] = w;
+  if (from != null){ if (prev) D[from] = prev; else delete D[from]; }
+  sel = null; save(); renderDrag(ex); progress();
+}
+function removeFrom(ex, id){ delete S.d[ex][id]; save(); renderDrag(ex); progress(); }
+
+/* ============ KÉO THẢ (Pointer Events – chạy cả điện thoại) ============ */
+let drag = null, hoverEl = null, scrollV = 0, rafId = 0;
+const ghost = $('#ghost');
+function bindChip(el, ex, w, from){
+  el.addEventListener('pointerdown', e => {
+    if (S.submitted || (e.button !== undefined && e.button !== 0)) return;
+    e.preventDefault();
+    drag = {ex, w, from, el, x0:e.clientX, y0:e.clientY, moved:false};
+    try { el.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+}
+function dropTarget(x, y, ex){
+  const el = document.elementFromPoint(x, y);
+  const d = el && el.closest('.drop');
+  return d && +d.dataset.ex === ex ? d : null;
+}
+function autoScroll(){
+  if (!drag || !drag.moved || !scrollV){ rafId = 0; return; }
+  window.scrollBy(0, scrollV);
+  rafId = requestAnimationFrame(autoScroll);
+}
+document.addEventListener('pointermove', e => {
+  if (!drag) return;
+  if (!drag.moved && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 6){
+    drag.moved = true; sel = null;
+    ghost.textContent = drag.el.textContent.trim();
+    ghost.style.display = 'inline-flex';
+    drag.el.classList.add('dragging');
+    $('#ex' + drag.ex).classList.remove('pickmode');
+  }
+  if (!drag.moved) return;
+  ghost.style.left = e.clientX + 'px'; ghost.style.top = e.clientY + 'px';
+  const t = dropTarget(e.clientX, e.clientY, drag.ex);
+  if (t !== hoverEl){ hoverEl && hoverEl.classList.remove('hover'); hoverEl = t; t && t.classList.add('hover'); }
+  const H = window.innerHeight;
+  scrollV = e.clientY < 70 ? -10 : e.clientY > H - 110 ? 10 : 0;
+  if (scrollV && !rafId) rafId = requestAnimationFrame(autoScroll);
+});
+function endDrag(e, cancel){
+  if (!drag) return;
+  const d = drag; drag = null; scrollV = 0;
+  ghost.style.display = 'none'; d.el.classList.remove('dragging');
+  hoverEl && hoverEl.classList.remove('hover'); hoverEl = null;
+  if (cancel) return;
+  if (!d.moved){ onTap(d); return; }
+  const t = dropTarget(e.clientX, e.clientY, d.ex);
+  if (t) place(d.ex, t.dataset.id, d.w, d.from);
+  else if (d.from != null) removeFrom(d.ex, d.from);
+}
+document.addEventListener('pointerup', e => endDrag(e, false));
+document.addEventListener('pointercancel', e => endDrag(e, true));
+function onTap(d){
+  if (d.from == null){                       // chạm chip trong ngân hàng → chọn / bỏ chọn
+    sel = sel && sel.ex === d.ex && sel.w === d.w ? null : {ex:d.ex, w:d.w};
+    DRAG.forEach(renderDrag);
+  } else if (sel && sel.ex === d.ex){         // đang chọn chip khác → thay vào ô này
+    place(d.ex, d.from, sel.w, null);
+  } else {                                     // chạm chip trong ô → trả về ngân hàng
+    removeFrom(d.ex, d.from);
+  }
+}
+
+/* ============ GHI ÂM (Ex 8) ============ */
+const REC_KEY = STORE_KEY + '-rec';
+const IDB = {
+  open(){
+    return new Promise((res, rej) => {
+      try {
+        const r = indexedDB.open('btvn-recordings', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('rec');
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+      } catch (e) { rej(e); }
+    });
+  },
+  async run(mode, fn){
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('rec', mode), st = tx.objectStore('rec');
+      const req = fn(st);
+      tx.oncomplete = () => res(req && req.result);
+      tx.onerror = () => rej(tx.error);
+    });
+  },
+  put(k, v){ return this.run('readwrite', st => st.put(v, k)); },
+  get(k){ return this.run('readonly', st => st.get(k)); },
+};
+
+let recBlob = null, recUrl = '', recMsg = '', recErr = false, recSaved = true;
+let mr = null, recStream = null, recChunks = [], recT0 = 0, recTimer = 0;
+
+function pickMime(){
+  const c = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus', 'audio/ogg'];
+  if (!window.MediaRecorder || !MediaRecorder.isTypeSupported) return '';
+  return c.find(m => MediaRecorder.isTypeSupported(m)) || '';
+}
+const extOf = t => /mp4|aac|m4a/.test(t) ? 'm4a' : /ogg/.test(t) ? 'ogg' : /wav/.test(t) ? 'wav' : 'webm';
+
+function setRecMsg(m, err){ recMsg = m; recErr = !!err; renderRec(); }
+
+async function startRec(){
+  if (S.submitted || mr) return;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder){
+    setRecMsg('Trình duyệt này chưa ghi âm được. Em mở trang bằng Chrome (Android, máy tính) hoặc Safari (iPhone, iPad) nhé.', true); return;
+  }
+  muteAway = true;
+  if (S.rec){
+    const ok = confirm('Thu lại sẽ xóa bản ghi cũ. Em chắc chưa?');
+    if (!ok){ releaseAway(); return; }
+  }
+  try {
+    recStream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true, noiseSuppression:true}});
+  } catch (e){
+    releaseAway();
+    const denied = e && (e.name === 'NotAllowedError' || e.name === 'SecurityError');
+    setRecMsg(denied
+      ? 'Em chưa cho phép dùng micro. Bấm vào biểu tượng 🔒 cạnh địa chỉ trang, chọn Cho phép micro (Allow microphone), rồi thử lại nhé.'
+      : 'Không tìm thấy micro. Em kiểm tra tai nghe/micro rồi thử lại nhé.', true);
+    return;
+  }
+  releaseAway();
+  const mime = pickMime();
+  try { mr = new MediaRecorder(recStream, Object.assign({audioBitsPerSecond:48000}, mime ? {mimeType:mime} : {})); }
+  catch (e){ mr = new MediaRecorder(recStream); }
+  recChunks = [];
+  mr.ondataavailable = e => { if (e.data && e.data.size) recChunks.push(e.data); };
+  mr.onstop = onRecStop;
+  mr.start(1000);
+  recT0 = Date.now();
+  recTimer = setInterval(recTick, 250);
+  recMsg = ''; recErr = false;
+  renderRec();
+}
+function releaseAway(){ setTimeout(() => { muteAway = false; away = false; }, 800); }
+function stopRec(){ if (mr && mr.state !== 'inactive') mr.stop(); }
+function recTick(){
+  const s = (Date.now() - recT0) / 1000;
+  const tm = $('#recTm'), tr = $('#recTrack');
+  if (tm) tm.innerHTML = `${clock(s)} <span>/ ${clock(REC_MAX)}</span>`;
+  if (tr) tr.style.width = Math.min(100, s / REC_MAX * 100) + '%';
+  if (s >= REC_MAX) stopRec();
+}
+async function onRecStop(){
+  clearInterval(recTimer);
+  try { recStream.getTracks().forEach(t => t.stop()); } catch (_) {}
+  const type = (mr && mr.mimeType) || (recChunks[0] && recChunks[0].type) || 'audio/webm';
+  const dur = Math.min(REC_MAX, (Date.now() - recT0) / 1000);
+  mr = null; recStream = null;
+  const blob = new Blob(recChunks, {type});
+  recChunks = [];
+  if (blob.size < 500 || dur < 1){ setRecMsg('Bản ghi quá ngắn, em thu lại nhé.', true); return; }
+  setBlob(blob);
+  S.rec = {dur:Math.round(dur), mime:type, ext:extOf(type), at:new Date().toISOString(), size:blob.size};
+  save();
+  try { await IDB.put(REC_KEY, blob); recSaved = true; } catch (e) { recSaved = false; }
+  recMsg = recSaved ? '' : 'Lưu ý: máy không lưu được bản ghi, em đừng tải lại trang trước khi nộp nhé.';
+  recErr = !recSaved;
+  renderRec(); progress();
+}
+function setBlob(b){
+  if (recUrl) URL.revokeObjectURL(recUrl);
+  recBlob = b; recUrl = b ? URL.createObjectURL(b) : '';
+}
+
+function renderRec(){
+  const box = $('#rec');
+  const msg = recMsg ? `<div class="msg${recErr ? ' err' : ''}">${recMsg}</div>` : '';
+  if (mr){
+    box.innerHTML = `<div><span class="dot"></span><b>Đang ghi âm…</b></div>
+      <div class="tm" id="recTm">0:00 <span>/ ${clock(REC_MAX)}</span></div>
+      <div class="track"><div id="recTrack"></div></div>
+      <button class="btn red" type="button" id="recStop">⏹ Dừng ghi âm</button>${msg}`;
+    $('#recStop').onclick = stopRec;
+    recTick();
+    return;
+  }
+  if (S.rec && recBlob){
+    box.innerHTML = `<div style="font-weight:800">${S.submitted ? '🎙 Bài ghi âm em đã nộp' : '✅ Đã ghi âm xong'} · ${clock(S.rec.dur)}</div>
+      <audio class="player" controls src="${recUrl}"></audio>
+      ${S.submitted ? '' : `<div class="row"><button class="btn ghost" type="button" id="recAgain">🎙 Thu lại</button></div>
+      <div class="msg">Nghe lại thấy ổn rồi thì kéo xuống bấm <b>Nộp bài</b> nhé.</div>`}${msg}`;
+    const b = $('#recAgain'); if (b) b.onclick = startRec;
+    return;
+  }
+  if (S.submitted){
+    box.innerHTML = `<div class="msg">${S.rec ? 'Bản ghi đã được gửi cho cô cùng bài làm.' : 'Em không nộp bài ghi âm.'}</div>`;
+    return;
+  }
+  box.innerHTML = `<button class="btn" type="button" id="recStart">🎙 Bắt đầu ghi âm</button>
+    <div class="msg">Trình duyệt sẽ hỏi quyền dùng micro, em bấm <b>Cho phép / Allow</b> nhé.</div>${msg}`;
+  $('#recStart').onclick = startRec;
+}
+
+async function loadRec(){
+  if (!S.rec) return;
+  try {
+    const b = await IDB.get(REC_KEY);
+    if (b && b.size) setBlob(b);
+  } catch (_) {}
+  if (!recBlob && !S.submitted){
+    S.rec = null; save();
+    recMsg = 'Không tìm thấy bản ghi cũ trên máy, em thu lại nhé.'; recErr = true;
+  }
+  renderRec(); progress();
+}
+
+/* ============ TIẾN ĐỘ ============ */
+function answeredList(){
+  const a = [];
+  DRAG.forEach(ex => CFG[ex].items.forEach(it => a.push(!!S.d[ex][it.id])));
+  EX5.items.forEach(it => a.push(S.mc[it.id] != null));
+  EX7.items.forEach(it => a.push((S.wo[it.id] || []).length === it.words.length));
+  a.push(!!S.rec);
+  return a;
+}
+function progress(){
+  const a = answeredList(), done = a.filter(Boolean).length;
+  if (S.submitted && RES){
+    $('#progT').textContent = `Đã nộp · ${RES.score}/${RES.total} câu đúng`;
+    $('#progF').style.width = (RES.total ? RES.score / RES.total * 100 : 0) + '%';
+  } else {
+    $('#progT').textContent = `Đã làm ${done}/${a.length} câu`;
+    $('#progF').style.width = done / a.length * 100 + '%';
+  }
+}
+
+/* ============ CHẤM ĐIỂM ============ */
+function grade(){
+  const items = [];
+  const meanOf = {1:EX1.mean, 2:EX2.mean, 3:EX3.mean};
+
+  DRAG.forEach(ex => CFG[ex].items.forEach(it => {
+    const w = S.d[ex][it.id] || '';
+    const q = ex === 1 ? `Tranh ${it.id}` : ex === 4 ? it.who : plain(it.t);
+    const msgs = [];
+    let ok, correct = it.a, why = it.tip;
+    if (ex === 2){
+      if (!it.a){ ok = null; correct = '(cô chấm)'; why = 'Cô sẽ nghe lại và chấm câu này sau nhé.'; }
+      else {
+        ok = w === it.a;
+        why = `Nghe lại: “${esc(it.t.replace('___', it.a))}” · <b>${it.a}</b> = ${EX2.mean[it.a] || ''}.`;
+      }
+    } else ok = w === it.a;
+    if (w && ok === false && meanOf[ex] && meanOf[ex][w]) msgs.push(`<b>${esc(w)}</b> nghĩa là “${meanOf[ex][w]}”, chưa hợp với ${ex === 1 ? 'tranh' : 'câu'} này.`);
+    items.push({sec:String(ex), key:`${ex}-${it.id}`, fb:`fb-${ex}-${it.id}`, n:it.id, q, ans:w, correct, ok, msgs, why});
+  }));
+
+  EX5.items.forEach(it => {
+    const p = S.mc[it.id];
+    items.push({sec:'5', key:'5-' + it.id, fb:'fb-5-' + it.id, n:it.id, q:it.q,
+      ans:p != null ? it.opts[p] : '', correct:it.opts[it.a], ok:p === it.a, msgs:[], why:it.why});
+  });
+
+  EX7.items.forEach(it => {
+    const picked = S.wo[it.id] || [];
+    const raw = picked.map(i => it.words[i]).join(' ');
+    const full = picked.length === it.words.length;
+    const ok = full && it.ans.map(normWords).includes(normWords(raw));
+    const msgs = picked.length && !full ? ['Em chưa xếp hết các từ.'] : [];
+    items.push({sec:'7', key:'7-' + it.id, fb:'fb-7-' + it.id, n:it.id, q:it.words.join(' / '),
+      ans:raw ? raw + it.end : '', correct:it.show, ok, msgs, why:it.why});
+  });
+
+  const sections = SECTIONS.map(s => {
+    const its = items.filter(i => i.sec === s.id), graded = its.filter(i => i.ok !== null);
+    return {...s, score:graded.filter(i => i.ok).length, total:graded.length, pending:graded.length < its.length};
+  });
+  const map = {}; items.forEach(i => map[i.key] = i);
+  const graded = items.filter(i => i.ok !== null);
+  return {items, map, sections, score:graded.filter(i => i.ok).length, total:graded.length};
+}
+
+/* ============ HIỂN THỊ KẾT QUẢ ============ */
+function fbHtml(i){
+  const head = i.ok == null
+    ? `<div class="h">⏳ Em chọn: ${i.ans ? `<b>${esc(i.ans)}</b>` : 'chưa làm'}</div>`
+    : i.ok
+      ? `<div class="h">✅ Đúng rồi!</div>`
+      : `<div class="h">❌ ${i.ans ? `<s>${esc(i.ans)}</s>` : 'Chưa làm'} → <b>${esc(i.correct)}</b></div>`;
+  const errs = i.ok === false && i.msgs.length ? `<ul>${i.msgs.map(m => `<li>${m}</li>`).join('')}</ul>` : '';
+  return `${head}${errs}<div class="why">💡 ${i.why}</div>`;
+}
+function paintFb(id, arr){
+  const el = document.getElementById(id); if (!el) return;
+  const cls = arr.some(i => i.ok === false) ? 'bad' : arr.some(i => i.ok == null) ? 'wait' : 'ok';
+  el.className = 'fb show ' + cls;
+  el.innerHTML = arr.map(fbHtml).join('');
+}
+function showResults(){
+  RES = grade();
+  RES.items.forEach(i => { if (i.sec !== '7') paintFb(i.fb, [i]); });
+  DRAG.forEach(renderDrag);
+  renderMC();
+  EX7.items.forEach(it => renderWO(it.id));
+  $('#script4').hidden = false; $('#script5').hidden = false;
+  $('#submitBtn').hidden = true;
+  renderRec();
+  renderWho();
+  renderSummary();
+  progress();
+}
+function renderSummary(){
+  const pct = RES.total ? RES.score / RES.total : 0;
+  $('#summaryBox').innerHTML = `<div class="card summary">
+    <div class="score">${RES.score}<span>/${RES.total}</span></div>
+    <div style="flex:1;min-width:220px">
+      <div style="font-weight:800;font-size:18px">${RES.score === RES.total ? '🎉 Đúng hết luôn, giỏi quá!' : pct >= .8 ? '👏 Giỏi lắm!' : pct >= .5 ? '💪 Khá rồi, cố thêm chút nữa nhé!' : '📚 Xem lại giải thích bên dưới nha!'}</div>
+      <div class="secs">${RES.sections.map(s => s.pending && !s.total
+          ? `<span class="sec wait">Ex ${s.id}: cô chấm</span>`
+          : `<span class="sec${s.score === s.total && !s.pending ? ' full' : ''}">Ex ${s.id}: ${s.score}/${s.total}${s.pending ? ' +⏳' : ''}</span>`).join('')}
+        <span class="sec${S.rec ? ' full' : ''}">Ex 8: ${S.rec ? '🎙 ' + clock(S.rec.dur) : 'chưa ghi âm'}</span></div>
+      <div style="font-size:14.5px;color:var(--muted)">Kéo xuống xem đáp án nhé, câu sai tô đỏ. Lời thoại bài nghe hiện ở cuối Ex 4 và Ex 5.</div>
+      <div class="status" id="sendStatus"></div>
+    </div></div>`;
+  updateStatus();
+}
+
+/* ============ GỬI BÀI ============ */
+let sendState = null; // null | 'sending' | 'ok' | 'err' | 'warn'
+let sendErr = '';
+function updateStatus(){
+  const el = $('#sendStatus'); if (!el) return;
+  const st = S.sent ? 'ok' : sendState;
+  el.className = 'status ' + (st || '');
+  if (st === 'ok') el.innerHTML = '✅ Cô đã nhận được bài!';
+  else if (st === 'sending') el.innerHTML = S.rec ? '⏳ Đang gửi bài và file ghi âm cho cô… (có thể mất vài chục giây)' : '⏳ Đang gửi bài cho cô…';
+  else if (st === 'warn') el.innerHTML = '⚠️ Trang chưa được cài địa chỉ gửi bài (SCRIPT_URL), nên bài chưa được gửi cho cô.';
+  else el.innerHTML = `⚠️ Chưa gửi được bài${sendErr ? ` (${esc(sendErr)})` : ''}. Em kiểm tra mạng rồi bấm: <button class="btn" type="button" id="resendBtn" style="padding:6px 14px;font-size:14px;margin-left:4px">Gửi lại</button>`;
+  const rb = $('#resendBtn'); if (rb) rb.onclick = send;
+}
+function blobToB64(b){
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => res(String(fr.result).split(',')[1] || '');
+    fr.onerror = () => rej(fr.error);
+    fr.readAsDataURL(b);
+  });
+}
+async function payload(){
+  const p = {
+    app:'btvn', unit:UNIT, title:TITLE, name:S.name, cls:S.cls, submittedAt:S.submittedAt,
+    startedAt:S.startedAt || null, leaves:S.leaves || 0,
+    timeTakenSec:S.startedAt ? Math.max(0, Math.round((new Date(S.submittedAt) - new Date(S.startedAt)) / 1000)) : null,
+    score:RES.score, total:RES.total,
+    sections:RES.sections.map(s => ({id:s.id, title:s.title, score:s.score, total:s.total, pending:s.pending && !s.total})),
+    items:RES.items.map(i => ({sec:i.sec, n:i.n, q:i.q, ans:i.ans, correct:i.correct, ok:i.ok})),
+    wantsAudio:true, audio:null,
+  };
+  if (S.rec && recBlob){
+    p.audio = {b64:await blobToB64(recBlob), mime:S.rec.mime, ext:S.rec.ext, dur:S.rec.dur, label:'Exercise 8 – Speaking: my family’s daily routines'};
+  }
+  return p;
+}
+async function send(){
+  if (!SCRIPT_URL || SCRIPT_URL.includes('PASTE_')){ sendState = 'warn'; updateStatus(); return; }
+  sendState = 'sending'; updateStatus();
+  try {
+    const body = JSON.stringify(await payload());
+    const r = await fetch(SCRIPT_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body});
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'máy chủ báo lỗi');
+    S.sent = true; save(); sendState = 'ok';
+  } catch (err){
+    sendState = 'err'; sendErr = err && err.message ? err.message : String(err);
+  }
+  updateStatus();
+}
+
+/* ============ NỘP BÀI ============ */
+$('#submitBtn').addEventListener('click', () => {
+  if (S.submitted) return;
+  if (mr){ alert('Em đang ghi âm. Bấm ⏹ Dừng ghi âm trước rồi mới nộp bài nhé.'); return; }
+  const a = answeredList(), left = a.slice(0, -1).filter(x => !x).length;
+  const notes = [];
+  if (left) notes.push(`Còn ${left} câu chưa làm.`);
+  if (!S.rec) notes.push('Em chưa ghi âm Exercise 8.');
+  muteAway = true; // hộp xác nhận làm trang mất focus – không tính là rời trang
+  const go = confirm(notes.length ? `${notes.join('\n')}\nEm vẫn nộp luôn hả?\n(Nộp rồi là không sửa được nữa đâu.)` : 'Nộp bài nhé? Nộp rồi là không sửa được nữa đâu.');
+  releaseAway();
+  if (!go) return;
+  sel = null;
+  document.querySelectorAll('audio').forEach(x => x.pause());
+  S.submitted = true; S.submittedAt = new Date().toISOString(); save();
+  showResults();
+  window.scrollTo({top:0, behavior:'smooth'});
+  send();
+});
+
+/* ============ TÊN HỌC SINH ============ */
+function renderWho(){
+  $('#whoBar').innerHTML = `<span>👤 <b>${esc(S.name)}</b> · Lớp <b>${esc(S.cls)}</b></span>` +
+    (S.submitted ? `<span style="color:var(--muted);font-size:14px">Nộp lúc ${new Date(S.submittedAt).toLocaleString('vi-VN')}</span>` : `<button class="linkbtn" type="button" id="editName">Sửa tên / lớp</button>`);
+  const b = $('#editName'); if (b) b.onclick = () => { $('#work').hidden = true; $('#bar').hidden = true; $('#start').hidden = false; $('#inName').focus(); };
+}
+function showWork(){
+  $('#start').hidden = true; $('#work').hidden = false; $('#bar').hidden = false;
+  renderWho(); progress();
+}
+$('#inName').value = S.name; $('#inCls').value = S.cls;
+$('#startBtn').addEventListener('click', () => {
+  const n = $('#inName').value.trim(), c = $('#inCls').value.trim();
+  if (n.length < 2){ $('#startErr').textContent = 'Em hãy nhập họ và tên.'; return; }
+  if (!c){ $('#startErr').textContent = 'Em hãy nhập lớp.'; return; }
+  $('#startErr').textContent = '';
+  S.name = n.slice(0, 80); S.cls = c.slice(0, 30);
+  if (!S.startedAt) S.startedAt = new Date().toISOString();
+  save();
+  showWork(); window.scrollTo({top:0});
+});
+['inName', 'inCls'].forEach(id => $('#' + id).addEventListener('keydown', e => { if (e.key === 'Enter') $('#startBtn').click(); }));
+
+/* ============ ĐẾM SỐ LẦN RỜI TRANG ============ */
+// Tính 1 lần khi em chuyển tab/ứng dụng, thu nhỏ cửa sổ hoặc tải lại trang (chỉ trong lúc đang làm bài)
+let away = false, muteAway = false;
+const tracking = () => !!S.startedAt && !S.submitted && !$('#work').hidden;
+function goAway(){
+  if (muteAway || away || !tracking()) return;
+  away = true; S.leaves = (S.leaves || 0) + 1; save();
+}
+function comeBack(){ if (!document.hidden && document.hasFocus()) away = false; }
+document.addEventListener('visibilitychange', () => document.hidden ? goAway() : comeBack());
+window.addEventListener('blur', goAway);
+window.addEventListener('focus', comeBack);
+
+/* ============ KHỞI ĐỘNG ============ */
+build();
+renderRec();
+if (S.name) showWork();
+if (S.submitted) showResults();
+loadRec().then(() => { if (S.submitted && RES) renderSummary(); });
+</script>
+</body>
+</html>

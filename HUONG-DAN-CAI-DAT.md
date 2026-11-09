@@ -26,6 +26,8 @@ Có 2 phần: **(A) máy chủ nhận bài** bằng Google Apps Script, dùng đ
 
 > Nếu sau này sửa `Code.gs`, cần vào **Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy** để bản mới có hiệu lực. URL không đổi.
 
+> **Cập nhật cho Unit 1 (có ghi âm):** `Code.gs` đã được sửa để nhận file ghi âm và đính kèm vào email. Cô dán lại toàn bộ `Code.gs` mới vào Apps Script, bấm 💾 Save, rồi làm bước **New version → Deploy** ở trên. Không cần cấp thêm quyền. Google Sheet sẽ tự đổi tiêu đề cột thành `Phần 1…Phần 5` và thêm 2 cột cuối là `Phần 6` và `Ghi âm`. Các dòng cũ của Unit 2 giữ nguyên.
+
 ## B. Đăng trang lên GitHub Pages
 
 1. Tạo repo mới trên GitHub, ví dụ `btvn`, để chế độ **Public**.
@@ -33,9 +35,12 @@ Có 2 phần: **(A) máy chủ nhận bài** bằng Google Apps Script, dùng đ
 3. Trên GitHub, vào repo → **Settings → Pages** → Source: **Deploy from a branch** → Branch: `main` / `(root)` → **Save**.
 4. Sau 1–2 phút, trang có địa chỉ:
    - Mục lục: `https://<tên-github>.github.io/btvn/`
+   - Bài Unit 1: `https://<tên-github>.github.io/btvn/unit-01-ms-foundation-ls/`
    - Bài Unit 2: `https://<tên-github>.github.io/btvn/unit-02-present-simple/`
 
-Gửi link bài Unit 2 cho học sinh là xong.
+Gửi link bài cho học sinh là xong.
+
+> Ghi âm (Unit 1, Exercise 8) chỉ chạy khi trang mở qua **https** (GitHub Pages đã có sẵn https). Học sinh dùng Chrome trên Android hoặc máy tính, Safari trên iPhone hoặc iPad. Lần đầu bấm ghi âm, trình duyệt hỏi quyền micro, học sinh bấm **Cho phép**.
 
 ---
 
@@ -49,6 +54,7 @@ Gửi link bài Unit 2 cho học sinh là xong.
 ## Cô nhận được gì?
 
 - **Email** tiêu đề dạng `[BTVN Unit 2] Nguyễn Minh Anh – 7A – 27/31`, có bảng từng câu: học sinh trả lời gì, đáp án, đúng/sai.
+  Với Unit 1, nếu học sinh có ghi âm thì tiêu đề có thêm 🎙 và **file ghi âm được đính kèm** ở cuối email (bấm vào là nghe được).
 - **Google Sheet** "BTVN – Bài nộp của học sinh": mỗi lần nộp là 1 dòng (thời gian, tên, lớp, điểm từng bài, danh sách câu sai).
 
 ## Muốn cho một học sinh làm lại?
