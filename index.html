@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bài tập về nhà</title>
+<title>Homework - IELTS Foundation. Pack 1</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#fff8ef;--ink:#2b2d42;--muted:#6b7080;--brand:#14866d;--line:#ece3d6}
@@ -13,27 +13,34 @@ header{background:linear-gradient(135deg,#14866d,#2bb39a);color:#fff;text-align:
 header h1{margin:0;font-size:clamp(24px,5vw,34px)}
 header p{margin:4px 0 0;opacity:.92}
 main{max-width:720px;margin:-26px auto 40px;padding:0 16px}
-a.unit{display:flex;gap:14px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px;text-decoration:none;color:inherit;box-shadow:0 4px 18px rgba(60,40,10,.07);transition:transform .15s}
+.unit{display:flex;gap:14px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px;text-decoration:none;color:inherit;box-shadow:0 4px 18px rgba(60,40,10,.07);transition:transform .15s}
 a.unit:hover{transform:translateY(-2px)}
-.n{background:var(--brand);color:#fff;font-weight:800;border-radius:12px;padding:8px 12px;flex:none}
+.unit.soon{opacity:.55;cursor:default;box-shadow:none}
+.n{background:var(--brand);color:#fff;font-weight:800;border-radius:12px;padding:8px 12px;flex:none;text-align:center;min-width:92px}
+.soon .n{background:#9aa0ad}
 .t{font-weight:800;font-size:18px}
 .d{color:var(--muted);font-size:14.5px}
+.tag{display:inline-block;background:#eee8dd;color:var(--muted);border-radius:999px;padding:0 10px;font-size:13px;font-weight:800;margin-left:6px;vertical-align:middle}
 </style>
 </head>
 <body>
 <header>
-  <h1>📚 Bài tập về nhà</h1>
+  <h1>📚 Homework - IELTS Foundation. Pack 1</h1>
   <p>Chọn bài cô giao để làm nhé!</p>
 </header>
 <main>
   <a class="unit" href="unit-01-ms-foundation-ls/">
     <span class="n">Unit 1</span>
-    <span><span class="t">MS-Foundation-LS · Daily routines</span><br><span class="d">Exercise 1 – 8 · nghe mp3, ghép tranh, xếp câu, ghi âm nói</span></span>
+    <span><span class="t">MS Foundation</span><br><span class="d">Daily routines · Exercise 1–8 · nghe mp3, ghép tranh, xếp câu, ghi âm</span></span>
   </a>
-  <a class="unit" href="unit-02-present-simple/">
-    <span class="n">Unit 2</span>
+  <a class="unit" href="grammar/">
+    <span class="n">Grammar</span>
     <span><span class="t">Present Simple (I do / work / like…)</span><br><span class="d">Bài 2.1 – 2.5 · kéo thả, điền từ, đặt câu hỏi</span></span>
   </a>
+  <div class="unit soon" aria-disabled="true">
+    <span class="n">Listening</span>
+    <span><span class="t">Basic Listening <span class="tag">Sắp có</span></span><br><span class="d">Bài nghe cơ bản · cô sẽ mở sau</span></span>
+  </div>
 </main>
 </body>
 </html>

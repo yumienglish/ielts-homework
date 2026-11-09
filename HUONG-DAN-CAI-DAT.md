@@ -18,7 +18,7 @@ Có 2 phần: **(A) máy chủ nhận bài** bằng Google Apps Script, dùng đ
    - **Execute as:** `Me (tqmai1996@gmail.com)`
    - **Who has access:** `Anyone` (bắt buộc, để học sinh không cần đăng nhập vẫn nộp được)
    - Bấm **Deploy** rồi **copy Web app URL** (dạng `https://script.google.com/macros/s/AKfy…/exec`).
-5. Mở file `unit-02-present-simple/index.html`, tìm dòng:
+5. Mở từng file bài tập (`unit-01-ms-foundation-ls/index.html`, `grammar/index.html`), tìm dòng:
    ```js
    const SCRIPT_URL = 'PASTE_APPS_SCRIPT_URL_HERE';
    ```
@@ -26,19 +26,20 @@ Có 2 phần: **(A) máy chủ nhận bài** bằng Google Apps Script, dùng đ
 
 > Nếu sau này sửa `Code.gs`, cần vào **Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy** để bản mới có hiệu lực. URL không đổi.
 
-> **Cập nhật cho Unit 1 (có ghi âm):** `Code.gs` đã được sửa để nhận file ghi âm và đính kèm vào email. Cô dán lại toàn bộ `Code.gs` mới vào Apps Script, bấm 💾 Save, rồi làm bước **New version → Deploy** ở trên. Không cần cấp thêm quyền. Google Sheet sẽ tự đổi tiêu đề cột thành `Phần 1…Phần 5` và thêm 2 cột cuối là `Phần 6` và `Ghi âm`. Các dòng cũ của Unit 2 giữ nguyên.
+> **Cập nhật cho Unit 1 (có ghi âm):** `Code.gs` đã được sửa để nhận file ghi âm và đính kèm vào email. Cô dán lại toàn bộ `Code.gs` mới vào Apps Script, bấm 💾 Save, rồi làm bước **New version → Deploy** ở trên. Không cần cấp thêm quyền. Google Sheet sẽ tự đổi tiêu đề cột thành `Phần 1…Phần 5` và thêm 2 cột cuối là `Phần 6` và `Ghi âm`. Các dòng cũ của bài Grammar giữ nguyên.
 
 ## B. Đăng trang lên GitHub Pages
 
 1. Tạo repo mới trên GitHub, ví dụ `btvn`, để chế độ **Public**.
 2. Push thư mục `d:\Syllabus` lên repo đó.
 3. Trên GitHub, vào repo → **Settings → Pages** → Source: **Deploy from a branch** → Branch: `main` / `(root)` → **Save**.
-4. Sau 1–2 phút, trang có địa chỉ:
-   - Mục lục: `https://<tên-github>.github.io/btvn/`
-   - Bài Unit 1: `https://<tên-github>.github.io/btvn/unit-01-ms-foundation-ls/`
-   - Bài Unit 2: `https://<tên-github>.github.io/btvn/unit-02-present-simple/`
+4. Sau 1–2 phút, trang có địa chỉ (repo hiện tại là `grammar-homework`):
+   - Mục lục **Homework - IELTS Foundation. Pack 1**: <https://miathoday.github.io/grammar-homework/>
+   - Unit 1 · MS Foundation: <https://miathoday.github.io/grammar-homework/unit-01-ms-foundation-ls/>
+   - Grammar · Present Simple: <https://miathoday.github.io/grammar-homework/grammar/>
+   - Link cũ `…/unit-02-present-simple/` vẫn dùng được, trang sẽ tự chuyển sang `…/grammar/`.
 
-Gửi link bài cho học sinh là xong.
+Gửi link mục lục cho học sinh là tiện nhất: các em tự chọn bài, mỗi trang bài tập đều có nút **← Homework · IELTS Foundation · Pack 1** để quay về mục lục.
 
 > Ghi âm (Unit 1, Exercise 8) chỉ chạy khi trang mở qua **https** (GitHub Pages đã có sẵn https). Học sinh dùng Chrome trên Android hoặc máy tính, Safari trên iPhone hoặc iPad. Lần đầu bấm ghi âm, trình duyệt hỏi quyền micro, học sinh bấm **Cho phép**.
 
@@ -53,7 +54,7 @@ Gửi link bài cho học sinh là xong.
 
 ## Cô nhận được gì?
 
-- **Email** tiêu đề dạng `[BTVN Unit 2] Nguyễn Minh Anh – 7A – 27/31`, có bảng từng câu: học sinh trả lời gì, đáp án, đúng/sai.
+- **Email** tiêu đề dạng `[BTVN Grammar] Nguyễn Minh Anh – 7A – 27/31`, có bảng từng câu: học sinh trả lời gì, đáp án, đúng/sai.
   Với Unit 1, nếu học sinh có ghi âm thì tiêu đề có thêm 🎙 và **file ghi âm được đính kèm** ở cuối email (bấm vào là nghe được).
 - **Google Sheet** "BTVN – Bài nộp của học sinh": mỗi lần nộp là 1 dòng (thời gian, tên, lớp, điểm từng bài, danh sách câu sai).
 
