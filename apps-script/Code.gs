@@ -9,6 +9,18 @@
 const TEACHER_EMAIL = 'tqmai1996@gmail.com';
 const SHEET_TITLE = 'BTVN – Bài nộp của học sinh';
 const TIMEZONE = 'Asia/Ho_Chi_Minh';
+const HEAD = ['Thời gian nộp', 'Họ tên', 'Lớp', 'Bài', 'Điểm', 'Tổng', '2.1', '2.2', '2.3', '2.4', '2.5', 'Câu sai', 'Chi tiết (JSON)',
+              'Bắt đầu lúc', 'Thời gian làm bài', 'Số lần rời trang'];
+
+function fmtTime_(iso) {
+  return iso ? Utilities.formatDate(new Date(iso), TIMEZONE, 'HH:mm:ss dd/MM/yyyy') : '—';
+}
+function fmtDur_(sec) {
+  if (sec == null || isNaN(sec)) return '—';
+  sec = Math.round(sec);
+  const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+  return (h ? h + ' giờ ' : '') + (h || m ? m + ' phút ' : '') + s + ' giây';
+}
 
 /** Chạy hàm này 1 lần trong trình soạn thảo để cấp quyền + tạo Sheet + gửi email thử. */
 function setup() {
@@ -48,6 +60,8 @@ function validate_(d) {
   d.score = Number(d.score) || 0;
   d.total = Number(d.total) || 0;
   d.sections = Array.isArray(d.sections) ? d.sections.slice(0, 20) : [];
+  d.leaves = Math.max(0, Number(d.leaves) || 0);
+  d.timeTakenSec = d.timeTakenSec == null ? null : Number(d.timeTakenSec);
 }
 
 function json_(o) {
@@ -71,9 +85,12 @@ function getSheet_() {
   if (!sh) {
     sh = ss.getSheets()[0];
     sh.setName('Bài nộp');
-    const head = ['Thời gian nộp', 'Họ tên', 'Lớp', 'Bài', 'Điểm', 'Tổng', '2.1', '2.2', '2.3', '2.4', '2.5', 'Câu sai', 'Chi tiết (JSON)'];
-    sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight('bold').setBackground('#d9f2ee');
     sh.setFrozenRows(1);
+  }
+  // tạo / bổ sung dòng tiêu đề (bảng cũ sẽ tự có thêm cột mới ở cuối)
+  const cur = sh.getRange(1, 1, 1, HEAD.length).getValues()[0];
+  if (cur.join('|') !== HEAD.join('|')) {
+    sh.getRange(1, 1, 1, HEAD.length).setValues([HEAD]).setFontWeight('bold').setBackground('#d9f2ee');
   }
   return { ss, sh };
 }
@@ -85,18 +102,25 @@ function logToSheet_(d) {
   while (secs.length < 5) secs.push('');
   const wrong = d.items.filter(i => !i.ok).map(i => i.sec + '.' + i.n).join(', ');
   const when = d.submittedAt ? new Date(d.submittedAt) : new Date();
-  sh.appendRow([when, d.name, d.cls, d.title, d.score, d.total].concat(secs.slice(0, 5), [wrong || '—', JSON.stringify(d.items)]));
+  sh.appendRow([when, d.name, d.cls, d.title, d.score, d.total].concat(secs.slice(0, 5), [wrong || '—', JSON.stringify(d.items),
+    d.startedAt ? new Date(d.startedAt) : '—', fmtDur_(d.timeTakenSec), d.leaves]));
   return ss.getUrl();
 }
 
 function sendMail_(d, sheetUrl) {
-  const when = Utilities.formatDate(d.submittedAt ? new Date(d.submittedAt) : new Date(), TIMEZONE, 'HH:mm dd/MM/yyyy');
   const subject = '[BTVN ' + d.unit + '] ' + d.name + ' – ' + d.cls + ' – ' + d.score + '/' + d.total;
   const td = 'style="border:1px solid #e3dccf;padding:6px 8px;vertical-align:top"';
+  const row = (k, v) => '<tr><td style="padding:3px 14px 3px 0;color:#666">' + k + '</td><td style="padding:3px 0"><b>' + v + '</b></td></tr>';
   let html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;max-width:760px">' +
-    '<h2 style="margin:0 0 6px;color:#14866d">' + esc_(d.title) + '</h2>' +
-    '<p style="margin:0 0 12px">Học sinh: <b>' + esc_(d.name) + '</b> · Lớp: <b>' + esc_(d.cls) + '</b><br>' +
-    'Nộp lúc: ' + when + '<br>Điểm: <b style="font-size:20px;color:#14866d">' + d.score + '/' + d.total + '</b></p>';
+    '<h2 style="margin:0 0 8px;color:#14866d">' + esc_(d.title) + '</h2>' +
+    '<table style="border-collapse:collapse;margin-bottom:12px;font-size:14px">' +
+    row('Học sinh', esc_(d.name) + ' – Lớp ' + esc_(d.cls)) +
+    row('Điểm (score)', '<span style="font-size:20px;color:#14866d">' + d.score + '/' + d.total + '</span>') +
+    row('Bắt đầu (started)', fmtTime_(d.startedAt)) +
+    row('Nộp bài (submitted)', fmtTime_(d.submittedAt)) +
+    row('Thời gian làm (time taken)', fmtDur_(d.timeTakenSec)) +
+    row('Rời trang (left the page)', '<span style="color:' + (d.leaves ? '#d64045' : '#1f8a4c') + '">' + d.leaves + ' lần</span>') +
+    '</table>';
 
   d.sections.forEach(s => {
     html += '<h3 style="margin:16px 0 6px">' + esc_(s.title) + ' — ' + s.score + '/' + s.total + '</h3>' +

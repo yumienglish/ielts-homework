@@ -147,7 +147,7 @@ input.txt:disabled{opacity:1;-webkit-text-fill-color:currentColor}
   <!-- Màn hình nhập tên -->
   <section class="card start" id="start">
     <h2>👋 Chào em!</h2>
-    <p style="margin:0;color:var(--muted)">Nhập họ tên và lớp để bắt đầu. Bài làm được tự động lưu trên máy em. Khi nộp, bài sẽ được gửi cho cô.</p>
+    <p style="margin:0;color:var(--muted)">Điền tên và lớp rồi bắt đầu nha. Bài làm tự lưu, xong bấm <b>Nộp bài</b> là cô nhận được.</p>
     <div class="field"><label for="inName">Họ và tên</label><input id="inName" autocomplete="name" placeholder="VD: Nguyễn Minh Anh"></div>
     <div class="field"><label for="inCls">Lớp</label><input id="inCls" placeholder="VD: 7A"></div>
     <div class="err-msg" id="startErr"></div>
@@ -161,7 +161,7 @@ input.txt:disabled{opacity:1;-webkit-text-fill-color:currentColor}
     <!-- 2.1 -->
     <section class="card ex" id="ex1">
       <div class="ex-head"><span class="badge">2.1</span><h2>Complete the sentences using the following verbs</h2></div>
-      <p class="how">🖐️ Kéo động từ thả vào chỗ trống (hoặc chạm vào từ rồi chạm vào chỗ trống). Sau đó chọn <b>không thêm</b>, <b>+s</b> hoặc <b>+es</b>. Chạm vào từ đã điền để trả nó về.</p>
+      <p class="how">👉 Kéo từ vào chỗ trống. Cần thêm đuôi thì bấm <b>+s</b> hoặc <b>+es</b>. Điền nhầm thì chạm vào từ để gỡ ra.</p>
       <div class="bank" id="bank1"></div>
       <ol class="items" id="list1"></ol>
     </section>
@@ -169,14 +169,14 @@ input.txt:disabled{opacity:1;-webkit-text-fill-color:currentColor}
     <!-- 2.2 -->
     <section class="card ex" id="ex2">
       <div class="ex-head"><span class="badge">2.2</span><h2>Put the verb into the correct form</h2></div>
-      <p class="how">⌨️ Gõ dạng đúng của động từ vào ô trống, dùng gợi ý trong ngoặc. Chỉ gõ phần còn thiếu.</p>
+      <p class="how">👉 Gõ phần còn thiếu vào ô trống, nhìn gợi ý trong ngoặc nhé.</p>
       <ol class="items" id="list2"></ol>
     </section>
 
     <!-- 2.3 -->
     <section class="card ex" id="ex3">
       <div class="ex-head"><span class="badge">2.3</span><h2>Complete the sentences using these verbs. Sometimes you need the negative.</h2></div>
-      <p class="how">🖐️ Kéo động từ vào chỗ trống, rồi bấm mũi tên <b>▾</b> để chọn dạng đúng: thêm -s/-es, nguyên mẫu, <i>doesn’t</i> hay <i>don’t</i>.</p>
+      <p class="how">👉 Kéo từ vào chỗ trống, rồi bấm <b>▾</b> chọn dạng đúng. Để ý: có câu cần phủ định đó!</p>
       <div class="bank" id="bank3"></div>
       <ol class="items" id="list3"></ol>
     </section>
@@ -184,14 +184,14 @@ input.txt:disabled{opacity:1;-webkit-text-fill-color:currentColor}
     <!-- 2.4 -->
     <section class="card ex" id="ex4">
       <div class="ex-head"><span class="badge">2.4</span><h2>You ask Lisa questions about herself and her family. Write the questions.</h2></div>
-      <p class="how">⌨️ Đọc tình huống, nhìn tranh, rồi tự gõ câu hỏi bằng tiếng Anh.</p>
+      <p class="how">👉 Đọc tình huống, xem tranh rồi tự viết câu hỏi nhé.</p>
       <div id="list4"></div>
     </section>
 
     <!-- 2.5 -->
     <section class="card ex" id="ex5">
       <div class="ex-head"><span class="badge">2.5</span><h2>Complete using the following</h2></div>
-      <p class="how">🖐️ Kéo cụm từ thích hợp vào chỗ trống.</p>
+      <p class="how">👉 Kéo cụm từ hợp nghĩa vào chỗ trống.</p>
       <div class="bank" id="bank5"></div>
       <ol class="items" id="list5"></ol>
     </section>
@@ -226,7 +226,7 @@ function sForm(v){
   if (/[^aeiou]y$/.test(v)) return v.slice(0, -1) + 'ies';
   return v + 's';
 }
-const needsEs = v => /(o|s|sh|ch|x|z)$/.test(v);
+const CHECK_SPELL = 'Em so lại với đáp án xem sai chính tả hay thiếu chữ nào nhé.';
 const forms3 = v => [sForm(v), v, 'doesn’t ' + v, 'don’t ' + v];
 function norm(s){
   s = (s || '').toLowerCase().replace(/[’‘`´]/g, "'").replace(/[?.!,;:"“”]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -238,14 +238,14 @@ function norm(s){
 const EX1 = {
   bank: ['cause', 'close', 'connect', 'go', 'live', 'take'],
   example: {t: 'Tanya ___ German very well.', w: 'speaks'},
-  mean: {cause:'gây ra', close:'đóng cửa', connect:'nối liền', go:'đi', live:'sống', take:'lấy, cầm / (take place) diễn ra'},
+  mean: {cause:'gây ra', close:'đóng cửa', connect:'nối liền', go:'đi', live:'sống', take:'lấy, cầm'},
   items: [
-    {id:'2', t:'Ben and Jack ___ to the same school.', v:'go', e:'', subj:'“Ben and Jack” là 2 người → số nhiều (= they)', mean:'go to school = đi học'},
-    {id:'3', t:'Bad driving ___ many accidents.', v:'cause', e:'s', subj:'“Bad driving” (việc lái xe ẩu) là chủ ngữ số ít (= it)', mean:'cause accidents = gây ra tai nạn'},
-    {id:'4', t:'The museum ___ at 4 o’clock on Sundays.', v:'close', e:'s', subj:'“The museum” số ít (= it)', mean:'close = đóng cửa'},
-    {id:'5', t:'My parents ___ in a very small flat.', v:'live', e:'', subj:'“My parents” (bố mẹ tôi) số nhiều (= they)', mean:'live in a flat = sống trong căn hộ'},
-    {id:'6', t:'The Olympic Games ___ place every four years.', v:'take', e:'', subj:'“The Olympic Games” là danh từ số nhiều (Games có -s) (= they)', mean:'take place = diễn ra, được tổ chức'},
-    {id:'7', t:'The Panama Canal ___ the Atlantic and Pacific oceans.', v:'connect', e:'s', subj:'“The Panama Canal” (kênh đào Panama) số ít (= it)', mean:'connect A and B = nối liền A và B'},
+    {id:'2', t:'Ben and Jack ___ to the same school.', v:'go', e:'', tip:'Ben và Jack là 2 người (they) nên giữ nguyên: <b>go</b>.'},
+    {id:'3', t:'Bad driving ___ many accidents.', v:'cause', e:'s', tip:'“Lái xe ẩu” <i>gây ra</i> tai nạn. Bad driving là “it” nên thêm s: <b>causes</b>.'},
+    {id:'4', t:'The museum ___ at 4 o’clock on Sundays.', v:'close', e:'s', tip:'Bảo tàng <i>đóng cửa</i> lúc 4 giờ. The museum là “it” nên <b>closes</b> (chỉ thêm s thôi).'},
+    {id:'5', t:'My parents ___ in a very small flat.', v:'live', e:'', tip:'Bố mẹ là 2 người (they) nên giữ nguyên: <b>live</b>.'},
+    {id:'6', t:'The Olympic Games ___ place every four years.', v:'take', e:'', tip:'<i>take place</i> = diễn ra. “Games” có s là số nhiều nên giữ nguyên: <b>take</b>.'},
+    {id:'7', t:'The Panama Canal ___ the Atlantic and Pacific oceans.', v:'connect', e:'s', tip:'Kênh đào <i>nối liền</i> 2 đại dương. The canal là “it” nên <b>connects</b>.'},
   ]
 };
 
@@ -260,22 +260,22 @@ const EX2 = {
     {id:'8', parts:['It ', '8a', ' <span class="hint">(take)</span> me an hour to get to work in the morning. How long ', '8b', ' <span class="hint">(it / take)</span> you?']},
   ],
   blanks: {
-    '2':  {w:17, show:'do the banks close', ans:['do the banks close'], m:{type:'q', pre:'what time', aux:'do', subj:'the banks', verb:'close', vs:'closes', sd:'“The banks” số nhiều (= they)'},
-           why:'Câu hỏi có từ để hỏi: <b>What time + do/does + S + V nguyên mẫu?</b> “The banks” số nhiều → <b>do</b>. → What time <b>do the banks close</b> here?'},
-    '3':  {w:11, show:'don’t use', ans:['do not use'], m:{type:'neg', pre:'i', aux:'do', subj:'i', verb:'use', vs:'uses', sd:'Chủ ngữ I'},
-           why:'Chủ ngữ <b>I</b> → phủ định dùng <b>don’t + V nguyên mẫu</b>. → I <b>don’t use</b> it much.'},
-    '4':  {w:15, show:'does Maria come', ans:['does maria come'], m:{type:'q', pre:'where', aux:'does', subj:'maria', verb:'come', vs:'comes', sd:'“Maria” là một người (= she)'},
-           why:'“Maria” (= she) → <b>does</b>; sau does, động từ giữ nguyên: <b>come</b>. → Where <b>does Maria come</b> from? (Maria đến từ đâu?)'},
-    '5':  {w:11, show:'do you do', ans:['do you do'], m:{type:'q', pre:'what', aux:'do', subj:'you', verb:'do', vs:'does', sd:'Chủ ngữ you'},
-           why:'<b>What do you do?</b> = Em làm nghề gì? “do” thứ nhất là <i>trợ động từ</i>, “do” thứ hai là <i>động từ chính</i> (làm). Chủ ngữ you → <b>do</b>.'},
-    '6':  {w:18, show:'does this word mean', ans:['does this word mean'], m:{type:'q', pre:'what', aux:'does', subj:'this word', verb:'mean', vs:'means', sd:'“This word” số ít (= it)'},
-           why:'“This word” số ít (= it) → <b>does</b> + <b>mean</b> (nguyên mẫu). → What <b>does this word mean</b>? (Từ này nghĩa là gì?)'},
-    '7':  {w:12, show:'doesn’t do', ans:['does not do'], m:{type:'neg', pre:'he', aux:'does', subj:'he', verb:'do', vs:'does', sd:'Chủ ngữ He'},
-           why:'<b>He</b> → <b>doesn’t</b> + V nguyên mẫu. “do sport” có “do” là động từ chính nên vẫn cần trợ động từ: He <b>doesn’t do</b> any sport.'},
-    '8a': {w:9, show:'takes', ans:['takes'], m:{type:'aff', pre:'it', aux:'does', subj:'it', verb:'take', vs:'takes', sd:'Chủ ngữ It (số ít)'},
-           why:'Câu khẳng định, chủ ngữ <b>It</b> (số ít) → thêm -s: <b>takes</b>. Cấu trúc <i>It takes + (ai) + thời gian + to V</i> = ai đó mất bao lâu để làm gì.'},
-    '8b': {w:13, show:'does it take', ans:['does it take'], m:{type:'q', pre:'how long', aux:'does', subj:'it', verb:'take', vs:'takes', sd:'Chủ ngữ It (số ít)'},
-           why:'Câu hỏi: How long + <b>does</b> + it + <b>take</b> (nguyên mẫu) + you? → How long <b>does it take</b> you?'},
+    '2':  {w:17, show:'do the banks close', ans:['do the banks close'], m:{type:'q', pre:'what time', aux:'do', subj:'the banks', verb:'close', vs:'closes', sd:'“The banks” là số nhiều'},
+           why:'“The banks” là số nhiều nên hỏi bằng <b>do</b>: What time <b>do the banks close</b> here?'},
+    '3':  {w:11, show:'don’t use', ans:['do not use'], m:{type:'neg', pre:'i', aux:'do', subj:'i', verb:'use', vs:'uses', sd:'Với “I”'},
+           why:'Với <b>I</b> thì dùng <b>don’t</b>: I <b>don’t use</b> it much.'},
+    '4':  {w:15, show:'does Maria come', ans:['does maria come'], m:{type:'q', pre:'where', aux:'does', subj:'maria', verb:'come', vs:'comes', sd:'Maria là “she”'},
+           why:'Maria là “she” nên dùng <b>does</b>, và sau does thì <b>come</b> không thêm s.'},
+    '5':  {w:11, show:'do you do', ans:['do you do'], m:{type:'q', pre:'what', aux:'do', subj:'you', verb:'do', vs:'does', sd:'Với “you”'},
+           why:'<b>What do you do?</b> = Bạn làm nghề gì? Có 2 chữ “do” là đúng nhé!'},
+    '6':  {w:18, show:'does this word mean', ans:['does this word mean'], m:{type:'q', pre:'what', aux:'does', subj:'this word', verb:'mean', vs:'means', sd:'“This word” là “it”'},
+           why:'“This word” là “it” nên dùng <b>does</b>, còn <b>mean</b> không thêm s.'},
+    '7':  {w:12, show:'doesn’t do', ans:['does not do'], m:{type:'neg', pre:'he', aux:'does', subj:'he', verb:'do', vs:'does', sd:'Với “he”'},
+           why:'He thì dùng <b>doesn’t do</b>. “do sport” vẫn cần doesn’t phía trước nhé.'},
+    '8a': {w:9, show:'takes', ans:['takes'], m:{type:'aff', pre:'it', aux:'does', subj:'it', verb:'take', vs:'takes', sd:'“It” là số ít'},
+           why:'“It” là số ít, câu khẳng định nên thêm s: <b>takes</b>. (It takes me an hour = Tôi mất 1 tiếng.)'},
+    '8b': {w:13, show:'does it take', ans:['does it take'], m:{type:'q', pre:'how long', aux:'does', subj:'it', verb:'take', vs:'takes', sd:'“It” là số ít'},
+           why:'Câu hỏi với “it” nên dùng <b>does it take</b> (take không thêm s).'},
   }
 };
 
@@ -284,13 +284,13 @@ const EX3 = {
   examples: [{n:'1', t:'The earth ___ round the sun.', w:'goes'}, {n:'2', t:'Rice ___ in cold climates.', w:'doesn’t grow'}],
   mean: {believe:'tin', eat:'ăn', flow:'chảy', make:'làm ra', rise:'mọc, nhô lên', tell:'nói, kể', translate:'dịch'},
   items: [
-    {id:'3', t:'The sun ___ in the east.', v:'rise', f:0, subj:'“The sun” số ít (= it)', pol:'Mặt trời mọc ở hướng đông, là sự thật hiển nhiên nên dùng câu khẳng định'},
-    {id:'4', t:'Bees ___ honey.', v:'make', f:1, subj:'“Bees” (những con ong) số nhiều (= they)', pol:'Ong làm ra mật nên dùng câu khẳng định'},
-    {id:'5', t:'Vegetarians ___ meat.', v:'eat', f:3, subj:'“Vegetarians” (người ăn chay) số nhiều (= they)', pol:'Người ăn chay KHÔNG ăn thịt nên dùng câu phủ định'},
-    {id:'6', t:'An atheist ___ in God.', v:'believe', f:2, subj:'“An atheist” (một người vô thần) số ít (= he/she)', pol:'Người vô thần KHÔNG tin vào Chúa nên dùng câu phủ định'},
-    {id:'7', t:'An interpreter ___ from one language into another.', v:'translate', f:0, subj:'“An interpreter” (một phiên dịch viên) số ít (= he/she)', pol:'Phiên dịch viên dịch từ ngôn ngữ này sang ngôn ngữ khác nên dùng câu khẳng định'},
-    {id:'8', t:'Liars are people who ___ the truth.', v:'tell', f:3, subj:'“who” thay cho “people” → số nhiều (= they)', pol:'Kẻ nói dối là người KHÔNG nói sự thật nên dùng câu phủ định'},
-    {id:'9', t:'The River Amazon ___ into the Atlantic Ocean.', v:'flow', f:0, subj:'“The River Amazon” (sông Amazon) số ít (= it)', pol:'Sông Amazon chảy ra Đại Tây Dương nên dùng câu khẳng định'},
+    {id:'3', t:'The sun ___ in the east.', v:'rise', f:0, tip:'Mặt trời (it) mọc ở hướng đông: <b>rises</b>.'},
+    {id:'4', t:'Bees ___ honey.', v:'make', f:1, tip:'Ong (they) làm ra mật: <b>make</b>.'},
+    {id:'5', t:'Vegetarians ___ meat.', v:'eat', f:3, tip:'Người ăn chay thì <u>không</u> ăn thịt, mà họ là số nhiều: <b>don’t eat</b>.'},
+    {id:'6', t:'An atheist ___ in God.', v:'believe', f:2, tip:'Người vô thần <u>không</u> tin vào Chúa, mà “an atheist” là 1 người: <b>doesn’t believe</b>.'},
+    {id:'7', t:'An interpreter ___ from one language into another.', v:'translate', f:0, tip:'Phiên dịch viên (1 người) dịch từ tiếng này sang tiếng khác: <b>translates</b>.'},
+    {id:'8', t:'Liars are people who ___ the truth.', v:'tell', f:3, tip:'Kẻ nói dối là người <u>không</u> nói thật. “people” là số nhiều: <b>don’t tell</b>.'},
+    {id:'9', t:'The River Amazon ___ into the Atlantic Ocean.', v:'flow', f:0, tip:'Sông Amazon (it) chảy ra Đại Tây Dương: <b>flows</b>.'},
   ]
 };
 
@@ -299,39 +299,39 @@ const EX4 = {
   items: [
     {id:'2', t:'Perhaps Lisa’s sister plays tennis too. You want to know. Ask Lisa.', two:true, show:'Does your sister play tennis?',
      ans:['does your sister play tennis', 'does your sister play tennis too'],
-     m:{type:'q', wh:'', aux:'does', subj:'your sister', verb:'play', vs:'plays', sd:'“Your sister” (= she)'},
-     why:'Em chỉ đoán (“Perhaps”) nên hỏi câu Yes/No: <b>Does + S + V nguyên mẫu?</b> “your sister” (= she) → <b>Does</b>; play giữ nguyên.'},
+     m:{type:'q', wh:'', aux:'does', subj:'your sister', verb:'play', vs:'plays', sd:'“Your sister” là “she”'},
+     why:'Mình chỉ đoán thôi nên hỏi Yes/No. Your sister là “she”: <b>Does</b> … <b>play</b>?'},
     {id:'3', t:'You know that Lisa goes to the cinema a lot. You want to know how often. Ask her.', show:'How often do you go to the cinema?',
      ans:['how often do you go to the cinema', 'how often do you go to the movies'],
-     m:{type:'q', wh:'how often', aux:'do', subj:'you', verb:'go', vs:'goes', sd:'Hỏi trực tiếp Lisa → chủ ngữ you'},
-     why:'Muốn biết mức độ thường xuyên → <b>How often + do + you + V?</b> Hỏi trực tiếp Lisa nên chủ ngữ là <b>you</b>.'},
+     m:{type:'q', wh:'how often', aux:'do', subj:'you', verb:'go', vs:'goes', sd:'Hỏi Lisa thì dùng “you”'},
+     why:'Hỏi bao lâu một lần: <b>How often do you</b> go…?'},
     {id:'4', t:'You know that Lisa’s brother works. You want to know what he does. Ask Lisa.', show:'What does your brother do?',
      ans:['what does your brother do', 'what does your brother do for a living', "what is your brother's job", 'what job does your brother do'],
-     m:{type:'q', wh:'what', aux:'does', subj:'your brother', verb:'do', vs:'does', sd:'“Your brother” (= he)'},
-     why:'Hỏi nghề nghiệp → <b>What + does + S + do?</b> “your brother” (= he) → <b>does</b>; động từ chính <b>do</b> giữ nguyên.'},
+     m:{type:'q', wh:'what', aux:'does', subj:'your brother', verb:'do', vs:'does', sd:'“Your brother” là “he”'},
+     why:'Hỏi nghề nghiệp: <b>What does</b> your brother <b>do</b>?'},
     {id:'5', t:'You’re not sure whether Lisa speaks Spanish. You want to know. Ask her.', show:'Do you speak Spanish?',
      ans:['do you speak spanish'],
-     m:{type:'q', wh:'', aux:'do', subj:'you', verb:'speak', vs:'speaks', sd:'Hỏi trực tiếp Lisa → chủ ngữ you'},
-     why:'Không chắc nên hỏi câu Yes/No: <b>Do + you + V?</b> → Do you speak Spanish?'},
+     m:{type:'q', wh:'', aux:'do', subj:'you', verb:'speak', vs:'speaks', sd:'Hỏi Lisa thì dùng “you”'},
+     why:'Không chắc thì hỏi Yes/No: <b>Do you</b> speak Spanish?'},
     {id:'6', t:'You don’t know where Lisa’s grandparents live. You want to know. Ask Lisa.', show:'Where do your grandparents live?',
      ans:['where do your grandparents live'],
-     m:{type:'q', wh:'where', aux:'do', subj:'your grandparents', verb:'live', vs:'lives', sd:'“Your grandparents” số nhiều (= they)'},
-     why:'Hỏi nơi chốn → <b>Where + do + S + V?</b> “your grandparents” (ông bà, số nhiều) → <b>do</b>.'},
+     m:{type:'q', wh:'where', aux:'do', subj:'your grandparents', verb:'live', vs:'lives', sd:'Ông bà là số nhiều'},
+     why:'Hỏi ở đâu: <b>Where do</b> your grandparents <b>live</b>?'},
   ]
 };
 
 const EX5 = {
   bank: ['I agree', 'I apologise', 'I insist', 'I promise', 'I recommend'],
   example: {t:'Mr Evans is not in the office today. ___ you try calling him tomorrow.', w:'I suggest'},
-  mean: {'I agree':'tôi đồng ý', 'I apologise':'tôi xin lỗi', 'I insist':'tôi nhất quyết (nài nỉ)', 'I promise':'tôi hứa', 'I recommend':'tôi giới thiệu / khuyên dùng'},
+  mean: {'I agree':'tôi đồng ý', 'I apologise':'tôi xin lỗi', 'I insist':'tôi nhất quyết', 'I promise':'tôi hứa', 'I recommend':'tôi giới thiệu'},
   items: [
-    {id:'2', t:'I won’t tell anybody what you said. ___.', a:'I promise', why:'Người nói cam kết giữ bí mật → <b>I promise</b> (tôi hứa).'},
-    {id:'3', t:'<i>(in a restaurant)</i> You must let me pay for the meal. ___.', a:'I insist', why:'Người nói nhất quyết đòi trả tiền (“You must let me…”) → <b>I insist</b> (tôi nhất định trả đấy).'},
-    {id:'4', t:'___ for what I said. I shouldn’t have said it.', a:'I apologise', why:'Người nói hối hận vì đã nói điều không nên nói → <b>I apologise for</b> + điều đã làm (tôi xin lỗi vì…).'},
-    {id:'5', t:'The new restaurant in Baker Street is very good. ___ it.', a:'I recommend', why:'Khen nhà hàng ngon và khuyên người khác đến → <b>I recommend it</b> (tôi giới thiệu / khuyên bạn thử).'},
-    {id:'6', t:'I think you’re absolutely right. ___ with you.', a:'I agree', why:'“You’re absolutely right” thể hiện sự đồng tình → <b>I agree with you</b> (tôi đồng ý với bạn).'},
+    {id:'2', t:'I won’t tell anybody what you said. ___.', a:'I promise', why:'Hứa giữ bí mật: <b>I promise</b>.'},
+    {id:'3', t:'<i>(in a restaurant)</i> You must let me pay for the meal. ___.', a:'I insist', why:'Nhất quyết đòi trả tiền: <b>I insist</b>.'},
+    {id:'4', t:'___ for what I said. I shouldn’t have said it.', a:'I apologise', why:'Xin lỗi vì lỡ lời: <b>I apologise</b>.'},
+    {id:'5', t:'The new restaurant in Baker Street is very good. ___ it.', a:'I recommend', why:'Khen nhà hàng và rủ người khác đi thử: <b>I recommend</b> it.'},
+    {id:'6', t:'I think you’re absolutely right. ___ with you.', a:'I agree', why:'Thấy bạn nói đúng: <b>I agree</b> with you.'},
   ],
-  note:'💡 Với các động từ <i>promise, insist, apologise, recommend, agree, suggest</i>, ta dùng thì hiện tại đơn khi chính lời nói là hành động. Nói “I promise” nghĩa là đang hứa.'
+  note:'💡 Nói “I promise” là đang hứa luôn rồi, nên mấy câu này dùng thì hiện tại đơn.'
 };
 
 const SECTIONS = [
@@ -456,7 +456,7 @@ function renderDrag(ex){
   bank.hidden = S.submitted;
   bank.innerHTML = free.length
     ? free.map(w => `<span class="chip${sel && sel.ex === ex && sel.w === w ? ' sel' : ''}" data-w="${esc(w)}">${esc(w)}</span>`).join('')
-    : `<span class="empty">Đã dùng hết từ 👍 Chạm vào từ đã điền để đổi.</span>`;
+    : `<span class="empty">Hết từ rồi 👍</span>`;
   bank.querySelectorAll('.chip').forEach(c => bindChip(c, ex, c.dataset.w, null));
   $('#ex' + ex).classList.toggle('pickmode', !!(sel && sel.ex === ex));
   $('#ex' + ex).classList.toggle('locked', S.submitted);
@@ -472,13 +472,13 @@ function renderSlot(ex, id){
   if (w){
     let lab = esc(w);
     if (ex === 1){ const e = S.e1[id]; lab = esc(w) + (e ? `<b class="suf">${e}</b>` : ''); }
-    if (ex === 3){ const f = S.f3[id]; lab = f == null ? `${esc(w)} <span class="q">chọn dạng ▸</span>` : esc(forms3(w)[f]); }
+    if (ex === 3){ const f = S.f3[id]; lab = f == null ? esc(w) : esc(forms3(w)[f]); }
     chip = `<span class="chip in" data-w="${esc(w)}">${lab}</span>`;
   }
   let h = `<span class="drop${w ? ' filled' : ''}${st}" data-ex="${ex}" data-id="${id}">${chip}</span>`;
   if (ex === 1 && w){
-    const e = S.e1[id];
-    h += `<span class="ends${e == null ? ' need' : ''}">${[['', 'không thêm'], ['s', '+s'], ['es', '+es']].map(([v, l]) =>
+    const e = S.e1[id] || '';
+    h += `<span class="ends">${[['s', '+s'], ['es', '+es']].map(([v, l]) =>
       `<button type="button" class="${e === v ? 'on' : ''}" data-end="${v}" ${S.submitted ? 'disabled' : ''}>${l}</button>`).join('')}</span>`;
   }
   if (ex === 3 && w){
@@ -490,7 +490,8 @@ function renderSlot(ex, id){
     if (!S.submitted && sel && sel.ex === ex && !S['d' + ex][id]) place(ex, id, sel.w, null);
   });
   host.querySelectorAll('.ends button').forEach(b => b.addEventListener('click', () => {
-    S.e1[id] = b.dataset.end; save(); renderSlot(1, id); progress();
+    // bấm lần nữa vào đuôi đang chọn → bỏ đuôi
+    S.e1[id] = (S.e1[id] || '') === b.dataset.end ? '' : b.dataset.end; save(); renderSlot(1, id); progress();
   }));
   const arrow = host.querySelector('.arrow');
   if (arrow) arrow.addEventListener('click', e => { e.stopPropagation(); toggleMenu(arrow, id); });
@@ -575,7 +576,7 @@ function toggleMenu(btn, id){
   if (!menu.hidden && menuFor === id){ closeMenu(); return; }
   menuFor = id;
   const w = S.d3[id];
-  menu.innerHTML = `<div class="mt">Chọn dạng đúng của “${esc(w)}”:</div>` +
+  menu.innerHTML = `<div class="mt">Chọn dạng đúng nè:</div>` +
     forms3(w).map((f, i) => `<button type="button" data-i="${i}" class="${S.f3[id] === i ? 'on' : ''}">${esc(f)}</button>`).join('');
   menu.hidden = false;
   const r = btn.getBoundingClientRect();
@@ -594,7 +595,7 @@ window.addEventListener('resize', closeMenu);
 /* ============ TIẾN ĐỘ ============ */
 function answeredList(){
   const a = [];
-  EX1.items.forEach(it => a.push(!!S.d1[it.id] && S.e1[it.id] != null));
+  EX1.items.forEach(it => a.push(!!S.d1[it.id]));
   Object.keys(EX2.blanks).forEach(k => a.push(!!(S.t['2-' + k] || '').trim()));
   EX3.items.forEach(it => a.push(!!S.d3[it.id] && S.f3[it.id] != null));
   EX4.items.forEach(it => a.push(it.two ? !!((S.t['4-2a'] || '').trim() && (S.t['4-2b'] || '').trim()) : !!(S.t['4-' + it.id] || '').trim()));
@@ -610,38 +611,38 @@ function progress(){
 /* ============ CHẨN ĐOÁN LỖI CHO CÂU GÕ ============ */
 function diag(raw, m){
   const out = [];
-  if (/\b(doesnt|dont)\b/i.test(raw || '')) out.push('Nhớ viết dấu nháy: <b>doesn’t</b> / <b>don’t</b>.');
+  if (/\b(doesnt|dont)\b/i.test(raw || '')) out.push('Nhớ có dấu nháy nha: <b>doesn’t / don’t</b>.');
   let a = norm((raw || '').replace(/\bdoesnt\b/gi, "doesn't").replace(/\bdont\b/gi, "don't"));
   if (m.pre && (a === m.pre || a.startsWith(m.pre + ' '))){
-    out.push(`Không cần gõ lại “${cap(m.pre)}” vì từ này đã có sẵn trong câu. Chỉ điền phần còn thiếu.`);
+    out.push(`Chữ “${cap(m.pre)}” có sẵn trong câu rồi, em chỉ cần điền phần thiếu thôi.`);
     a = a.slice(m.pre.length).trim();
   }
   const w = a.split(' ').filter(Boolean);
   const neg = m.aux === 'does' ? 'doesn’t' : 'don’t';
   if (m.type === 'aff'){
-    if (w.includes(m.verb)) out.push(`${m.sd} + câu khẳng định → động từ phải thêm -s: <b>${m.vs}</b>.`);
-    if (w.includes('do') || w.includes('does')) out.push('Câu khẳng định không dùng trợ động từ do/does.');
+    if (w.includes(m.verb)) out.push(`${m.sd} nên phải thêm s: <b>${m.vs}</b>.`);
+    if (w.includes('do') || w.includes('does')) out.push('Câu khẳng định không cần do/does đâu.');
   } else if (m.type === 'neg'){
     const ni = w.indexOf('not');
-    if (ni < 0) out.push(`Đề cho “not” nên đây là câu phủ định: <b>${neg} + ${m.verb}</b>.`);
+    if (ni < 0) out.push(`Đề có “not” nên câu này phủ định: <b>${neg} ${m.verb}</b>.`);
     else {
       const aux = w[ni - 1];
-      if (aux !== 'do' && aux !== 'does') out.push(`Phủ định thì hiện tại đơn cần trợ động từ: <b>${neg}</b> + V nguyên mẫu.`);
-      else if (aux !== m.aux) out.push(`${m.sd} → dùng <b>${neg}</b>, không dùng ${aux === 'does' ? 'doesn’t' : 'don’t'}.`);
-      if (w.slice(ni + 1).includes(m.vs) && m.vs !== m.verb) out.push(`Sau ${neg}, động từ giữ nguyên mẫu: <b>${m.verb}</b> (không phải ${m.vs}).`);
+      if (aux !== 'do' && aux !== 'does') out.push(`Thiếu <b>${neg}</b> rồi.`);
+      else if (aux !== m.aux) out.push(`${m.sd} thì dùng <b>${neg}</b> chứ không phải ${aux === 'does' ? 'doesn’t' : 'don’t'}.`);
+      if (w.slice(ni + 1).includes(m.vs) && m.vs !== m.verb) out.push(`Sau ${neg} thì động từ không thêm s: <b>${m.verb}</b>.`);
     }
   } else {
-    if (m.wh && !(a === m.wh || a.startsWith(m.wh + ' '))) out.push(`Câu hỏi cần bắt đầu bằng từ để hỏi <b>${cap(m.wh)}</b>.`);
+    if (m.wh && !(a === m.wh || a.startsWith(m.wh + ' '))) out.push(`Câu hỏi phải mở đầu bằng <b>${cap(m.wh)}</b>.`);
     const ai = w.findIndex(x => x === 'do' || x === 'does');
     const sw = m.subj.split(' ');
     const si = w.findIndex((x, i) => sw.every((y, j) => w[i + j] === y));
-    if (ai < 0) out.push(`Câu hỏi thì hiện tại đơn cần trợ động từ <b>${m.aux === 'does' ? 'Does/does' : 'Do/do'}</b> đứng TRƯỚC chủ ngữ: ${m.wh ? '(Wh-) + ' : ''}do/does + S + V?`);
+    if (ai < 0) out.push(`Thiếu <b>${m.aux}</b> trước chủ ngữ rồi.`);
     else {
-      if (si >= 0 && si < ai) out.push('Sai trật tự từ: trợ động từ do/does phải đứng <b>trước</b> chủ ngữ.');
-      if (w[ai] !== m.aux) out.push(`${m.sd} → dùng <b>${m.aux}</b>, không dùng ${w[ai]}.`);
-      if (w.slice(ai + 1).includes(m.vs)) out.push(`Sau do/does, động từ chính trở về nguyên mẫu: <b>${m.verb}</b> (không phải ${m.vs}).`);
+      if (si >= 0 && si < ai) out.push('<b>do/does</b> phải đứng trước chủ ngữ nha.');
+      if (w[ai] !== m.aux) out.push(`${m.sd} thì dùng <b>${m.aux}</b> chứ không phải ${w[ai]}.`);
+      if (w.slice(ai + 1).includes(m.vs)) out.push(`Có do/does rồi thì động từ không thêm s: <b>${m.verb}</b>.`);
     }
-    if (si < 0) out.push(`Chủ ngữ của câu hỏi phải là <b>${m.subj === 'maria' ? 'Maria' : m.subj}</b>.`);
+    if (si < 0) out.push(`Chủ ngữ phải là <b>${m.subj === 'maria' ? 'Maria' : m.subj}</b>.`);
   }
   return out;
 }
@@ -652,35 +653,23 @@ function grade(){
   const push = (o) => items.push(o);
 
   EX1.items.forEach(it => {
-    const w = S.d1[it.id], e = S.e1[it.id];
+    const w = S.d1[it.id], e = S.e1[it.id] || '';
     const correct = it.v + it.e;
     const ans = w ? w + (e || '') : '';
     const ok = w === it.v && e === it.e;
     const msgs = [];
-    if (!w) msgs.push('Em chưa điền chỗ này.');
-    else {
-      if (w !== it.v) msgs.push(`Em chọn <b>${w}</b> (${EX1.mean[w]}), không hợp nghĩa câu. Câu này cần: <i>${it.mean}</i>.`);
-      if (e == null) msgs.push('Em chưa chọn đuôi (không thêm / +s / +es).');
-      else if (e !== it.e){
-        if (it.e === '') msgs.push(`${it.subj} → động từ <b>giữ nguyên</b>, không thêm -s/-es.`);
-        else if (e === '') msgs.push(`${it.subj} → động từ phải <b>thêm -s/-es</b>.`);
-        else msgs.push(`“${it.v}” không tận cùng bằng o, s, sh, ch, x, z nên chỉ thêm <b>-s</b> (${sForm(it.v)}), không thêm -es.`);
-      }
-    }
-    const rule = it.e ? (needsEs(it.v) ? ` “${it.v}” tận cùng bằng ${it.v.slice(-1)} nên thêm -es.` : ' Chủ ngữ số ít (he/she/it) → thêm -s.') : ' Chủ ngữ số nhiều (they) → giữ nguyên động từ.';
-    push({sec:'2.1', key:'1-' + it.id, fb:'fb-1-' + it.id, n:it.id, q:plain(it.t), ans, correct, ok, msgs,
-          why:`${it.subj} → <b>${correct}</b>.${rule} (${it.mean})`});
+    if (w && w !== it.v) msgs.push(`<b>${w}</b> nghĩa là “${EX1.mean[w]}”, chưa hợp câu này.`);
+    push({sec:'2.1', key:'1-' + it.id, fb:'fb-1-' + it.id, n:it.id, q:plain(it.t), ans, correct, ok, msgs, why:it.tip});
   });
 
   Object.entries(EX2.blanks).forEach(([k, b]) => {
     const raw = (S.t['2-' + k] || '').trim();
     const ok = !!raw && b.ans.map(norm).includes(norm(raw));
     let msgs = [];
-    if (!raw) msgs = ['Em chưa điền chỗ này.'];
-    else if (!ok){ msgs = diag(raw, b.m); if (!msgs.length) msgs = ['Đối chiếu với đáp án: kiểm tra chính tả và từ bị thiếu/thừa.']; }
+    if (raw && !ok){ msgs = diag(raw, b.m); if (!msgs.length) msgs = [CHECK_SPELL]; }
     const s = EX2.sentences.find(x => x.parts.includes(k));
     const q = plain(s.parts.map((p, i) => i % 2 ? (p === k ? '___' : '…') : p).join(''));
-    push({sec:'2.2', key:'2-' + k, fb:'fb-2-' + s.id, n:k, q, ans:raw, correct:b.show, ok, msgs, why:b.why, label:k.length > 1 ? `Chỗ trống ${k === '8a' ? '1' : '2'}: ` : ''});
+    push({sec:'2.2', key:'2-' + k, fb:'fb-2-' + s.id, n:k, q, ans:raw, correct:b.show, ok, msgs, why:b.why, label:k.length > 1 ? `Ô ${k === '8a' ? '1' : '2'}: ` : ''});
   });
 
   EX3.items.forEach(it => {
@@ -689,18 +678,11 @@ function grade(){
     const ans = w ? (f == null ? w + ' (chưa chọn dạng)' : forms3(w)[f]) : '';
     const ok = w === it.v && f === it.f;
     const msgs = [];
-    if (!w) msgs.push('Em chưa điền chỗ này.');
-    else {
-      if (w !== it.v) msgs.push(`Em chọn <b>${w}</b> (${EX3.mean[w]}), không hợp nghĩa câu. Động từ đúng là <b>${it.v}</b> (${EX3.mean[it.v]}).`);
-      if (f == null) msgs.push('Em chưa bấm ▾ để chọn dạng động từ.');
-      else if (f !== it.f){
-        const wantNeg = it.f >= 2, gotNeg = f >= 2, wantSing = it.f === 0 || it.f === 2, gotSing = f === 0 || f === 2;
-        if (wantNeg !== gotNeg) msgs.push(`${it.pol}. Vì vậy cần <b>${wantNeg ? 'dạng phủ định' : 'dạng khẳng định'}</b>.`);
-        if (wantSing !== gotSing) msgs.push(`${it.subj} → ${wantNeg ? `dùng <b>${wantSing ? 'doesn’t' : 'don’t'}</b>` : (wantSing ? '<b>thêm -s/-es</b>' : '<b>giữ nguyên</b> động từ')}.`);
-      }
+    if (w){
+      if (w !== it.v) msgs.push(`<b>${w}</b> nghĩa là “${EX3.mean[w]}”, chưa hợp câu này.`);
+      if (f == null) msgs.push('Em quên bấm ▾ chọn dạng rồi.');
     }
-    push({sec:'2.3', key:'3-' + it.id, fb:'fb-3-' + it.id, n:it.id, q:plain(it.t), ans, correct, ok, msgs,
-          why:`${it.pol}. ${it.subj} → <b>${correct}</b>.`});
+    push({sec:'2.3', key:'3-' + it.id, fb:'fb-3-' + it.id, n:it.id, q:plain(it.t), ans, correct, ok, msgs, why:it.tip});
   });
 
   EX4.items.forEach(it => {
@@ -709,8 +691,7 @@ function grade(){
       : (S.t['4-' + it.id] || '').trim();
     const ok = !!raw && it.ans.map(norm).includes(norm(raw));
     let msgs = [];
-    if (!raw) msgs = ['Em chưa viết câu hỏi.'];
-    else if (!ok){ msgs = diag(raw, it.m); if (!msgs.length) msgs = ['Đối chiếu với đáp án: kiểm tra chính tả và từ bị thiếu/thừa.']; }
+    if (raw && !ok){ msgs = diag(raw, it.m); if (!msgs.length) msgs = [CHECK_SPELL]; }
     push({sec:'2.4', key:'4-' + it.id, fb:'fb-4-' + it.id, n:it.id, q:it.t, ans:raw, correct:it.show, ok, msgs, why:it.why});
   });
 
@@ -718,8 +699,7 @@ function grade(){
     const w = S.d5[it.id];
     const ok = w === it.a;
     const msgs = [];
-    if (!w) msgs.push('Em chưa điền chỗ này.');
-    else if (!ok) msgs.push(`Em chọn <b>${w}</b> (${EX5.mean[w]}), không hợp ngữ cảnh.`);
+    if (w && !ok) msgs.push(`<b>${w}</b> là “${EX5.mean[w]}”, chưa hợp ngữ cảnh.`);
     push({sec:'2.5', key:'5-' + it.id, fb:'fb-5-' + it.id, n:it.id, q:plain(it.t), ans:w || '', correct:it.a, ok, msgs, why:it.why});
   });
 
@@ -734,9 +714,9 @@ function grade(){
 /* ============ HIỂN THỊ KẾT QUẢ ============ */
 function fbHtml(i){
   const head = i.ok
-    ? `<div class="h">${i.label || ''}✅ Đúng rồi! <b>${esc(i.correct)}</b></div>`
-    : `<div class="h">${i.label || ''}❌ ${i.ans ? `Em trả lời: <s>${esc(i.ans)}</s>` : 'Em bỏ trống'} → Đáp án: <b>${esc(i.correct)}</b></div>`;
-  const errs = i.ok ? '' : `<ul>${i.msgs.map(m => `<li>${m}</li>`).join('')}</ul>`;
+    ? `<div class="h">${i.label || ''}✅ Đúng rồi!</div>`
+    : `<div class="h">${i.label || ''}❌ ${i.ans ? `<s>${esc(i.ans)}</s>` : 'Chưa làm'} → <b>${esc(i.correct)}</b></div>`;
+  const errs = !i.ok && i.msgs.length ? `<ul>${i.msgs.map(m => `<li>${m}</li>`).join('')}</ul>` : '';
   return `<div class="part">${head}${errs}<div class="why">💡 ${i.why}</div></div>`;
 }
 function showResults(){
@@ -766,9 +746,9 @@ function renderSummary(){
   $('#summaryBox').innerHTML = `<div class="card summary">
     <div class="score">${RES.score}<span>/${RES.total}</span></div>
     <div style="flex:1;min-width:220px">
-      <div style="font-weight:800;font-size:18px">${RES.score === RES.total ? '🎉 Xuất sắc! Em làm đúng tất cả!' : RES.score >= RES.total * .8 ? '👏 Làm tốt lắm!' : RES.score >= RES.total * .5 ? '💪 Khá ổn, cố gắng thêm nhé!' : '📚 Em xem kỹ phần giải thích bên dưới nhé!'}</div>
+      <div style="font-weight:800;font-size:18px">${RES.score === RES.total ? '🎉 Đúng hết luôn, giỏi quá!' : RES.score >= RES.total * .8 ? '👏 Giỏi lắm!' : RES.score >= RES.total * .5 ? '💪 Khá rồi, cố thêm chút nữa nhé!' : '📚 Xem lại giải thích bên dưới nha!'}</div>
       <div class="secs">${RES.sections.map(s => `<span class="sec${s.score === s.total ? ' full' : ''}">${s.id}: ${s.score}/${s.total}</span>`).join('')}</div>
-      <div style="font-size:14.5px;color:var(--muted)">Kéo xuống để xem đáp án và giải thích từng câu. Câu sai được tô đỏ.</div>
+      <div style="font-size:14.5px;color:var(--muted)">Kéo xuống xem đáp án nhé, câu sai tô đỏ.</div>
       <div class="status" id="sendStatus"></div>
     </div></div>`;
   updateStatus();
@@ -781,15 +761,17 @@ function updateStatus(){
   const el = $('#sendStatus'); if (!el) return;
   const st = S.sent ? 'ok' : sendState;
   el.className = 'status ' + (st || '');
-  if (st === 'ok') el.innerHTML = '✅ Đã gửi bài cho cô!';
+  if (st === 'ok') el.innerHTML = '✅ Cô đã nhận được bài!';
   else if (st === 'sending') el.innerHTML = '⏳ Đang gửi bài cho cô…';
   else if (st === 'warn') el.innerHTML = '⚠️ Trang chưa được cài địa chỉ gửi bài (SCRIPT_URL), nên bài chưa được gửi cho cô.';
-  else el.innerHTML = `⚠️ Chưa gửi được bài cho cô${sendErr ? ` (${esc(sendErr)})` : ''}. Kiểm tra mạng rồi bấm: <button class="btn" type="button" id="resendBtn" style="padding:6px 14px;font-size:14px;margin-left:4px">Gửi lại</button>`;
+  else el.innerHTML = `⚠️ Chưa gửi được bài${sendErr ? ` (${esc(sendErr)})` : ''}. Em kiểm tra mạng rồi bấm: <button class="btn" type="button" id="resendBtn" style="padding:6px 14px;font-size:14px;margin-left:4px">Gửi lại</button>`;
   const rb = $('#resendBtn'); if (rb) rb.onclick = send;
 }
 function payload(){
   return {
     app:'btvn', unit:UNIT, title:TITLE, name:S.name, cls:S.cls, submittedAt:S.submittedAt,
+    startedAt:S.startedAt || null, leaves:S.leaves || 0,
+    timeTakenSec:S.startedAt ? Math.max(0, Math.round((new Date(S.submittedAt) - new Date(S.startedAt)) / 1000)) : null,
     score:RES.score, total:RES.total,
     sections:RES.sections.map(s => ({id:s.id, title:s.title, score:s.score, total:s.total})),
     items:RES.items.map(i => ({sec:i.sec, n:i.n, q:i.q, ans:i.ans, correct:i.correct, ok:i.ok})),
@@ -813,8 +795,10 @@ async function send(){
 $('#submitBtn').addEventListener('click', () => {
   if (S.submitted) return;
   const a = answeredList(), left = a.filter(x => !x).length;
-  if (left && !confirm(`Em còn ${left} câu chưa làm. Vẫn nộp bài chứ?\n(Sau khi nộp sẽ không sửa được nữa.)`)) return;
-  if (!left && !confirm('Nộp bài? Sau khi nộp sẽ không sửa được nữa.')) return;
+  muteAway = true; // hộp xác nhận làm trang mất focus – không tính là rời trang
+  const go = confirm(left ? `Còn ${left} câu chưa làm. Em vẫn nộp luôn hả?\n(Nộp rồi là không sửa được nữa đâu.)` : 'Nộp bài nhé? Nộp rồi là không sửa được nữa đâu.');
+  setTimeout(() => { muteAway = false; away = false; }, 800);
+  if (!go) return;
   closeMenu(); sel = null;
   S.submitted = true; S.submittedAt = new Date().toISOString(); save();
   showResults();
@@ -838,10 +822,25 @@ $('#startBtn').addEventListener('click', () => {
   if (n.length < 2){ $('#startErr').textContent = 'Em hãy nhập họ và tên.'; return; }
   if (!c){ $('#startErr').textContent = 'Em hãy nhập lớp.'; return; }
   $('#startErr').textContent = '';
-  S.name = n.slice(0, 80); S.cls = c.slice(0, 30); save();
+  S.name = n.slice(0, 80); S.cls = c.slice(0, 30);
+  if (!S.startedAt) S.startedAt = new Date().toISOString();
+  save();
   showWork(); window.scrollTo({top:0});
 });
 ['inName', 'inCls'].forEach(id => $('#' + id).addEventListener('keydown', e => { if (e.key === 'Enter') $('#startBtn').click(); }));
+
+/* ============ ĐẾM SỐ LẦN RỜI TRANG ============ */
+// Tính 1 lần khi em chuyển tab/ứng dụng, thu nhỏ cửa sổ hoặc tải lại trang (chỉ trong lúc đang làm bài)
+let away = false, muteAway = false;
+const tracking = () => !!S.startedAt && !S.submitted && !$('#work').hidden;
+function goAway(){
+  if (muteAway || away || !tracking()) return;
+  away = true; S.leaves = (S.leaves || 0) + 1; save();
+}
+function comeBack(){ if (!document.hidden && document.hasFocus()) away = false; }
+document.addEventListener('visibilitychange', () => document.hidden ? goAway() : comeBack());
+window.addEventListener('blur', goAway);
+window.addEventListener('focus', comeBack);
 
 /* ============ KHỞI ĐỘNG ============ */
 build();
