@@ -102,10 +102,13 @@ ul.tight li{margin:3px 0}
 .q{padding:14px 0;border-bottom:1px solid #f1ebe1}
 .q:last-child{border-bottom:none}
 .qline{display:flex;gap:10px;align-items:baseline}
-.qline .code{flex:none;min-width:74px}
+.qline .qn{flex:none;width:26px;height:26px;border-radius:50%;background:var(--hint);color:var(--muted);font-weight:800;font-size:14px;display:inline-flex;align-items:center;justify-content:center;transform:translateY(-1px)}
 .qtext{font-weight:700;font-size:17.5px}
-.sims{margin:6px 0 0 84px}
-@media (max-width:520px){.sims{margin-left:14px}.qline{flex-direction:column;gap:0}}
+.resq{margin:6px 0 0 36px;font-size:14.5px}
+.resq summary{cursor:pointer;color:var(--blue);font-weight:700;list-style:none}
+.resq summary::-webkit-details-marker{display:none}
+.resq ul{margin:4px 0 0}
+.stage .resq{margin-left:0}
 .opt{color:var(--muted);font-size:14.5px;padding:3px 0}
 .opt .ot{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
 .opt .ot .txt{flex:1 1 220px}

@@ -92,7 +92,7 @@ async function loadBlobs(keys) {
 /* ================= model ================= */
 const ITEMS = {}; // key -> item
 const findGroup = id => { for (const w of WEEKS) for (const g of w.p1) if (g.id === id) return g; return null; };
-const bullets = s => s.split(' · ');
+const storyTitle = id => { for (const w of WEEKS) for (const s of w.stories) if (s.id === id) return s.title; return ''; };
 
 function model(w) {
   const pre = 'W' + w.n + ':';
@@ -103,12 +103,8 @@ function model(w) {
     g,
     qs: g.q.map((arr, i) => {
       const code = g.id + '-' + pad2(i + 1);
-      return {
-        main: add({ code, q: arr[0], part: 'Part 1', req: true, max: LIM.p1, type: 'std', cmp: w.review ? 'W1:' + code : null }),
-        sims: arr.slice(1).map((s, j) => add({ code: code + '-s' + (j + 1), q: s, part: 'Part 1 (similar)', req: false, max: LIM.p1, type: 'std' })),
-      };
+      return { main: add({ code, q: arr[0], part: 'Part 1', req: true, max: LIM.p1, type: 'std', cmp: w.review ? 'W1:' + code : null }) };
     }),
-    os: (g.o || []).map((s, i) => add({ code: g.id + '-o' + (i + 1), q: s, part: 'Part 1 (other)', req: false, max: LIM.p1, type: 'std' })),
   }));
 
   const stories = w.stories.map(s => ({
@@ -116,19 +112,14 @@ function model(w) {
     p2: add({ code: s.id + '-P2', q: s.p2[0], say: s.p2.slice(1), part: 'Part 2 ★', req: true, max: LIM.p2, type: 'p2' }),
     p3: s.p3.map((arr, i) => {
       const code = s.id + '-P3-' + pad2(i + 1);
-      return {
-        main: add({ code, q: arr[0], part: 'Part 3', req: true, max: LIM.p3, type: 'std' }),
-        sims: arr.slice(1).map((x, j) => add({ code: code + '-s' + (j + 1), q: x, part: 'Part 3 (similar)', req: false, max: LIM.p3, type: 'std' })),
-      };
+      return { main: add({ code, q: arr[0], part: 'Part 3', req: true, max: LIM.p3, type: 'std', rescue: true }) };
     }),
-    vs: s.v.map((v, i) => add({ code: s.id + '-V' + (i + 1), q: v[0], say: bullets(v[1]), part: 'Part 2 (same story)', req: false, max: LIM.p2, type: 'p2' })),
-    os: s.o.map((x, i) => add({ code: s.id + '-o' + (i + 1), q: x, part: 'Part 3 (other)', req: false, max: LIM.p3, type: 'std' })),
   }));
 
   const mocks = (w.mocks || []).map(m => {
     let k = 0;
     const p1qs = [];
-    m.p1.forEach(g => g.q.forEach(q => p1qs.push({ code: m.id + '-P1-' + pad2(++k), q, group: g.title + ' (from ' + g.from + ')' })));
+    m.p1.forEach(g => g.q.forEach(q => p1qs.push({ code: m.id + '-P1-' + pad2(++k), q, group: g.title })));
     const p3qs = m.p3.map((q, i) => ({ code: m.id + '-P3-' + (i + 1), q }));
     return {
       m,
@@ -158,24 +149,6 @@ function stats(n) {
     unsent: its.filter(i => META[i.key] && !META[i.key].sent).length,
     any: its.filter(i => META[i.key]).length,
   };
-}
-function reqSummary(md) {
-  const w = md.w;
-  if (w.mocks) return plural(w.mocks.length, 'mock test');
-  const p1 = md.groups.reduce((a, g) => a + g.qs.length, 0);
-  const p3 = md.stories.reduce((a, s) => a + s.p3.length, 0);
-  return (w.review ? 'Review ' + w.review + ' (' + p1 + ')' : 'P1: ' + p1 + ' questions') + ' · P2: ' + plural(md.stories.length, 'topic') + ' · P3: ' + p3 + ' questions';
-}
-function weekTasks(md) {
-  const w = md.w;
-  if (w.tasks) return w.tasks;
-  const p1 = md.groups.reduce((a, g) => a + g.qs.length, 0), p3 = md.stories.reduce((a, s) => a + s.p3.length, 0), p2 = md.stories.length;
-  return [
-    'Part 1: record the ' + p1 + ' required questions, 2–3 sentences each. Similar questions (≈) – just read them.',
-    'Part 2: prepare ' + (p2 === 1 ? '1 ★ topic' : p2 + ' ★ topics') + ' – write 4–5 keywords in 1 minute, then speak for 2 minutes and record it.',
-    'Part 3: answer the ' + p3 + ' required questions using Answer – Reason – Example.',
-    'Weekend: a mock test of about 12 minutes with any questions from this week.',
-  ];
 }
 // notes sent together with the recordings (reflections, new topics)
 function extrasFor(n) {
@@ -217,8 +190,9 @@ function saveMe() {
   setStatus('', '');
 }
 
-function rescueHtml(open) {
-  return `<details class="box"${open ? ' open' : ''}><summary>🛟 5 rescue phrases</summary>
+// small rescue-phrase list shown under each Part 3 question
+function rescueHtml() {
+  return `<details class="resq"><summary>🛟 Rescue phrases</summary>
     <ul class="tight rescue">${PLAN.rescue.map(r => `<li>${esc(r)}</li>`).join('')}</ul></details>`;
 }
 
@@ -233,8 +207,10 @@ function renderHome() {
   const cur = currentWeek();
   const cards = WEEKS.map(w => {
     const md = getModel(w.n), st = stats(w.n), open = isOpen(w.n);
-    const p1 = w.mocks ? (w.n === 9 ? 'Mock tests' : 'Light review before the exam') : w.review ? 'Review ' + w.review + ' + new topics' : md.groups.map(g => g.g.title).join(' · ');
-    const p2 = w.mocks ? w.mocks.map(m => m.id).join(', ') : md.stories.map(s => s.s.title).join(' · ');
+    const p1 = md.groups.map(g => g.g.title).join(' · ');
+    const p2 = md.stories.map(s => s.s.title).join(' · ');
+    const topics = w.mocks ? `<span>${plural(w.mocks.length, 'mock test')}</span>`
+      : `<span>Part 1:</span> ${esc(p1)}<br><span>Part 2:</span> ${esc(p2)}`;
     let tag = '';
     if (!open) tag = `<span class="tag lock">🔒 Opens ${esc(fmtDate(weekStart(w.n)))}</span>`;
     else if (st.total && st.done === st.total && !st.unsent) tag = '<span class="tag done">✓ Done</span>';
@@ -242,9 +218,9 @@ function renderHome() {
     const inner = `<span class="n">W${w.n}<small>${esc(weekStart(w.n).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }))}</small></span>
       <span class="body"><span class="t">${esc(w.title)}</span>${tag}<br>
       <span class="d">${esc(fmtDate(weekStart(w.n)))} – ${esc(fmtDate(weekDue(w.n)))} · Deadline <b>${esc(fmtDate(weekDue(w.n)))}</b></span>
-      <div class="topics"><span>Part 1:</span> ${esc(p1)}<br><span>Part 2 ★:</span> ${esc(p2)}<br><span>Required:</span> ${esc(reqSummary(md))}</div>
+      <div class="topics">${topics}</div>
       ${open && st.any ? `<div class="prog"><div style="width:${st.total ? Math.round(st.done / st.total * 100) : 0}%"></div></div>
-      <div class="prog-l">${st.done}/${st.total} required recorded${st.unsent ? ` · <b style="color:var(--wait)">${st.unsent} not sent yet</b>` : ''}</div>` : ''}</span>`;
+      <div class="prog-l">${st.done}/${st.total} recorded${st.unsent ? ` · <b style="color:var(--wait)">${st.unsent} not sent yet</b>` : ''}</div>` : ''}</span>`;
     return open
       ? `<a class="wk${w.n === cur ? ' now' : ''}" href="#week-${w.n}">${inner}</a>`
       : `<div class="wk locked" aria-disabled="true">${inner}</div>`;
@@ -253,47 +229,18 @@ function renderHome() {
   $('#app').innerHTML = whoHtml() + `
   <section class="card">
     <h2>🗓 Your 10 weeks</h2>
-    <p class="muted small" style="margin-top:-6px">Each week starts on <b>Tuesday</b> and the deadline is the <b>following Monday</b>.
-    Week 1 starts on ${esc(fmtDate(weekStart(1)))} and Week 10 ends on ${esc(fmtDate(weekDue(10)))} (exam expected around ${esc(fmtDate(dayAt(70)))}).
-    A week opens on its start date.</p>
     <div class="weeks">${cards}</div>
   </section>
   ${howHtml()}`;
 }
 
 function howHtml() {
-  return `<details class="box" open><summary>📖 How to use this plan</summary>
-    <p style="margin-top:0">In Weeks 1–8 you practise just 1–2 Part 1 groups and 1–2 Part 2 topics a week. Similar topics are grouped together, and questions with the same idea sit under one required question. Weeks 9–10 are mock tests and light review. Topics about work, companies and business have been removed.</p>
-    <div class="tblwrap"><table class="tbl">
-      <tr><th>Question type</th><th>How to practise</th></tr>
-      <tr><td><b>Required question</b></td><td>Bold, with a code. <b>Record a 2–3 sentence answer.</b></td></tr>
-      <tr><td class="muted">≈ Similar question</td><td>Grey, under a required question. No separate answer needed: your answer to the required question works for it too.</td></tr>
-      <tr><td class="muted">Other question (optional)</td><td>Grey, at the end of each group. Read them to get familiar; answer briefly if you have time.</td></tr>
-      <tr><td><b>★ Practice topic (Part 2)</b></td><td>The only topic you prepare carefully for each story: write 4–5 keywords, then speak for 2 minutes.</td></tr>
-      <tr><td class="muted">Same-story topic</td><td>No separate practice. If you get it in the exam, tell your ★ story and just change the first and last sentences.</td></tr>
-    </table></div>
-    <p class="small muted">Every grey question has a small <span class="mic">🎙 Record</span> button if you want to practise it too.</p>
-    <div class="tblwrap"><table class="tbl small">
-      <tr><th>Code</th><th>Meaning</th></tr>
-      <tr><td><code>W2-A</code></td><td>The first Part 1 group of Week 2</td></tr>
-      <tr><td><code>W2-A-03</code></td><td>Required question 3 of that group</td></tr>
-      <tr><td><code>W2-A-03-s1</code></td><td>Similar question 1 of W2-A-03</td></tr>
-      <tr><td><code>W2-A-o2</code></td><td>Other (optional) question 2</td></tr>
-      <tr><td><code>W2-S1</code></td><td>The first Part 2 story of Week 2</td></tr>
-      <tr><td><code>W2-S1-P2</code></td><td>The ★ practice topic of that story</td></tr>
-      <tr><td><code>W2-S1-V1</code></td><td>Same-story topic 1</td></tr>
-      <tr><td><code>W2-S1-P3-02</code></td><td>Required Part 3 question 2</td></tr>
-      <tr><td><code>MOCK-1-P1-03</code></td><td>Part 1 question 3 of mock test 1</td></tr>
-    </table></div>
-  </details>
-  <details class="box"><summary>⏱ Your weekly rhythm</summary><ul class="tight">${PLAN.rhythm.map(r => `<li>${esc(r)}</li>`).join('')}</ul></details>
-  <details class="box"><summary>🎙 Recording &amp; sending</summary><ul class="tight">
-    <li>Press <b>🎙 Record</b>, answer, then press <b>⏹ Stop</b>. Listen back – if you don’t like it, press <b>🔁 Record again</b>.</li>
-    <li>Your recordings are saved on this device, so you can close the page and continue later. Use the same phone/computer and browser all week.</li>
-    <li>Press <b>✉ Send to teacher</b> at the bottom of the week page. Only new or re-recorded answers are sent, so you can send several times during the week.</li>
-    <li>The first time, your browser asks to use the microphone – press <b>Allow</b>. Use Chrome (Android, computer) or Safari (iPhone, iPad).</li>
-  </ul></details>
-  ${rescueHtml(false)}`;
+  return `<section class="card"><h3 style="margin:0 0 6px">📖 How it works</h3><ol class="tight" style="margin:0">
+    <li>Open this week. Press <b>🎙 Record</b>, answer, then press <b>⏹ Stop</b>.</li>
+    <li>Listen back. Not happy? Press <b>🔁 Record again</b>.</li>
+    <li>Press <b>✉ Send to teacher</b> at the bottom of the page. You can send more later.</li>
+    <li>Use Chrome or Safari and press <b>Allow</b> when asked for the microphone.</li>
+  </ol></section>`;
 }
 
 /* ================= week page ================= */
@@ -322,21 +269,17 @@ async function renderWeek(n) {
     <div class="kv">
       <div>Dates</div><div>${esc(fmtDate(weekStart(n)))} – ${esc(fmtDate(weekDue(n)))}</div>
       <div>Deadline</div><div><b>${esc(fmtDate(weekDue(n)))}</b> <span class="tag ${dl < 0 ? 'late' : 'now'}">${esc(due)}</span></div>
-      <div>Focus</div><div>${esc(w.focus)}</div>
-      <div>Required</div><div>${esc(reqSummary(md))}</div>
     </div>
-    <h3 style="margin:16px 0 4px">✅ This week’s tasks</h3>
-    <ul class="tight">${weekTasks(md).map(t => `<li>${esc(t)}</li>`).join('')}</ul>
-  </section>${rescueHtml(n <= 2)}`;
+  </section>`;
 
   if (md.groups.length) {
     h += `<h2 class="part-title">Part 1${w.review ? ' – review' : ''}</h2>`;
-    if (w.review) h += `<p class="muted small" style="margin:-6px 4px 12px">Answer the required questions again. If you recorded them in Week 1, your old answer is shown so you can compare.</p>`;
+    if (w.review) h += `<p class="muted small" style="margin:-6px 4px 12px">Answer again and compare with your Week 1 answer.</p>`;
     h += md.groups.map(groupHtml).join('');
   }
   if (md.stories.length) h += `<h2 class="part-title">Part 2 &amp; 3</h2>` + md.stories.map(storyHtml).join('');
   if (w.newTopics) h += `<section class="card"><h3>🆕 New Q1/2027 topics (add later)</h3><p class="small">${esc(w.newTopics)}</p>
-    <div class="kw"><label for="nt">New topics and which story you will use (e.g. “Describe a teacher… → W3-S1”)</label>
+    <div class="kw"><label for="nt">New topics and which story you will use (e.g. “Describe a teacher… → my English teacher”)</label>
     <textarea id="nt" data-note="W${n}:newtopics" rows="4">${esc(NOTES['W' + n + ':newtopics'] || '')}</textarea></div>
     <div class="msg">This note is sent to your teacher with your next recordings.</div></section>`;
   if (md.mocks.length) h += md.mocks.map(mockHtml).join('');
@@ -352,22 +295,20 @@ async function renderWeek(n) {
 function optHtml(it) {
   const has = !!META[it.key];
   const show = has || OPENOPT[it.key];
-  return `<div class="opt"><div class="ot"><span class="txt">${it.part.includes('similar') ? '≈ ' : ''}${esc(it.q)} <code>${esc(it.code)}</code></span>
+  return `<div class="opt"><div class="ot"><span class="txt">${esc(it.q)}</span>
     <button class="mic${has ? ' has' : ''}" type="button" data-opt="${esc(it.key)}">${has ? '✓ Recorded' : '🎙 Record'}</button></div>
     ${it.say ? `<div class="bul">${esc(it.say.join(' · '))}</div>` : ''}
     ${show ? `<div class="rec" id="${sid(it.key)}" data-key="${esc(it.key)}"></div>` : ''}</div>`;
 }
-function reqHtml(it, sims) {
-  return `<div class="q"><div class="qline"><code class="code">${esc(it.code)}</code><span class="qtext">${esc(it.q)}</span></div>
-    ${sims && sims.length ? `<div class="sims">${sims.map(optHtml).join('')}</div>` : ''}
+function reqHtml(it, i) {
+  return `<div class="q"><div class="qline"><span class="qn">${i + 1}</span><span class="qtext">${esc(it.q)}</span></div>
+    ${it.rescue ? rescueHtml() : ''}
     <div class="rec" id="${sid(it.key)}" data-key="${esc(it.key)}"></div></div>`;
 }
 function groupHtml(G) {
   const g = G.g;
-  return `<section class="card"><div class="ghead"><span class="gid">${esc(g.id)}</span><h3>${esc(g.title)}</h3></div>
-    <div class="from">Merged from: ${esc(g.from)}</div>
-    ${G.qs.map(x => reqHtml(x.main, x.sims)).join('')}
-    ${G.os.length ? `<div class="subh">Other questions (optional)</div>${G.os.map(optHtml).join('')}` : ''}</section>`;
+  return `<section class="card"><div class="ghead"><h3>${esc(g.title)}</h3></div>
+    ${G.qs.map((x, i) => reqHtml(x.main, i)).join('')}</section>`;
 }
 function cueHtml(title, say, star) {
   return `<div class="cue"><div class="ct">${star ? '★ ' : ''}${esc(title)}</div><div class="ys">You should say:</div>
@@ -379,25 +320,23 @@ function kwHtml(key, label) {
 }
 function storyHtml(S) {
   const s = S.s;
-  return `<section class="card"><div class="ghead"><span class="gid">${esc(s.id)}</span><h3>Story: ${esc(s.title)}</h3></div>
+  return `<section class="card"><div class="ghead"><h3>${esc(s.title)}</h3></div>
     <div class="hint"><b>Tip:</b> ${esc(s.hint)}</div>
-    <div class="qline"><code class="code">${esc(S.p2.code)}</code><span class="muted small"><b>Part 2 – practice topic</b></span></div>
-    ${cueHtml(s.p2[0], s.p2.slice(1), true)}
+    <div class="subh">Part 2</div>
+    ${cueHtml(s.p2[0], s.p2.slice(1))}
     ${kwHtml(S.p2.key)}
     <div class="rec" id="${sid(S.p2.key)}" data-key="${esc(S.p2.key)}"></div>
-    <div class="subh blue">Part 3 – required questions</div>
-    ${S.p3.map(x => reqHtml(x.main, x.sims)).join('')}
-    ${S.vs.length ? `<div class="subh">Same-story topics (no separate practice needed)</div>${S.vs.map(optHtml).join('')}` : ''}
-    ${S.os.length ? `<div class="subh">Other Part 3 questions (optional)</div>${S.os.map(optHtml).join('')}` : ''}</section>`;
+    <div class="subh blue">Part 3</div>
+    ${S.p3.map((x, i) => reqHtml(x.main, i)).join('')}</section>`;
 }
 function mockHtml(M) {
   const m = M.m, n = M.p1.week;
   const all = `<details class="box" style="margin-top:12px"><summary style="font-size:15px">👀 Examiner only: show all questions</summary>
-    <div class="small"><b>Part 1</b><ol class="tight">${M.p1.qs.map(q => `<li>${esc(q.q)} <code>${esc(q.code)}</code></li>`).join('')}</ol>
-    <b>Part 2</b> ${cueHtml(m.p2[0], m.p2.slice(1))}<div class="muted">Reuse story ${esc(m.reuse)}.</div>
-    <b>Part 3</b><ol class="tight">${M.p3.qs.map(q => `<li>${esc(q.q)} <code>${esc(q.code)}</code></li>`).join('')}</ol></div></details>`;
-  return `<section class="card mock"><h3>🎤 Mock test ${esc(m.id)}</h3>
-    <div class="muted small">About 11–14 minutes. A teacher or parent can be the examiner and read the questions aloud – or just read each question when it appears. The questions stay hidden until you start each part.</div>
+    <div class="small"><b>Part 1</b><ol class="tight">${M.p1.qs.map(q => `<li>${esc(q.q)}</li>`).join('')}</ol>
+    <b>Part 2</b> ${cueHtml(m.p2[0], m.p2.slice(1))}<div class="muted">Use your story: ${esc(storyTitle(m.reuse))}.</div>
+    <b>Part 3</b><ol class="tight">${M.p3.qs.map(q => `<li>${esc(q.q)}</li>`).join('')}</ol></div></details>`;
+  return `<section class="card mock"><h3>🎤 Mock test ${esc(m.id.replace('MOCK-', ''))}</h3>
+    <div class="muted small">About 12 minutes. The questions stay hidden until you start each part.</div>
     <div class="mpart"><h4>Part 1 <span class="muted small">(4–5 minutes · ${M.p1.qs.length} questions)</span></h4><div class="rec" id="${sid(M.p1.key)}" data-key="${esc(M.p1.key)}"></div></div>
     <div class="mpart"><h4>Part 2 <span class="muted small">(3–4 minutes · 1 minute to prepare, speak for up to 2 minutes)</span></h4><div class="rec" id="${sid(M.p2.key)}" data-key="${esc(M.p2.key)}"></div></div>
     <div class="mpart"><h4>Part 3 <span class="muted small">(4–5 minutes · ${M.p3.qs.length} questions)</span></h4><div class="rec" id="${sid(M.p3.key)}" data-key="${esc(M.p3.key)}"></div></div>
@@ -409,12 +348,10 @@ function mockHtml(M) {
 }
 function reviewHtml(md) {
   return `<h2 class="part-title">Stories to review</h2>
-  <p class="muted small" style="margin:-6px 4px 12px">Just read your keywords and say each story once. Recording is optional.</p>
+  <p class="muted small" style="margin:-6px 4px 12px">Read your keywords and say each story once. Recording is optional.</p>
   ${md.review.map(r => {
     const s = r.s, notes = (NOTES[r.it.notesKey] || '').trim();
-    return `<section class="card"><div class="ghead"><span class="gid">${esc(s.id)}</span><h3>${esc(s.title)}</h3>
-      <span class="tag done">${s.v.length + 1} topics</span></div>
-      <div class="cue" style="padding:8px 12px"><div class="ct" style="font-size:16px">★ ${esc(s.p2[0])}</div></div>
+    return `<section class="card"><div class="ghead"><h3>${esc(s.title)}</h3></div>
       <div class="small"><b class="muted">Your keywords (Week ${r.wk}):</b> ${notes ? esc(notes) : '<i class="muted">none written</i>'}</div>
       ${optHtml(r.it).replace('<div class="opt">', '<div class="opt" style="margin-top:4px">')}</section>`;
   }).join('')}`;
@@ -492,7 +429,7 @@ function paintMock(it, el) {
       const i = REC.qi, q = it.qs[i], last = i === it.qs.length - 1;
       el.innerHTML = `<div class="recing"><span class="dot"></span>Recording… <span class="tm" id="t_${sid(k)}">0:00</span></div>
         <div class="stage"><div class="qn">Question ${i + 1} of ${it.qs.length}${q.group ? ' · ' + esc(q.group) : ''}</div>
-        <div class="qbig">${esc(q.q)}</div></div>
+        <div class="qbig">${esc(q.q)}</div>${it.mp === 3 ? rescueHtml() : ''}</div>
         <div class="row">${last
           ? `<button class="btn red" type="button" data-act="stop">⏹ Finish ${partName}</button>`
           : `<button class="btn" type="button" data-act="mnext">Next question ›</button>
@@ -506,7 +443,7 @@ function paintMock(it, el) {
     if (it.qs && m.marks) {
       h += `<ol class="marks">${it.qs.map((q, i) => m.marks[i] == null ? '' : `<li><b>${clock(m.marks[i])}</b> ${esc(q.q)}</li>`).join('')}</ol>`;
     } else if (it.mp === 2) {
-      h += `<div class="small" style="margin-top:6px"><b>Topic:</b> ${esc(it.q)} <span class="muted">· reuse story ${esc(it.reuse)}</span></div>`;
+      h += `<div class="small" style="margin-top:6px"><b>Topic:</b> ${esc(it.q)} <span class="muted">· your story: ${esc(storyTitle(it.reuse))}</span></div>`;
     }
     h += `<div class="row"><button class="btn ghost sm" type="button" data-act="mstart">🔁 Redo ${partName}</button></div>`;
   } else {
@@ -685,7 +622,7 @@ function updateBar() {
   if (!ROUTE) return;
   const st = stats(ROUTE), x = extrasChanged(ROUTE);
   const todo = st.unsent + (x ? 1 : 0);
-  $('#sbInfo').innerHTML = `Required: <b>${st.done}/${st.total}</b> recorded · ` +
+  $('#sbInfo').innerHTML = `Recorded <b>${st.done}/${st.total}</b> · ` +
     (st.unsent ? `<b style="color:var(--wait)">${plural(st.unsent, 'recording')} not sent yet</b>` : x ? '<b style="color:var(--wait)">new notes not sent yet</b>' : st.any ? '<span style="color:var(--ok)">all sent ✓</span>' : 'nothing recorded yet');
   $('#sendBtn').disabled = sending || !todo;
 }
@@ -714,7 +651,7 @@ async function sendWeek() {
   if (!keys.length && !xNew) { setStatus('ok', 'Nothing new to send. Everything is already with your teacher ✓'); return; }
   const missing = st.total - st.done;
   const ask = (keys.length ? `Send ${plural(keys.length, 'recording')} to your teacher?` : 'Send your notes to your teacher?') +
-    (missing ? `\n\nYou still have ${missing} required ${missing === 1 ? 'question' : 'questions'} to record. That’s OK – you can send them later.` : '');
+    (missing ? `\n\nYou still have ${plural(missing, 'question')} to record. That’s OK – you can send them later.` : '');
   if (!confirm(ask)) return;
 
   sending = true; updateBar();

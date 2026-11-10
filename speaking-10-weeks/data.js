@@ -57,7 +57,7 @@ const WEEKS = [
   ],
   stories: [
     { id: 'W1-S1', title: 'A natural place near your home',
-      hint: 'Pick one real place you often go to (a park, a beach, a lake…). Prepare the ★ topic carefully; for the other topics, just change your first and last sentences.',
+      hint: 'Pick one real place you often go to (a park, a beach, a lake…).',
       p2: ['Describe a natural place in your city that you enjoy visiting', 'Where it is', 'What it is like', 'How often you go there', 'Who you often go there with', 'And explain why you enjoy visiting there'],
       p3: [
         ['Do you think there should be many natural places in cities?'],
@@ -113,7 +113,7 @@ const WEEKS = [
       ],
       o: ['Some people say large cities are suitable for old people. What do you think?', 'Do you think it is possible that all of the population move to cities?', 'Are there any changes in your city?', 'What should the government do to improve citizens’ safety?'] },
     { id: 'W2-S2', title: 'A crowded, noisy place',
-      hint: 'Pick one market, shopping mall or busy street. The same place can be described as crowded, noisy, boring, or as having a tall building.',
+      hint: 'Pick one market, shopping mall or busy street.',
       p2: ['Describe a crowded place you went to', 'Where it was', 'When you went there', 'Who you went there with', 'What you did there', 'And how you felt about it'],
       p3: [
         ['Why do people go to crowded places?', 'Do you think there are some people who enjoy crowded places?'],
@@ -155,7 +155,7 @@ const WEEKS = [
   ],
   stories: [
     { id: 'W3-S1', title: 'An older person (grandparent, aunt/uncle, teacher)',
-      hint: 'Pick one real person. Note down: who they are, their personality, their hobbies (growing plants, making things by hand, loving history…) and one memory you share. Their home also works for the topic “a home you like to visit”.',
+      hint: 'Pick one real person. Note down: who they are, their personality, their hobbies (growing plants, making things by hand, loving history…) and one memory you share.',
       p2: ['Describe someone who is older than you that you admire', 'Who this person is', 'How you knew this person', 'What kinds of things you like to do together', 'And explain how you feel about this person'],
       p3: [
         ['What can young and old people learn from each other?', 'Why is there a generation gap between the young and the old?'],
@@ -219,7 +219,7 @@ const WEEKS = [
       ],
       o: ['What’s the difference between having younger friends and older friends?', 'Do you think it’s ok to take photos everywhere?', 'Some people don’t mind others walking into their shot when they’re taking photos. What do you think?', 'Are there many people who can speak foreign languages in your country?', 'Do people learn any languages other than English?', 'Why is it easier for children to learn new things than for adults?', 'How do people learn new things?', 'Do you think being a doctor is easy or difficult?', 'Do you think learning biology is interesting for children?', 'What can we do to leave a good impression on people we meet for the first time?', 'What should we not talk about when we meet a person for the first time?'] },
     { id: 'W4-S2', title: 'A famous person',
-      hint: 'Pick one famous person you know well (a singer, a footballer, a YouTuber…). Use the same person for the interview and advertisement topics.',
+      hint: 'Pick one famous person you know well (a singer, a footballer, a YouTuber…).',
       p2: ['Describe a famous person in your local area', 'Who this person is', 'What he/she has done', 'Why he/she is popular', 'And explain how you feel about this person'],
       p3: [
         ['Why are some students popular?', 'Is it always good to be a popular student at school?'],
@@ -258,7 +258,7 @@ const WEEKS = [
   ],
   stories: [
     { id: 'W5-S1', title: 'Studying',
-      hint: 'Pick one course or class (e.g. your IELTS class). You can also talk about group work or a talk you listened to.',
+      hint: 'Pick one course or class (e.g. your IELTS class).',
       p2: ['Describe a course that impressed you a lot', 'What the course was about', 'Where you took the course', 'What you did during the course', 'And explain why it impressed you a lot'],
       p3: [
         ['What’s the best way to learn a language?', 'Which is better, to study a language alone or to study it in a group? Why?'],
@@ -274,7 +274,7 @@ const WEEKS = [
       ],
       o: ['What do people need to remember in their daily lives?', 'What can we learn from history?', 'Why do some people have a better memory than others?', 'Do people like things of memorial significance?', 'Which can help people remember things better, words or photos?', 'Can technology help people remember things better? How?', 'What skills should children learn before they go to school?', 'Can a child learn skills from another child?', 'Is it important for everyone to have a specialized skill?', 'What are the advantages and disadvantages of learning a language?', 'Some people think that technology has made it unnecessary to learn languages. What do you think?', 'Do you think language learning is important? Why?', 'Why do some people prefer to work by themselves?', 'What should a leader do to make team members want to follow him or her?', 'What kind of topics do young people like to talk about today?', 'What would happen if the listener didn’t listen carefully?', 'How can we tell if a listener is listening carefully?'] },
     { id: 'W5-S2', title: 'A decision / a change',
-      hint: 'Pick one real decision (choosing a school, deciding to study IELTS, changing a habit…). The same story works for “a decision”, “a change”, “a changed plan” and “a changed opinion”.',
+      hint: 'Pick one real decision (choosing a school, deciding to study IELTS, changing a habit…).',
       p2: ['Describe an important decision that you made', 'What the decision was', 'How you made your decision', 'What the results of the decision were', 'And explain why it was important'],
       p3: [
         ['How do people usually make important decisions?', 'Who can children turn to for help when making a decision?'],
@@ -392,7 +392,7 @@ const WEEKS = [
       ],
       o: ['Do you think only old people have time for leisure?', 'Why do people like to have days off?', 'Going out to have holidays is tiring. Why do people still want to do it?', 'How do people get along in a big family?', 'Do you prefer to prepare and organize an activity or just take part in an activity?', 'How can parents help children to be organized?', 'On what occasions do people need to be organized?', 'What sports matches are suitable for children to attend?'] },
     { id: 'W7-S2', title: 'Videos, films & books',
-      hint: 'Pick one video or film you remember well; reuse the ideas for the film, book and news topics.',
+      hint: 'Pick one video or film you remember well.',
       p2: ['Describe an interesting video', 'When and where you watched it', 'What it is about', 'Why you watched it', 'And explain how you feel about it'],
       p3: [
         ['Which is more helpful, watching videos or reading books?', 'Are movies more likely to help people become more creative than books?', 'What skills can people learn from watching videos?'],
@@ -423,7 +423,7 @@ const WEEKS = [
   p1: [],
   stories: [
     { id: 'W8-S1', title: 'Laws & the environment',
-      hint: 'Pick one simple law (no littering, limits on plastic bags…). Use it for all 3 topics.',
+      hint: 'Pick one simple law (no littering, limits on plastic bags…).',
       p2: ['Describe a law on environmental protection', 'What it is', 'How you first learned about it', 'Who benefits from it', 'And explain how you feel about this law'],
       p3: [
         ['Do you think school rules are important?', 'What kinds of rules do schools in Vietnam have?', 'What rules should students follow at school?', 'What kinds of rules do schools in China have?'],
@@ -449,7 +449,7 @@ const WEEKS = [
       ],
       o: ['Why are some young people keen on being fans of superstars?', 'Will you continue doing something when you are aware that it’s a waste of time?', 'Why do some people refuse to abide by rules?'] },
   ],
-  newTopics: 'Speaking topics usually change in early January. When the new forecast comes out, write the new topics here using the same codes (e.g. W8-A, W8-S3). Fit them into a story you already have whenever you can; only add a new ★ practice topic when a topic really doesn’t fit.',
+  newTopics: 'Speaking topics usually change in early January. When the new forecast comes out, write the new topics here and which of your stories you can use for each one.',
 },
 /* ================================================================ WEEK 9 */
 {
