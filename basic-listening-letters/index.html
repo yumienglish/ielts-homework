@@ -1,0 +1,675 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Basic Listening · Letters · IELTS Foundation Pack 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff8ef; --card:#fff; --ink:#2b2d42; --muted:#6b7080; --line:#ece3d6;
+  --brand:#14866d; --brand-soft:#dff3ee; --accent:#ff8c42; --blue:#3a6df0;
+  --ok:#1f8a4c; --ok-bg:#e7f7ee; --bad:#d64045; --bad-bg:#fdecec; --wait:#b7791f; --wait-bg:#fff6e0;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:17px;line-height:1.6}
+.hero{background:linear-gradient(135deg,#14866d,#2bb39a);color:#fff;padding:26px 16px 44px;text-align:center}
+.hero h1{margin:0;font-size:clamp(23px,5vw,34px);font-weight:800;letter-spacing:.2px}
+.hero p{margin:4px 0 0;opacity:.93;font-size:15.5px}
+.pack{display:inline-block;color:#fff;opacity:.9;font-size:14px;font-weight:700;text-decoration:none;background:rgba(255,255,255,.18);border-radius:999px;padding:3px 12px;margin-bottom:8px}
+.pack:hover{opacity:1;background:rgba(255,255,255,.28)}
+main{max-width:880px;margin:-26px auto 0;padding:0 16px 130px}
+.card{background:var(--card);border-radius:18px;box-shadow:0 4px 18px rgba(60,40,10,.07);padding:20px;margin-bottom:18px;border:1px solid var(--line)}
+@media (max-width:520px){.card{padding:16px 14px}}
+h2,h3{line-height:1.3}
+
+/* start */
+.start h2{margin:0 0 4px;font-size:21px}
+.field{display:flex;flex-direction:column;gap:4px;margin:12px 0}
+.field label{font-weight:700;font-size:15px}
+.field input{font:inherit;padding:10px 12px;border:2px solid #e2d9cb;border-radius:12px;outline:none;background:#fffdf9}
+.field input:focus{border-color:var(--brand)}
+.btn{font:inherit;font-weight:800;border:none;border-radius:14px;padding:12px 22px;cursor:pointer;background:var(--brand);color:#fff;box-shadow:0 3px 0 #0d5e4c}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #0d5e4c}
+.btn.orange{background:var(--accent);box-shadow:0 3px 0 #c9661f}
+.btn.red{background:var(--bad);box-shadow:0 3px 0 #9e2a2e}
+.btn.ghost{background:#fff;color:var(--brand);border:2px solid var(--brand);box-shadow:none}
+.btn:disabled{opacity:.6;cursor:default}
+.err-msg{color:var(--bad);font-weight:700;font-size:14.5px;min-height:1em}
+.who{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:15.5px}
+.who b{color:var(--brand)}
+.linkbtn{background:none;border:none;color:var(--blue);font:inherit;font-size:14.5px;cursor:pointer;text-decoration:underline;padding:0}
+
+/* exercise head */
+.ex-head{display:flex;gap:12px;align-items:flex-start;margin-bottom:4px}
+.badge{background:var(--brand);color:#fff;font-weight:800;border-radius:10px;padding:3px 10px;font-size:16px;flex:none}
+.ex-head h2{font-size:19px;margin:2px 0 0}
+.how{color:var(--muted);font-size:14.5px;margin:4px 0 14px;background:#f6f3ee;border-radius:10px;padding:8px 12px}
+.part{margin-top:22px;padding-top:16px;border-top:1px dashed #e2d9cb}
+.part h3{font-size:17px;margin:0 0 6px}
+.part h3 .pl{display:inline-block;background:var(--blue);color:#fff;border-radius:8px;padding:0 8px;margin-right:6px;font-size:15px}
+
+/* audio */
+.listen{background:#eef3ff;border-radius:14px;padding:10px 12px;margin-bottom:14px}
+.listen .lt{font-weight:800;font-size:15px;color:var(--blue)}
+.player{display:block;width:100%;height:40px;margin:6px 0 2px}
+
+/* 1A alphabet */
+.abc{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;align-items:center;margin:4px 0 12px}
+.abc .k{font-weight:700;color:var(--muted);font-size:14.5px}
+.abc .v{font-weight:800;letter-spacing:.32em;font-size:18px;word-break:break-all;line-height:1.5}
+@media (max-width:520px){.abc{grid-template-columns:1fr}.abc .v{font-size:16px;letter-spacing:.22em}}
+
+/* blanks */
+.cells{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:10px 12px}
+.cells.wide{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+.cell{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.cell .cn{font-weight:800;color:var(--brand);min-width:24px;text-align:right}
+input.txt{font:inherit;font-weight:700;color:var(--blue);border:none;border-bottom:2.5px solid #b9b2a6;background:#f5f1ea;border-radius:8px 8px 3px 3px;padding:4px 8px;outline:none;min-width:0;margin:2px}
+.cell input.txt{flex:1}
+input.txt.one{flex:none;width:46px;text-align:center;font-size:19px}
+input.txt:focus{border-color:var(--brand);background:#eefaf7}
+input.txt.ok{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+input.txt.bad{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
+input.txt.wait{background:var(--wait-bg);border-color:var(--wait);color:var(--wait)}
+input.txt:disabled{opacity:1;-webkit-text-fill-color:currentColor}
+.fix{font-size:14px;font-weight:800;color:var(--ok)}
+.fix.w{color:var(--wait)}
+.cell .fix{flex-basis:100%;padding-left:30px;line-height:1.3}
+.cell .fix:empty{display:none}
+
+/* 1C grid */
+.grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:420px}
+.lt-btn{font:inherit;font-weight:800;font-size:22px;aspect-ratio:1.4;border:2px solid #e2d9cb;background:#fffdf9;border-radius:14px;cursor:pointer;color:var(--ink);position:relative}
+.lt-btn.on{border-color:var(--blue);background:#eef3ff;color:var(--blue);box-shadow:inset 0 0 0 3px var(--blue);border-radius:50%}
+.lt-btn.right{border-color:var(--ok);background:var(--ok-bg);color:var(--ok);box-shadow:inset 0 0 0 3px var(--ok);border-radius:50%}
+.lt-btn.extra{border-color:var(--bad);background:var(--bad-bg);color:var(--bad);box-shadow:inset 0 0 0 3px var(--bad);border-radius:50%}
+.lt-btn.missed{border:3px dashed var(--accent);color:var(--accent)}
+.lt-btn:disabled{cursor:default}
+.legend{font-size:14px;color:var(--muted);margin-top:8px}
+.legend b.g{color:var(--ok)} .legend b.r{color:var(--bad)} .legend b.o{color:var(--accent)}
+
+/* Ex4 dialogues */
+.dlg{list-style:none;padding:0;margin:0}
+.dlg li{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #f1ebe1}
+.dlg li:last-child{border-bottom:none}
+.dlg .num{font-weight:800;color:var(--brand);min-width:20px;flex:none}
+.dlg .ln{margin:2px 0}
+.dlg .sp{font-weight:800;color:var(--muted);margin-right:4px}
+.dlg input.txt{width:170px;max-width:100%}
+.dlg .fix{margin-left:4px}
+.note{background:#f6f3ee;border-radius:12px;padding:10px 14px;font-size:15px;margin-top:12px}
+
+/* recorder */
+.rec{border:2px dashed #b9cff9;border-radius:16px;padding:16px;text-align:center;background:#f8faff}
+.rec .tm{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink)}
+.rec .tm span{font-size:16px;color:var(--muted)}
+.rec .track{height:8px;background:#e3e9f7;border-radius:99px;overflow:hidden;margin:8px auto 12px;max-width:360px}
+.rec .track div{height:100%;background:var(--bad);width:0}
+.rec .dot{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--bad);margin-right:6px;animation:blink 1s infinite;vertical-align:middle}
+@keyframes blink{50%{opacity:.25}}
+.rec .player{margin:6px auto 10px;max-width:360px}
+.rec .msg{color:var(--muted);font-size:14.5px;margin-top:8px}
+.rec .msg.err{color:var(--bad);font-weight:700}
+.rec .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+/* feedback */
+.fb{display:none;margin-top:10px;border-radius:12px;padding:10px 12px;font-size:15px;line-height:1.55}
+.fb.show{display:block}
+.fb.ok{background:var(--ok-bg);border-left:4px solid var(--ok)}
+.fb.bad{background:var(--bad-bg);border-left:4px solid var(--bad)}
+.fb.wait{background:var(--wait-bg);border-left:4px solid var(--wait)}
+
+/* summary */
+.summary{display:flex;gap:18px;align-items:center;flex-wrap:wrap;border:2px solid var(--brand)}
+.score{font-size:46px;font-weight:800;color:var(--brand);line-height:1}
+.score span{font-size:24px;color:var(--muted)}
+.secs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.sec{background:#f4efe6;border-radius:999px;padding:2px 10px;font-weight:700;font-size:14px}
+.sec.full{background:var(--ok-bg);color:var(--ok)}
+.sec.wait{background:var(--wait-bg);color:var(--wait)}
+.status{font-weight:700;font-size:15px;margin-top:4px}
+.status.ok{color:var(--ok)} .status.err,.status.warn{color:var(--bad)} .status.sending{color:var(--muted)}
+
+/* bottom bar */
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));z-index:40;backdrop-filter:blur(6px)}
+.bar-in{max-width:880px;margin:0 auto;display:flex;align-items:center;gap:14px}
+.prog{flex:1;min-width:0}
+.prog .t{font-size:14px;font-weight:700;color:var(--muted)}
+.prog .track{height:10px;background:#eee6d8;border-radius:99px;overflow:hidden;margin-top:3px}
+.prog .fill{height:100%;background:linear-gradient(90deg,#2bb39a,#14866d);width:0;transition:width .3s}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header class="hero">
+  <a class="pack" href="../">← Homework · IELTS Foundation · Pack 1</a>
+  <h1>Basic Listening · Letters</h1>
+  <p>Bảng chữ cái · từ viết tắt · địa danh · đánh vần tên</p>
+</header>
+
+<main>
+  <!-- Màn hình nhập tên -->
+  <section class="card start" id="start">
+    <h2>👋 Chào em!</h2>
+    <p style="margin:0;color:var(--muted)">Điền tên và lớp rồi bắt đầu nha. Bài làm tự lưu, xong bấm <b>Nộp bài</b> là cô nhận được (kể cả bài ghi âm). Nhớ đeo tai nghe hoặc bật loa để nghe bài nhé 🎧</p>
+    <div class="field"><label for="inName">Họ và tên</label><input id="inName" autocomplete="name" placeholder="VD: Nguyễn Minh Anh"></div>
+    <div class="field"><label for="inCls">Lớp</label><input id="inCls" placeholder="VD: 7A"></div>
+    <div class="err-msg" id="startErr"></div>
+    <button class="btn" id="startBtn" type="button">Bắt đầu làm bài →</button>
+  </section>
+
+  <div id="work" hidden>
+    <div id="summaryBox"></div>
+    <div class="card who" id="whoBar"></div>
+
+    <!-- Ex 1 -->
+    <section class="card ex" id="ex1">
+      <div class="ex-head"><span class="badge">Ex 1</span><h2>Letters</h2></div>
+      <div class="listen"><div class="lt">🎧 01.MP3 · dùng cho cả phần A, B và C</div><audio class="player" controls preload="none" src="audio/01.mp3"></audio></div>
+
+      <div class="part" style="margin-top:4px;border-top:none;padding-top:0">
+        <h3><span class="pl">A</span>Listen to the recording and repeat these letters after the speaker.</h3>
+        <div class="abc">
+          <span class="k">Capital letters:</span><span class="v">ABCDEFGHIJKLMNOPQRSTUVWXYZ</span>
+          <span class="k">Small letters:</span><span class="v">abcdefghijklmnopqrstuvwxyz</span>
+        </div>
+        <p class="how">👉 Bấm 🎙 ghi âm, rồi bật audio và đọc to từng chữ cái theo người đọc. Ghi tối đa 2 phút, nghe lại được, chưa ưng thì thu lại. Bản ghi cuối cùng sẽ được gửi cho cô khi em nộp bài.</p>
+        <div class="rec" id="rec"></div>
+      </div>
+
+      <div class="part">
+        <h3><span class="pl">B</span>Listen to the recording and write down the letters.</h3>
+        <p class="how">👉 Mỗi ô ghi 1 chữ cái em nghe được.</p>
+        <div class="cells" id="list1B"></div>
+      </div>
+
+      <div class="part">
+        <h3><span class="pl">C</span>Circle the letters you hear.</h3>
+        <p class="how">👉 Chạm vào chữ để khoanh tròn, chạm lần nữa để bỏ khoanh. Chỉ khoanh những chữ em nghe thấy thôi nhé (khoanh thừa sẽ bị tính sai).</p>
+        <div class="grid5" id="grid1C"></div>
+        <div class="legend" id="legend1C" hidden><b class="g">Xanh</b>: khoanh đúng · <b class="r">Đỏ</b>: khoanh thừa · <b class="o">Viền cam</b>: có trong bài nhưng em chưa khoanh</div>
+        <div class="fb" id="fb-1C"></div>
+      </div>
+    </section>
+
+    <!-- Ex 2 -->
+    <section class="card ex" id="ex2">
+      <div class="ex-head"><span class="badge">Ex 2</span><h2>Common abbreviations</h2></div>
+      <div class="listen"><div class="lt">🎧 02.MP3</div><audio class="player" controls preload="none" src="audio/02.mp3"></audio></div>
+      <p class="how">👉 Listen to some common abbreviations and write them down in the spaces provided. Nghe và viết các từ viết tắt (VD: BBC).</p>
+      <div class="cells" id="list2"></div>
+    </section>
+
+    <!-- Ex 3 -->
+    <section class="card ex" id="ex3">
+      <div class="ex-head"><span class="badge">Ex 3</span><h2>Names of places</h2></div>
+      <div class="listen"><div class="lt">🎧 03.MP3</div><audio class="player" controls preload="none" src="audio/03.mp3"></audio></div>
+      <p class="how">👉 Listen to the names of the places and write them down. Nghe tên địa danh và viết lại, nhớ viết đúng chính tả nhé.</p>
+      <div class="cells wide" id="list3"></div>
+    </section>
+
+    <!-- Ex 4 -->
+    <section class="card ex" id="ex4">
+      <div class="ex-head"><span class="badge">Ex 4</span><h2>Listen to the conversations and answer the questions.</h2></div>
+      <div class="listen"><div class="lt">🎧 04.MP3</div><audio class="player" controls preload="none" src="audio/04.mp3"></audio></div>
+      <p class="how">👉 Nghe các đoạn hội thoại và điền tên vào chỗ trống. Tên được đánh vần thì em ghi cả từ, VD: <b>Smith</b>.</p>
+      <ol class="dlg" id="list4"></ol>
+      <div class="note"><b>Notes:</b> last name = family name = surname · first name = given name</div>
+    </section>
+  </div>
+</main>
+
+<div class="bar" id="bar" hidden>
+  <div class="bar-in">
+    <div class="prog"><div class="t" id="progT">Đã làm 0/0 câu</div><div class="track"><div class="fill" id="progF"></div></div></div>
+    <button class="btn orange" id="submitBtn" type="button">Nộp bài ✔</button>
+  </div>
+</div>
+
+<script>
+/* ============ CẤU HÌNH ============ */
+// Dán URL Web App của Google Apps Script vào đây (xem HUONG-DAN-CAI-DAT.md)
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyAom9bBpL0ms0VD7_bz5w691011llkFzttYSjKDyRyMCjLLeUZ4EZGGJLtLMFWuiV4sA/exec';
+const STORE_KEY = 'btvn-basic-listening-letters-v1';
+const UNIT = 'Basic Listening';
+const TITLE = 'Basic Listening – Letters (Ex 1–4)';
+const REC_MAX = 120; // giây ghi âm tối đa (phần 1A)
+
+/* ============ ĐÁP ÁN ============
+   Ô nào để trống '' thì trang hiện "cô chấm sau" và không tính điểm câu đó.
+   Nhiều cách viết đúng thì ngăn bằng dấu |   VD: 'Edinburgh|Edinburg'
+   Khi chấm: không phân biệt hoa/thường, bỏ qua dấu chấm, gạch nối và khoảng trắng. */
+const KEY = {
+  '1B': ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],   // 18 chữ cái
+  '1C': '',                                                                        // các chữ được đọc, VD: 'B M X A Z'
+  '2':  ['', '', '', '', '', '', '', '', '', ''],                                   // 10 từ viết tắt
+  '3':  ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''], // 20 địa danh
+  '4':  {'1':'', '2a':'', '2b':'', '3a':'', '3b':'', '4':'', '5a':'', '5b':''},     // 8 chỗ trống Ex 4
+};
+
+/* ============ TIỆN ÍCH ============ */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clock = s => { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const squash = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+const alts = k => String(k || '').split('|').map(x => x.trim()).filter(Boolean);
+const firstAlt = k => alts(k)[0] || '';
+/** true / false, hoặc null nếu chưa có đáp án */
+const check = (ans, key) => alts(key).length ? alts(key).some(a => squash(a) === squash(ans)) : null;
+
+/* ============ DỮ LIỆU ============ */
+const GRID_1C = ['B','P','E','D','G', 'K','F','M','X','I', 'A','H','N','Z','V', 'C','J','L','O','W', 'R','T','U','Y','S'];
+const EX4 = [
+  {n:'1', lines:[['A', 'What’s Joseph’s last name?'], ['B', 'His last name is {1}.']]},
+  {n:'2', lines:[['A', 'Sorry, what’s your name again?'], ['B', 'OK, my first name is {2a} and my last name is spelled {2b}.']]},
+  {n:'3', lines:[['A', 'Excuse me, what’s her name?'], ['B', '{3a}, and her last name is spelled {3b}.']]},
+  {n:'4', lines:[['A', 'What is Ms. Smith’s first name?'], ['B', 'It’s spelled {4}.']]},
+  {n:'5', lines:[['A', 'Who is the man in the middle?'], ['B', 'He is my friend, {5a}.'], ['A', 'Where is he from?'], ['B', 'He is from {5b}.']]},
+];
+const EX4_KEYS = ['1', '2a', '2b', '3a', '3b', '4', '5a', '5b'];
+const EX4_Q = k => { const d = EX4.find(x => k.startsWith(x.n)); return d.lines.map(([s, t]) => s + ': ' + t.replace(/\{(\w+)\}/g, (_, b) => b === k ? '_____' : '…')).join(' '); };
+
+const SECTIONS = [
+  {id:'1B', title:'Ex 1B Write down the letters'},
+  {id:'1C', title:'Ex 1C Circle the letters you hear'},
+  {id:'2', title:'Ex 2 Common abbreviations'},
+  {id:'3', title:'Ex 3 Names of places'},
+  {id:'4', title:'Ex 4 Spelling names'},
+];
+
+/* ============ TRẠNG THÁI ============ */
+const blankState = () => ({name:'', cls:'', t:{}, c:[], rec:null, submitted:false, sent:false, submittedAt:null, startedAt:null, leaves:0});
+let S = (() => { try { return Object.assign(blankState(), JSON.parse(localStorage.getItem(STORE_KEY)) || {}); } catch (e) { return blankState(); } })();
+if (!Array.isArray(S.c)) S.c = [];
+function save(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch (e) {} }
+let RES = null;
+
+/* ============ DỰNG GIAO DIỆN ============ */
+const ia = 'autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"';
+const cell = (k, n, cls = '') => `<label class="cell"><span class="cn">${n}.</span><input class="txt ${cls}" data-k="${k}" ${cls === 'one' ? 'maxlength="1"' : ''} ${ia} aria-label="Câu ${n}"><span class="fix" id="fix-${k}"></span></label>`;
+function build(){
+  $('#list1B').innerHTML = KEY['1B'].map((_, i) => cell('1B-' + (i + 1), i + 1, 'one')).join('');
+  $('#list2').innerHTML = KEY['2'].map((_, i) => cell('2-' + (i + 1), i + 1)).join('');
+  $('#list3').innerHTML = KEY['3'].map((_, i) => cell('3-' + (i + 1), i + 1)).join('');
+  $('#list4').innerHTML = EX4.map(d => `<li><span class="num">${d.n}.</span><div>${d.lines.map(([s, t]) =>
+      `<div class="ln"><span class="sp">${s}:</span>${esc(t).replace(/\{(\w+)\}/g, (_, b) => `<input class="txt" data-k="4-${b}" ${ia} aria-label="Câu ${b}"><span class="fix" id="fix-4-${b}"></span>`)}</div>`).join('')}</div></li>`).join('');
+  $('#grid1C').innerHTML = GRID_1C.map(L => `<button type="button" class="lt-btn" data-l="${L}" aria-pressed="false">${L}</button>`).join('');
+  $('#grid1C').addEventListener('click', e => {
+    const b = e.target.closest('.lt-btn'); if (!b || S.submitted) return;
+    const L = b.dataset.l, i = S.c.indexOf(L);
+    if (i < 0) S.c.push(L); else S.c.splice(i, 1);
+    save(); renderGrid(); progress();
+  });
+  document.querySelectorAll('input.txt').forEach(inp => {
+    inp.value = S.t[inp.dataset.k] || '';
+    inp.addEventListener('input', () => {
+      S.t[inp.dataset.k] = inp.value; save(); progress();
+      // 1B: gõ xong 1 chữ thì nhảy sang ô kế tiếp
+      if (inp.classList.contains('one') && inp.value.trim()){
+        const all = [...document.querySelectorAll('#list1B input')], nx = all[all.indexOf(inp) + 1];
+        if (nx) nx.focus();
+      }
+    });
+  });
+  renderGrid();
+  document.addEventListener('play', e => document.querySelectorAll('audio').forEach(a => { if (a !== e.target) a.pause(); }), true);
+}
+
+function heard1C(){ return [...new Set(String(KEY['1C'] || '').toUpperCase().replace(/[^A-Z]/g, '').split('').filter(Boolean))]; }
+function renderGrid(){
+  const heard = heard1C(), graded = S.submitted && heard.length;
+  document.querySelectorAll('#grid1C .lt-btn').forEach(b => {
+    const L = b.dataset.l, on = S.c.includes(L);
+    let cls = 'lt-btn';
+    if (graded) cls += on ? (heard.includes(L) ? ' right' : ' extra') : (heard.includes(L) ? ' missed' : '');
+    else if (on) cls += ' on';
+    b.className = cls; b.disabled = S.submitted; b.setAttribute('aria-pressed', on);
+  });
+  $('#legend1C').hidden = !graded;
+}
+
+/* ============ GHI ÂM (Ex 1A) ============ */
+const REC_KEY = STORE_KEY + '-rec';
+const IDB = {
+  open(){
+    return new Promise((res, rej) => {
+      try {
+        const r = indexedDB.open('btvn-recordings', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('rec');
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+      } catch (e) { rej(e); }
+    });
+  },
+  async run(mode, fn){
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const tx = db.transaction('rec', mode), st = tx.objectStore('rec');
+      const req = fn(st);
+      tx.oncomplete = () => res(req && req.result);
+      tx.onerror = () => rej(tx.error);
+    });
+  },
+  put(k, v){ return this.run('readwrite', st => st.put(v, k)); },
+  get(k){ return this.run('readonly', st => st.get(k)); },
+};
+
+let recBlob = null, recUrl = '', recMsg = '', recErr = false, recSaved = true;
+let mr = null, recStream = null, recChunks = [], recT0 = 0, recTimer = 0;
+
+function pickMime(){
+  const c = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus', 'audio/ogg'];
+  if (!window.MediaRecorder || !MediaRecorder.isTypeSupported) return '';
+  return c.find(m => MediaRecorder.isTypeSupported(m)) || '';
+}
+const extOf = t => /mp4|aac|m4a/.test(t) ? 'm4a' : /ogg/.test(t) ? 'ogg' : /wav/.test(t) ? 'wav' : 'webm';
+function setRecMsg(m, err){ recMsg = m; recErr = !!err; renderRec(); }
+
+async function startRec(){
+  if (S.submitted || mr) return;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder){
+    setRecMsg('Trình duyệt này chưa ghi âm được. Em mở trang bằng Chrome (Android, máy tính) hoặc Safari (iPhone, iPad) nhé.', true); return;
+  }
+  muteAway = true;
+  if (S.rec){
+    const ok = confirm('Thu lại sẽ xóa bản ghi cũ. Em chắc chưa?');
+    if (!ok){ releaseAway(); return; }
+  }
+  try {
+    recStream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true, noiseSuppression:true}});
+  } catch (e){
+    releaseAway();
+    const denied = e && (e.name === 'NotAllowedError' || e.name === 'SecurityError');
+    setRecMsg(denied
+      ? 'Em chưa cho phép dùng micro. Bấm vào biểu tượng 🔒 cạnh địa chỉ trang, chọn Cho phép micro (Allow microphone), rồi thử lại nhé.'
+      : 'Không tìm thấy micro. Em kiểm tra tai nghe/micro rồi thử lại nhé.', true);
+    return;
+  }
+  releaseAway();
+  const mime = pickMime();
+  try { mr = new MediaRecorder(recStream, Object.assign({audioBitsPerSecond:48000}, mime ? {mimeType:mime} : {})); }
+  catch (e){ mr = new MediaRecorder(recStream); }
+  recChunks = [];
+  mr.ondataavailable = e => { if (e.data && e.data.size) recChunks.push(e.data); };
+  mr.onstop = onRecStop;
+  mr.start(1000);
+  recT0 = Date.now();
+  recTimer = setInterval(recTick, 250);
+  recMsg = ''; recErr = false;
+  renderRec();
+}
+function releaseAway(){ setTimeout(() => { muteAway = false; away = false; }, 800); }
+function stopRec(){ if (mr && mr.state !== 'inactive') mr.stop(); }
+function recTick(){
+  const s = (Date.now() - recT0) / 1000;
+  const tm = $('#recTm'), tr = $('#recTrack');
+  if (tm) tm.innerHTML = `${clock(s)} <span>/ ${clock(REC_MAX)}</span>`;
+  if (tr) tr.style.width = Math.min(100, s / REC_MAX * 100) + '%';
+  if (s >= REC_MAX) stopRec();
+}
+async function onRecStop(){
+  clearInterval(recTimer);
+  try { recStream.getTracks().forEach(t => t.stop()); } catch (_) {}
+  const type = (mr && mr.mimeType) || (recChunks[0] && recChunks[0].type) || 'audio/webm';
+  const dur = Math.min(REC_MAX, (Date.now() - recT0) / 1000);
+  mr = null; recStream = null;
+  const blob = new Blob(recChunks, {type});
+  recChunks = [];
+  if (blob.size < 500 || dur < 1){ setRecMsg('Bản ghi quá ngắn, em thu lại nhé.', true); return; }
+  setBlob(blob);
+  S.rec = {dur:Math.round(dur), mime:type, ext:extOf(type), at:new Date().toISOString(), size:blob.size};
+  save();
+  try { await IDB.put(REC_KEY, blob); recSaved = true; } catch (e) { recSaved = false; }
+  recMsg = recSaved ? '' : 'Lưu ý: máy không lưu được bản ghi, em đừng tải lại trang trước khi nộp nhé.';
+  recErr = !recSaved;
+  renderRec(); progress();
+}
+function setBlob(b){
+  if (recUrl) URL.revokeObjectURL(recUrl);
+  recBlob = b; recUrl = b ? URL.createObjectURL(b) : '';
+}
+function renderRec(){
+  const box = $('#rec');
+  const msg = recMsg ? `<div class="msg${recErr ? ' err' : ''}">${recMsg}</div>` : '';
+  if (mr){
+    box.innerHTML = `<div><span class="dot"></span><b>Đang ghi âm…</b></div>
+      <div class="tm" id="recTm">0:00 <span>/ ${clock(REC_MAX)}</span></div>
+      <div class="track"><div id="recTrack"></div></div>
+      <button class="btn red" type="button" id="recStop">⏹ Dừng ghi âm</button>${msg}`;
+    $('#recStop').onclick = stopRec;
+    recTick();
+    return;
+  }
+  if (S.rec && recBlob){
+    box.innerHTML = `<div style="font-weight:800">${S.submitted ? '🎙 Bài ghi âm em đã nộp' : '✅ Đã ghi âm xong'} · ${clock(S.rec.dur)}</div>
+      <audio class="player" controls src="${recUrl}"></audio>
+      ${S.submitted ? '' : `<div class="row"><button class="btn ghost" type="button" id="recAgain">🎙 Thu lại</button></div>
+      <div class="msg">Nghe lại thấy ổn rồi thì làm tiếp phần B nhé.</div>`}${msg}`;
+    const b = $('#recAgain'); if (b) b.onclick = startRec;
+    return;
+  }
+  if (S.submitted){
+    box.innerHTML = `<div class="msg">${S.rec ? 'Bản ghi đã được gửi cho cô cùng bài làm.' : 'Em không nộp bài ghi âm.'}</div>`;
+    return;
+  }
+  box.innerHTML = `<button class="btn" type="button" id="recStart">🎙 Bắt đầu ghi âm</button>
+    <div class="msg">Trình duyệt sẽ hỏi quyền dùng micro, em bấm <b>Cho phép / Allow</b> nhé.</div>${msg}`;
+  $('#recStart').onclick = startRec;
+}
+async function loadRec(){
+  if (!S.rec) return;
+  try { const b = await IDB.get(REC_KEY); if (b && b.size) setBlob(b); } catch (_) {}
+  if (!recBlob && !S.submitted){
+    S.rec = null; save();
+    recMsg = 'Không tìm thấy bản ghi cũ trên máy, em thu lại nhé.'; recErr = true;
+  }
+  renderRec(); progress();
+}
+
+/* ============ TIẾN ĐỘ ============ */
+function answeredList(){
+  const a = [!!S.rec];
+  document.querySelectorAll('input.txt').forEach(inp => a.push(!!(S.t[inp.dataset.k] || '').trim()));
+  a.push(S.c.length > 0);
+  return a;
+}
+function progress(){
+  const a = answeredList(), done = a.filter(Boolean).length;
+  if (S.submitted && RES){
+    $('#progT').textContent = RES.total ? `Đã nộp · ${RES.score}/${RES.total} câu đúng` : 'Đã nộp · cô sẽ chấm bài';
+    $('#progF').style.width = (RES.total ? RES.score / RES.total * 100 : 100) + '%';
+  } else {
+    $('#progT').textContent = `Đã làm ${done}/${a.length} câu`;
+    $('#progF').style.width = done / a.length * 100 + '%';
+  }
+}
+
+/* ============ CHẤM ĐIỂM ============ */
+function grade(){
+  const items = [];
+  const text = (sec, k, n, q, key) => {
+    const ans = (S.t[k] || '').trim();
+    items.push({sec, k, n:String(n), q, ans, correct:firstAlt(key) || '(cô chấm)', ok:check(ans, key)});
+  };
+  KEY['1B'].forEach((key, i) => text('1B', '1B-' + (i + 1), i + 1, 'Chữ cái số ' + (i + 1), key));
+
+  const heard = heard1C();
+  if (!heard.length){
+    items.push({sec:'1C', n:'—', q:'Các chữ em khoanh', ans:S.c.slice().sort().join(' '), correct:'(cô chấm)', ok:null});
+  } else {
+    heard.forEach(L => items.push({sec:'1C', n:L, q:'Chữ ' + L, ans:S.c.includes(L) ? L : '', correct:L, ok:S.c.includes(L)}));
+    S.c.filter(L => !heard.includes(L)).sort().forEach(L =>
+      items.push({sec:'1C', n:L, q:'Chữ ' + L + ' (không có trong bài)', ans:L, correct:'(không khoanh)', ok:false}));
+  }
+
+  KEY['2'].forEach((key, i) => text('2', '2-' + (i + 1), i + 1, 'Từ viết tắt số ' + (i + 1), key));
+  KEY['3'].forEach((key, i) => text('3', '3-' + (i + 1), i + 1, 'Địa danh số ' + (i + 1), key));
+  EX4_KEYS.forEach(b => text('4', '4-' + b, b, EX4_Q(b), KEY['4'][b]));
+
+  const sections = SECTIONS.map(s => {
+    const its = items.filter(i => i.sec === s.id), graded = its.filter(i => i.ok !== null);
+    return {...s, score:graded.filter(i => i.ok).length, total:graded.length, pending:graded.length < its.length};
+  });
+  const graded = items.filter(i => i.ok !== null);
+  return {items, sections, score:graded.filter(i => i.ok).length, total:graded.length};
+}
+
+/* ============ HIỂN THỊ KẾT QUẢ ============ */
+function showResults(){
+  RES = grade();
+  RES.items.forEach(i => {
+    if (!i.k) return;
+    const inp = document.querySelector(`input.txt[data-k="${i.k}"]`), fix = $('#fix-' + i.k);
+    if (inp){ inp.disabled = true; inp.classList.add(i.ok == null ? 'wait' : i.ok ? 'ok' : 'bad'); }
+    if (fix){
+      fix.className = 'fix' + (i.ok == null ? ' w' : '');
+      fix.textContent = i.ok == null ? '⏳ cô chấm' : i.ok ? '' : '→ ' + i.correct;
+    }
+  });
+  const c = RES.sections.find(s => s.id === '1C'), fb = $('#fb-1C');
+  if (c.total){
+    fb.className = 'fb show ' + (c.score === c.total ? 'ok' : 'bad');
+    fb.innerHTML = `<b>${c.score === c.total ? '✅ Đúng hết rồi!' : `${c.score}/${c.total}`}</b> · Các chữ có trong bài: <b>${heard1C().join(' ')}</b>`;
+  } else {
+    fb.className = 'fb show wait';
+    fb.innerHTML = '⏳ Cô sẽ chấm phần này sau nhé.';
+  }
+  renderGrid();
+  document.querySelectorAll('input.txt').forEach(inp => inp.disabled = true);
+  $('#submitBtn').hidden = true;
+  renderRec(); renderWho(); renderSummary(); progress();
+}
+function renderSummary(){
+  const pct = RES.total ? RES.score / RES.total : 0;
+  const pendingAll = RES.sections.every(s => !s.total);
+  $('#summaryBox').innerHTML = `<div class="card summary">
+    ${pendingAll ? '<div class="score" style="font-size:38px">⏳</div>' : `<div class="score">${RES.score}<span>/${RES.total}</span></div>`}
+    <div style="flex:1;min-width:220px">
+      <div style="font-weight:800;font-size:18px">${pendingAll ? '📨 Em nộp bài xong rồi, cô sẽ chấm và báo điểm sau nhé!'
+        : RES.score === RES.total ? '🎉 Đúng hết luôn, giỏi quá!' : pct >= .8 ? '👏 Giỏi lắm!' : pct >= .5 ? '💪 Khá rồi, cố thêm chút nữa nhé!' : '📚 Xem lại đáp án bên dưới nha!'}</div>
+      <div class="secs"><span class="sec${S.rec ? ' full' : ''}">1A: ${S.rec ? '🎙 ' + clock(S.rec.dur) : 'chưa ghi âm'}</span>
+        ${RES.sections.map(s => s.pending && !s.total
+          ? `<span class="sec wait">${s.id}: cô chấm</span>`
+          : `<span class="sec${s.score === s.total && !s.pending ? ' full' : ''}">${s.id}: ${s.score}/${s.total}${s.pending ? ' +⏳' : ''}</span>`).join('')}</div>
+      ${pendingAll ? '' : '<div style="font-size:14.5px;color:var(--muted)">Kéo xuống xem đáp án nhé, câu sai tô đỏ.</div>'}
+      <div class="status" id="sendStatus"></div>
+    </div></div>`;
+  updateStatus();
+}
+
+/* ============ GỬI BÀI ============ */
+let sendState = null, sendErr = '';
+function updateStatus(){
+  const el = $('#sendStatus'); if (!el) return;
+  const st = S.sent ? 'ok' : sendState;
+  el.className = 'status ' + (st || '');
+  if (st === 'ok') el.innerHTML = '✅ Cô đã nhận được bài!';
+  else if (st === 'sending') el.innerHTML = S.rec ? '⏳ Đang gửi bài và file ghi âm cho cô… (có thể mất vài chục giây)' : '⏳ Đang gửi bài cho cô…';
+  else if (st === 'warn') el.innerHTML = '⚠️ Trang chưa được cài địa chỉ gửi bài (SCRIPT_URL), nên bài chưa được gửi cho cô.';
+  else el.innerHTML = `⚠️ Chưa gửi được bài${sendErr ? ` (${esc(sendErr)})` : ''}. Em kiểm tra mạng rồi bấm: <button class="btn" type="button" id="resendBtn" style="padding:6px 14px;font-size:14px;margin-left:4px">Gửi lại</button>`;
+  const rb = $('#resendBtn'); if (rb) rb.onclick = send;
+}
+function blobToB64(b){
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => res(String(fr.result).split(',')[1] || '');
+    fr.onerror = () => rej(fr.error);
+    fr.readAsDataURL(b);
+  });
+}
+async function payload(){
+  const p = {
+    app:'btvn', unit:UNIT, title:TITLE, name:S.name, cls:S.cls, submittedAt:S.submittedAt,
+    startedAt:S.startedAt || null, leaves:S.leaves || 0,
+    timeTakenSec:S.startedAt ? Math.max(0, Math.round((new Date(S.submittedAt) - new Date(S.startedAt)) / 1000)) : null,
+    score:RES.score, total:RES.total,
+    sections:RES.sections.map(s => ({id:s.id, title:s.title, score:s.score, total:s.total, pending:s.pending && !s.total})),
+    items:RES.items.map(i => ({sec:i.sec, n:i.n, q:i.q, ans:i.ans, correct:i.correct, ok:i.ok})),
+    wantsAudio:true, audio:null,
+  };
+  if (S.rec && recBlob){
+    p.audio = {b64:await blobToB64(recBlob), mime:S.rec.mime, ext:S.rec.ext, dur:S.rec.dur, label:'Exercise 1A – Listen and repeat the letters'};
+  }
+  return p;
+}
+async function send(){
+  if (!SCRIPT_URL || SCRIPT_URL.includes('PASTE_')){ sendState = 'warn'; updateStatus(); return; }
+  sendState = 'sending'; updateStatus();
+  try {
+    const body = JSON.stringify(await payload());
+    const r = await fetch(SCRIPT_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body});
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'máy chủ báo lỗi');
+    S.sent = true; save(); sendState = 'ok';
+  } catch (err){
+    sendState = 'err'; sendErr = err && err.message ? err.message : String(err);
+  }
+  updateStatus();
+}
+
+/* ============ NỘP BÀI ============ */
+$('#submitBtn').addEventListener('click', () => {
+  if (S.submitted) return;
+  if (mr){ alert('Em đang ghi âm. Bấm ⏹ Dừng ghi âm trước rồi mới nộp bài nhé.'); return; }
+  const a = answeredList(), left = a.slice(1).filter(x => !x).length;
+  const notes = [];
+  if (left) notes.push(`Còn ${left} câu chưa làm.`);
+  if (!S.rec) notes.push('Em chưa ghi âm phần 1A.');
+  muteAway = true;
+  const go = confirm(notes.length ? `${notes.join('\n')}\nEm vẫn nộp luôn hả?\n(Nộp rồi là không sửa được nữa đâu.)` : 'Nộp bài nhé? Nộp rồi là không sửa được nữa đâu.');
+  releaseAway();
+  if (!go) return;
+  document.querySelectorAll('audio').forEach(x => x.pause());
+  S.submitted = true; S.submittedAt = new Date().toISOString(); save();
+  showResults();
+  window.scrollTo({top:0, behavior:'smooth'});
+  send();
+});
+
+/* ============ TÊN HỌC SINH ============ */
+function renderWho(){
+  $('#whoBar').innerHTML = `<span>👤 <b>${esc(S.name)}</b> · Lớp <b>${esc(S.cls)}</b></span>` +
+    (S.submitted ? `<span style="color:var(--muted);font-size:14px">Nộp lúc ${new Date(S.submittedAt).toLocaleString('vi-VN')}</span>` : `<button class="linkbtn" type="button" id="editName">Sửa tên / lớp</button>`);
+  const b = $('#editName'); if (b) b.onclick = () => { $('#work').hidden = true; $('#bar').hidden = true; $('#start').hidden = false; $('#inName').focus(); };
+}
+function showWork(){
+  $('#start').hidden = true; $('#work').hidden = false; $('#bar').hidden = false;
+  renderWho(); progress();
+}
+$('#inName').value = S.name; $('#inCls').value = S.cls;
+$('#startBtn').addEventListener('click', () => {
+  const n = $('#inName').value.trim(), c = $('#inCls').value.trim();
+  if (n.length < 2){ $('#startErr').textContent = 'Em hãy nhập họ và tên.'; return; }
+  if (!c){ $('#startErr').textContent = 'Em hãy nhập lớp.'; return; }
+  $('#startErr').textContent = '';
+  S.name = n.slice(0, 80); S.cls = c.slice(0, 30);
+  if (!S.startedAt) S.startedAt = new Date().toISOString();
+  save();
+  showWork(); window.scrollTo({top:0});
+});
+['inName', 'inCls'].forEach(id => $('#' + id).addEventListener('keydown', e => { if (e.key === 'Enter') $('#startBtn').click(); }));
+
+/* ============ ĐẾM SỐ LẦN RỜI TRANG ============ */
+let away = false, muteAway = false;
+const tracking = () => !!S.startedAt && !S.submitted && !$('#work').hidden;
+function goAway(){
+  if (muteAway || away || !tracking()) return;
+  away = true; S.leaves = (S.leaves || 0) + 1; save();
+}
+function comeBack(){ if (!document.hidden && document.hasFocus()) away = false; }
+document.addEventListener('visibilitychange', () => document.hidden ? goAway() : comeBack());
+window.addEventListener('blur', goAway);
+window.addEventListener('focus', comeBack);
+
+/* ============ KHỞI ĐỘNG ============ */
+build();
+renderRec();
+if (S.name) showWork();
+if (S.submitted) showResults();
+loadRec().then(() => { if (S.submitted && RES) renderSummary(); });
+</script>
+</body>
+</html>

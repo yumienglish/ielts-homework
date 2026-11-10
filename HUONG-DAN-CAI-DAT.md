@@ -37,6 +37,7 @@ Có 2 phần: **(A) máy chủ nhận bài** bằng Google Apps Script, dùng đ
    - Mục lục **Homework - IELTS Foundation. Pack 1**: <https://miathoday.github.io/grammar-homework/>
    - Unit 1 · MS Foundation: <https://miathoday.github.io/grammar-homework/unit-01-ms-foundation-ls/>
    - Grammar · Present Simple: <https://miathoday.github.io/grammar-homework/grammar/>
+   - Basic Listening · Letters: <https://miathoday.github.io/grammar-homework/basic-listening-letters/>. Đáp án nằm ở hằng số `KEY` đầu phần script trong `basic-listening-letters/index.html`; ô nào để trống thì câu đó hiện "cô chấm sau".
    - Link cũ `…/unit-02-present-simple/` vẫn dùng được, trang sẽ tự chuyển sang `…/grammar/`.
 
 Gửi link mục lục cho học sinh là tiện nhất: các em tự chọn bài, mỗi trang bài tập đều có nút **← Homework · IELTS Foundation · Pack 1** để quay về mục lục.
