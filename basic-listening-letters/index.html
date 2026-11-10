@@ -243,11 +243,17 @@ const REC_MAX = 120; // giây ghi âm tối đa (phần 1A)
    Nhiều cách viết đúng thì ngăn bằng dấu |   VD: 'Edinburgh|Edinburg'
    Khi chấm: không phân biệt hoa/thường, bỏ qua dấu chấm, gạch nối và khoảng trắng. */
 const KEY = {
-  '1B': ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],   // 18 chữ cái
-  '1C': '',                                                                        // các chữ được đọc, VD: 'B M X A Z'
-  '2':  ['', '', '', '', '', '', '', '', '', ''],                                   // 10 từ viết tắt
-  '3':  ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''], // 20 địa danh
-  '4':  {'1':'', '2a':'', '2b':'', '3a':'', '3b':'', '4':'', '5a':'', '5b':''},     // 8 chỗ trống Ex 4
+  // 18 chữ cái phần 1B
+  '1B': ['P', 'I', 'F', 'H', 'J', 'K', 'O', 'M', 'R', 'L', 'W', 'T', 'U', 'X', 'S', 'A', 'B', 'E'],
+  // các chữ được đọc trong phần 1C
+  '1C': 'F G P H V J W N U R A B Y',
+  // 10 từ viết tắt (B.B.C, bbc, B B C… đều tính đúng)
+  '2':  ['BBC', 'SOS', 'WHO', 'TUC', 'ECM', 'SDP', 'ECE', 'EEC', 'IBA', 'LEA'],
+  // 20 địa danh
+  '3':  ['Edinburgh', 'Glasgow', 'Aberdeen', 'Dundee', 'Cardiff', 'Swansea', 'Newport', 'Belfast', 'Manchester', 'Leeds',
+         'Sheffield', 'Leicester', 'Liverpool', 'Birmingham', 'Nottingham', 'Coventry', 'Bristol', 'Bradford', 'London', 'Brighton'],
+  // 8 chỗ trống Ex 4 (T-A-N-A-K-A, tanaka… đều tính đúng)
+  '4':  {'1':'Miller', '2a':'Maria', '2b':'Tanaka', '3a':'Sarah', '3b':'Green', '4':'Elena', '5a':'Paulo', '5b':'Brazil'},
 };
 
 /* ============ TIỆN ÍCH ============ */
