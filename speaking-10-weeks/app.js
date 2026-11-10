@@ -1,7 +1,7 @@
 'use strict';
 /* ================= SETTINGS (teacher) ================= */
 // Web app URL of the Speaking Apps Script (apps-script/Speaking.gs). See HUONG-DAN-CAI-DAT.md, part C.
-const SCRIPT_URL = 'PASTE_SPEAKING_SCRIPT_URL_HERE';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwsg0ydZ2Cduf2XFyuJ6quo4lshGgTwOEVIErZMZVL08dpyBVpkLhD1kdf-pAnGY-a2/exec';
 // Tuesday of Week 1. Change this one date to move the whole schedule.
 const START_DATE = '2026-11-10';
 // Max recording length (seconds)
