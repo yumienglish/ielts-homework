@@ -59,6 +59,33 @@ Gửi link mục lục cho học sinh là tiện nhất: các em tự chọn bà
   Với Unit 1, nếu học sinh có ghi âm thì tiêu đề có thêm 🎙 và **file ghi âm được đính kèm** ở cuối email (bấm vào là nghe được).
 - **Google Sheet** "BTVN – Bài nộp của học sinh": mỗi lần nộp là 1 dòng (thời gian, tên, lớp, điểm từng bài, danh sách câu sai).
 
+---
+
+## C. Speaking 10 tuần (`speaking-10-weeks/`), máy chủ riêng
+
+Trang luyện Speaking dùng **một dự án Apps Script riêng**, có Google Sheet riêng, không dùng chung với `Code.gs`.
+
+1. Đăng nhập **tqmai1996@gmail.com**, mở <https://script.google.com>, bấm **New project**. Đặt tên, ví dụ `Speaking 10 tuần`.
+2. Xóa code mẫu, dán toàn bộ [`apps-script/Speaking.gs`](apps-script/Speaking.gs), rồi bấm 💾 **Save**.
+3. Chọn hàm **`setup`** rồi bấm **▶ Run**, sau đó cấp quyền giống phần A. Hộp thư nhận email **"Speaking 10 tuần: cài đặt thành công ✅"** kèm link Sheet **"Speaking 10 tuần – Bài nộp"**.
+4. **Deploy → New deployment → Web app**. *Execute as:* `Me`, *Who has access:* `Anyone`. Bấm **Deploy** rồi copy **Web app URL**.
+5. Mở `speaking-10-weeks/app.js`, sửa dòng đầu:
+   ```js
+   const SCRIPT_URL = 'PASTE_SPEAKING_SCRIPT_URL_HERE';
+   ```
+   thay bằng URL vừa copy, rồi push lên GitHub.
+6. Link cho học sinh: <https://miathoday.github.io/grammar-homework/speaking-10-weeks/>
+
+**Lịch:** Tuần 1 bắt đầu Thứ Ba 10/11/2026. Mỗi tuần mở vào Thứ Ba và có deadline vào Thứ Hai tuần sau. Tuần chưa tới thì bị khóa. Muốn dời cả lịch, chỉ cần sửa `START_DATE` ở đầu `app.js`.
+**Cô xem trước các tuần bị khóa:** thêm `?unlock` vào cuối link, ví dụ `…/speaking-10-weeks/?unlock`.
+**Sửa nội dung** (câu hỏi, đề, gợi ý, thêm đề mới quý 1/2027): sửa `speaking-10-weeks/data.js`. Mã câu (W1-A-01…) được tạo tự động theo thứ tự.
+
+**Học sinh làm gì:** nhập tên và lớp, mở tuần đang học, bấm **🎙 Record** để thu từng câu. Nghe lại bản thu, nếu chưa ưng thì bấm **🔁 Record again**. Part 2 có nút chuẩn bị 1 phút kèm ô ghi từ khóa. Tuần 9–10 thi thử: câu hỏi ẩn cho tới khi bấm bắt đầu, mỗi Part thu thành 1 file. Bản thu lưu trên máy nên tắt trang không mất. Bấm **✉ Send to teacher** thì chỉ những câu mới thu hoặc thu lại mới được gửi, nên học sinh gửi nhiều lần trong tuần được.
+
+**Cô nhận được:** email `[Speaking W1] Tên – Lớp – 6 recordings · required 10/19`, trong email có bảng các câu (mã câu, câu hỏi, độ dài, từ khóa Part 2, mốc thời gian từng câu của bài thi thử). **Mỗi câu là 1 file đính kèm, tên file là mã câu**, ví dụ `W1-A-01 - Nguyễn Minh Anh.webm`. Sheet có thêm 1 dòng cho mỗi lần gửi. Lần gửi nặng hơn 12MB sẽ tự tách thành nhiều email.
+
+> Nếu sau này sửa `Speaking.gs`: **Deploy → Manage deployments → ✏️ → Version: New version → Deploy**. URL giữ nguyên.
+
 ## Muốn cho một học sinh làm lại?
 
 Bài làm được lưu trong trình duyệt của học sinh. Học sinh mở trang bằng **cửa sổ ẩn danh** hoặc xóa dữ liệu trang web là làm lại được từ đầu.
