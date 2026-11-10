@@ -92,6 +92,10 @@ async function loadBlobs(keys) {
 /* ================= model ================= */
 const ITEMS = {}; // key -> item
 const findGroup = id => { for (const w of WEEKS) for (const g of w.p1) if (g.id === id) return g; return null; };
+const normQ = s => String(s).replace(/[’‘]/g, "'").trim();
+const IDEAS = {};
+if (typeof P3_IDEAS === 'object') for (const q in P3_IDEAS) IDEAS[normQ(q)] = P3_IDEAS[q];
+const ideasFor = q => IDEAS[normQ(q)] || null;
 const storyTitle = id => { for (const w of WEEKS) for (const s of w.stories) if (s.id === id) return s.title; return ''; };
 
 function model(w) {
@@ -112,7 +116,7 @@ function model(w) {
     p2: add({ code: s.id + '-P2', q: s.p2[0], say: s.p2.slice(1), part: 'Part 2 ★', req: true, max: LIM.p2, type: 'p2' }),
     p3: s.p3.map((arr, i) => {
       const code = s.id + '-P3-' + pad2(i + 1);
-      return { main: add({ code, q: arr[0], part: 'Part 3', req: true, max: LIM.p3, type: 'std', rescue: true }) };
+      return { main: add({ code, q: arr[0], part: 'Part 3', req: true, max: LIM.p3, type: 'std', ideas: ideasFor(arr[0]) }) };
     }),
   }));
 
@@ -190,10 +194,15 @@ function saveMe() {
   setStatus('', '');
 }
 
-// small rescue-phrase list shown under each Part 3 question
+// rescue phrases: shown once at the top of Part 2 & 3
 function rescueHtml() {
-  return `<details class="resq"><summary>🛟 Rescue phrases</summary>
+  return `<details class="box"><summary>🛟 Rescue phrases – when you get stuck</summary>
     <ul class="tight rescue">${PLAN.rescue.map(r => `<li>${esc(r)}</li>`).join('')}</ul></details>`;
+}
+// short idea hints under each Part 3 question
+function ideasHtml(list) {
+  return `<details class="resq"><summary>💡 Ideas</summary>
+    <ul class="tight">${list.map(x => `<li>${esc(x)}</li>`).join('')}</ul></details>`;
 }
 
 /* ================= overview ================= */
@@ -277,7 +286,7 @@ async function renderWeek(n) {
     if (w.review) h += `<p class="muted small" style="margin:-6px 4px 12px">Answer again and compare with your Week 1 answer.</p>`;
     h += md.groups.map(groupHtml).join('');
   }
-  if (md.stories.length) h += `<h2 class="part-title">Part 2 &amp; 3</h2>` + md.stories.map(storyHtml).join('');
+  if (md.stories.length) h += `<h2 class="part-title">Part 2 &amp; 3</h2>` + rescueHtml() + md.stories.map(storyHtml).join('');
   if (w.newTopics) h += `<section class="card"><h3>🆕 New Q1/2027 topics (add later)</h3><p class="small">${esc(w.newTopics)}</p>
     <div class="kw"><label for="nt">New topics and which story you will use (e.g. “Describe a teacher… → my English teacher”)</label>
     <textarea id="nt" data-note="W${n}:newtopics" rows="4">${esc(NOTES['W' + n + ':newtopics'] || '')}</textarea></div>
@@ -302,7 +311,7 @@ function optHtml(it) {
 }
 function reqHtml(it, i) {
   return `<div class="q"><div class="qline"><span class="qn">${i + 1}</span><span class="qtext">${esc(it.q)}</span></div>
-    ${it.rescue ? rescueHtml() : ''}
+    ${it.ideas ? ideasHtml(it.ideas) : ''}
     <div class="rec" id="${sid(it.key)}" data-key="${esc(it.key)}"></div></div>`;
 }
 function groupHtml(G) {
@@ -429,7 +438,7 @@ function paintMock(it, el) {
       const i = REC.qi, q = it.qs[i], last = i === it.qs.length - 1;
       el.innerHTML = `<div class="recing"><span class="dot"></span>Recording… <span class="tm" id="t_${sid(k)}">0:00</span></div>
         <div class="stage"><div class="qn">Question ${i + 1} of ${it.qs.length}${q.group ? ' · ' + esc(q.group) : ''}</div>
-        <div class="qbig">${esc(q.q)}</div>${it.mp === 3 ? rescueHtml() : ''}</div>
+        <div class="qbig">${esc(q.q)}</div></div>
         <div class="row">${last
           ? `<button class="btn red" type="button" data-act="stop">⏹ Finish ${partName}</button>`
           : `<button class="btn" type="button" data-act="mnext">Next question ›</button>

@@ -517,3 +517,77 @@ const WEEKS = [
   storyReview: true,
 },
 ];
+
+/* Part 3 idea hints – 2–3 short keyword ideas for each required Part 3 question.
+ * Key = the question text exactly as in WEEKS (straight ' and curly ’ are treated the same). */
+const P3_IDEAS = {
+  // Week 1 – A natural place near your home
+  'Do you think there should be many natural places in cities?': ['Yes – fresh air, less stress', 'Places to exercise and for kids to play', 'e.g. a park or lake near my home'],
+  'Do you think staying in a natural place would help change people’s mood?': ['Yes – quiet, green, relaxing', 'Away from phones, noise and traffic', 'e.g. a walk by the lake after school'],
+  'Are rivers and lakes important to a country?': ['Yes – water for farms and daily life', 'Transport, fishing, tourism', 'e.g. the Mekong River, West Lake'],
+  'Why do you think some people choose not to travel abroad?': ['Too expensive – flights, hotels', 'Language problems, visas', 'Prefer to explore their own country'],
+  // Week 2 – A trip
+  'Where do people in your country often go for holidays?': ['Beaches – Nha Trang, Da Nang, Phu Quoc', 'Mountains – Da Lat, Sa Pa', 'Back to their hometown at Tet'],
+  'Is it important to plan a holiday?': ['Yes – save money and time', 'Book hotels early, avoid crowds', 'But some fun comes from surprises'],
+  'What is the ideal length for a holiday?': ['About 4–5 days or one week', 'Enough to relax, not too expensive', 'Too long → bored, miss home'],
+  'What’s the difference between the city and the countryside?': ['City: busy, modern, many jobs and shops', 'Countryside: quiet, fresh air, rice fields', 'Life is cheaper and slower in the countryside'],
+  // Week 2 – A crowded, noisy place
+  'Why do people go to crowded places?': ['Shopping, food, festivals', 'Exciting atmosphere, meet friends', 'Cheap prices at markets'],
+  'What kinds of noises are there in our life?': ['Traffic and motorbike horns', 'Construction, loud music', 'Nature: birds, rain, the sea'],
+  'Do you think it is good for children to make noise?': ['Yes – playing is natural and healthy', 'But they should learn when to be quiet', 'e.g. not in libraries or hospitals'],
+  'Are there many tall buildings in your country?': ['Yes – in big cities like Hanoi and Ho Chi Minh City', 'e.g. Landmark 81', 'Not many in the countryside'],
+  // Week 3 – An older person
+  'What can young and old people learn from each other?': ['Young → old: technology, new trends', 'Old → young: life experience, patience', 'Traditions and family stories'],
+  'What do old people usually do in their daily life?': ['Exercise in the park in the morning', 'Look after grandchildren', 'Gardening, watching TV, chatting with neighbours'],
+  'Why do some people like to grow plants?': ['Relaxing, reduces stress', 'Fresh, safe vegetables', 'Makes the home green and beautiful'],
+  'Why should children learn new skills?': ['Easier to learn when young', 'More confident and independent', 'Useful later – e.g. swimming, English'],
+  // Week 4 – A friend
+  'Do you still keep in touch with your friends from childhood? Why or why not?': ['Yes – through Facebook, Zalo', 'Not really – moved away, different schools', 'Still meet at Tet or birthdays'],
+  'Do you think online communication through social media will replace face-to-face communication?': ['No – face-to-face feels warmer', 'Online is fast and easy, but can feel cold', 'Body language, hugs, sharing meals'],
+  'How do people make friends in Vietnam?': ['At school and university', 'Through clubs, sports, social media', 'Neighbours, friends of friends'],
+  'Why are some people keen on taking photos?': ['Keep memories', 'Share on social media', 'A hobby – beautiful places, food'],
+  // Week 4 – A famous person
+  'Why are some students popular?': ['Friendly, funny, helpful', 'Good at studying or sports', 'Good-looking, confident'],
+  'What kinds of people are frequently interviewed?': ['Celebrities – singers, athletes', 'Experts, politicians', 'People in the news – heroes, witnesses'],
+  'Why are many advertisements endorsed by celebrities? How useful are they?': ['Fans trust and copy their idols', 'Gets attention quickly', 'Useful? Sells more, but not always honest'],
+  'What are the advantages and disadvantages of advertisements?': ['Good: news about products and sales', 'Bad: too many, annoying', 'Make people buy things they don’t need'],
+  // Week 5 – Studying
+  'What’s the best way to learn a language?': ['Practise every day', 'Speak with friends or native speakers', 'Films, music, apps like Duolingo'],
+  'What difficulties do people face when learning a language?': ['Pronunciation, grammar', 'Not enough time, feeling lazy', 'Shy, afraid of making mistakes'],
+  'Do you think it is easier for children to learn new skills than for adults?': ['Yes – kids learn fast, not shy', 'Kids have more free time', 'Adults: more focused, know why they learn'],
+  'Should students learn to do group work?': ['Yes – teamwork for future jobs', 'Share ideas, learn from friends', 'But some members are lazy'],
+  // Week 5 – A decision / a change
+  'How do people usually make important decisions?': ['Ask family and friends', 'Think about pros and cons', 'Search for information online'],
+  'Which is better, to make a decision quickly or slowly?': ['Slowly for big things – school, job', 'Quickly for small things – food, clothes', 'Too slow → lose chances'],
+  'Do you think children sometimes have to make important decisions?': ['Yes – choosing a school or subject', 'Choosing friends', 'Parents should help them'],
+  'Do you think it is good to change one’s daily routine?': ['Yes – less boring, more creative', 'Try new hobbies, new habits', 'But too many changes → stressful'],
+  // Week 6 – Shopping, gifts & food
+  'Is it easier to spend money or save money?': ['Spending is easier', 'Online shopping – just one click', 'Saving needs a plan and self-control'],
+  'Should schools teach children how to manage money from a young age?': ['Yes – learn the value of money', 'Avoid debt in the future', 'e.g. a piggy bank, pocket money'],
+  'What are the differences between online shopping and in-store shopping?': ['Online: cheap, convenient, many choices', 'In-store: try things on, see the real quality', 'Online: risk of fake products'],
+  'What do people usually consider when buying gifts?': ['The person’s hobbies and needs', 'Price – their budget', 'Something meaningful or useful'],
+  // Week 6 – An unlucky day
+  'What can we do to reduce the possibility of losing things?': ['Keep things in one place', 'Check your bag before leaving', 'Phone apps – e.g. Find My'],
+  'How can we solve the traffic jam problem?': ['More public transport – buses, metro', 'Better roads, fewer private vehicles', 'Work from home, flexible hours'],
+  'Why do some people prefer sending a message instead of making a call?': ['Faster and quieter', 'Can reply later', 'Less awkward for shy people'],
+  'Do you think students are overly reliant on AI?': ['Yes – copy answers, don’t think', 'But AI helps explain hard lessons', 'Use it as a tool, not to cheat'],
+  // Week 7 – A fun day out
+  'How do people spend their leisure time in your country?': ['Coffee with friends', 'Watching films, using phones', 'Parks, shopping malls'],
+  'How does technology affect the way people spend their leisure time?': ['More time on screens – games, TikTok', 'Less time outdoors', 'Easy to book trips, watch films at home'],
+  'Why do some people like to watch sports events?': ['Exciting atmosphere', 'Support their team or country', 'Watch with friends – e.g. football matches'],
+  'Does everything need to be well prepared?': ['Big things: yes – exams, trips', 'Small things: no need', 'Surprises can be fun'],
+  // Week 7 – Videos, films & books
+  'Which is more helpful, watching videos or reading books?': ['Videos: fast, easy, fun', 'Books: deeper, better for focus', 'Depends on the topic'],
+  'What are the differences between watching movies at home and in a cinema?': ['Home: cheap, comfortable, pause anytime', 'Cinema: big screen, great sound', 'Cinema feels like a special day out'],
+  'What are the advantages of keeping a pet?': ['A good friend, less lonely', 'Teaches children responsibility', 'More exercise – e.g. walking a dog'],
+  'Do people prefer local or international news?': ['Local: daily life, traffic, weather', 'International: big events, sports', 'Most people read local news first'],
+  // Week 8 – Laws & the environment
+  'Do you think school rules are important?': ['Yes – keep order and safety', 'Teach discipline', 'Prepare kids for laws in society'],
+  'Do people in your country usually obey the law?': ['Mostly yes', 'Some break traffic rules – red lights, no helmet', 'Fines help people obey'],
+  'How can parents and teachers help children understand and follow rules?': ['Explain the reasons', 'Be good role models', 'Praise good behaviour'],
+  'What environmental laws does your country already have?': ['No littering – fines', 'Limits on plastic bags', 'Rules for factory waste'],
+  // Week 8 – Your goals & habits
+  'Is it good for a person to be ambitious?': ['Yes – gives motivation and goals', 'Helps people work hard', 'Too ambitious → stress'],
+  'Should parents support their children in pursuing their ambitions?': ['Yes – money, advice, encouragement', 'But let children choose', 'Don’t push too hard'],
+  'What kinds of things make people feel pressured?': ['Exams and grades', 'Parents’ expectations', 'Work, money, social media'],
+};
