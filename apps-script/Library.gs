@@ -2,7 +2,7 @@
  * Thư viện Yumi – máy chủ cho trang library/ (bảng tài liệu kiểu Padlet).
  * - File lưu trong Google Drive: thư mục "📚 Thư viện Yumi", mỗi pack là 1 thư mục con
  * - Danh sách pack + tài liệu lưu trong Google Sheet "Thư viện Yumi – dữ liệu" (nằm trong thư mục trên)
- * - Mọi yêu cầu phải kèm MÃ TRUY CẬP (Cài đặt dự án → Thuộc tính tập lệnh → ACCESS_CODE)
+ * - Không cần mã truy cập: ai có link trang đều xem/đăng được (link không công bố ở đâu)
  *
  * Đây là một dự án Apps Script RIÊNG, không dán chung với Code.gs / Speaking.gs.
  * Cài đặt: xem library/HUONG-DAN.md
@@ -21,19 +21,15 @@ const ITEM_COLS = [
   ['tags', 'Tag'], ['desc', 'Mô tả / ghi chú'], ['fileId', 'File Drive ID'], ['url', 'Link'],
   ['mime', 'Kiểu file'], ['size', 'Dung lượng (byte)'], ['by', 'Người đăng'], ['createdAt', 'Ngày đăng'],
   ['pinned', 'Ghim'], ['deleted', 'Đã xóa'],
+  ['color', 'Màu bài'], // cột mới luôn thêm ở CUỐI để dữ liệu cũ không bị lệch cột
 ];
 const DEFAULT_COLOR = '#ffd6cc';
+const MAX_DESC = 20000;
 
 /* ───────────────────────── Cài đặt ───────────────────────── */
 
-/** Chạy hàm này 1 lần trong trình soạn thảo: cấp quyền, tạo thư mục + Sheet, tạo mã truy cập, gửi email. */
+/** Chạy hàm này 1 lần trong trình soạn thảo: cấp quyền, tạo thư mục + Sheet, gửi email. */
 function setup() {
-  const props = PropertiesService.getScriptProperties();
-  let code = props.getProperty('ACCESS_CODE');
-  if (!code) {
-    code = 'yumi-' + randomCode_(5);
-    props.setProperty('ACCESS_CODE', code);
-  }
   const root = root_();
   const ss = ss_();
   table_(ss, 'PACKS', PACK_COLS);
@@ -41,19 +37,9 @@ function setup() {
   MailApp.sendEmail(TEACHER_EMAIL, 'Thư viện Yumi: cài đặt thành công ✅',
     'Máy chủ Thư viện Yumi đã sẵn sàng.\n\n' +
     '📁 Thư mục Drive chứa file: ' + root.getUrl() + '\n' +
-    '📊 Bảng dữ liệu: ' + ss.getUrl() + '\n' +
-    '🔑 Mã truy cập: ' + code + '\n\n' +
-    'Gửi link trang + mã truy cập cho trợ lý. Muốn đổi mã: Apps Script → ⚙ Cài đặt dự án → Thuộc tính tập lệnh → ACCESS_CODE.');
+    '📊 Bảng dữ liệu: ' + ss.getUrl());
   Logger.log('Thư mục: ' + root.getUrl());
   Logger.log('Sheet: ' + ss.getUrl());
-  Logger.log('Mã truy cập: ' + code);
-}
-
-function randomCode_(n) {
-  const abc = 'abcdefghjkmnpqrstuvwxyz23456789';
-  let s = '';
-  for (let i = 0; i < n; i++) s += abc[Math.floor(Math.random() * abc.length)];
-  return s;
 }
 
 /* ───────────────────────── Web app ───────────────────────── */
@@ -66,12 +52,6 @@ function doPost(e) {
   let d;
   try { d = JSON.parse(e.postData.contents); } catch (_) { return json_({ ok: false, error: 'Dữ liệu gửi lên không hợp lệ' }); }
   try {
-    const expected = PropertiesService.getScriptProperties().getProperty('ACCESS_CODE');
-    if (!expected) return json_({ ok: false, error: 'Máy chủ chưa cài đặt (chưa chạy setup)' });
-    if (String(d.code || '').trim() !== expected) {
-      Utilities.sleep(1500); // làm chậm việc đoán mã
-      return json_({ ok: false, auth: false, error: 'Sai mã truy cập' });
-    }
     const action = String(d.action || '');
     if (action === 'list') return json_({ ok: true, data: snapshot_() });
     const fn = ACTIONS[action];
@@ -209,9 +189,10 @@ function updateItem_(d) {
   const it = find_(t, d.id);
   if (it.deleted) throw new Error('Tài liệu đã bị xóa');
   if (d.title != null) it.title = str_(d.title, 150).trim() || it.title;
-  if (d.desc != null) it.desc = str_(d.desc, 5000).trim();
+  if (d.desc != null) it.desc = str_(d.desc, MAX_DESC).trim();
   if (d.tags != null) it.tags = tags_(d.tags);
   if (d.pinned != null) it.pinned = !!d.pinned;
+  if (d.color != null) it.color = itemColor_(d.color);
   if (d.url != null && it.type === 'link') {
     const url = str_(d.url, 2000).trim();
     if (!/^https?:\/\/\S+$/i.test(url)) throw new Error('Link phải bắt đầu bằng http:// hoặc https://');
@@ -241,10 +222,13 @@ function deleteItem_(d) {
 }
 
 function baseItem_(d, pack, type) {
+  // createdAt chỉ dùng khi chép bài cũ sang (giữ ngày gốc); không nhận ngày trong tương lai
+  const at = d.createdAt ? new Date(d.createdAt) : null;
   return {
     id: newId_(), packId: pack.id, packName: pack.name, title: '', type: type,
-    tags: tags_(d.tags), desc: str_(d.desc, 5000).trim(), fileId: '', url: '', mime: '', size: '',
-    by: str_(d.who, 30).trim() || '?', createdAt: new Date(), pinned: false, deleted: false,
+    tags: tags_(d.tags), desc: str_(d.desc, MAX_DESC).trim(), fileId: '', url: '', mime: '', size: '',
+    by: str_(d.who, 30).trim() || '?', createdAt: at && !isNaN(at) && at <= new Date() ? at : new Date(),
+    pinned: !!d.pinned, deleted: false, color: itemColor_(d.color),
   };
 }
 
@@ -258,7 +242,7 @@ function snapshot_() {
     .map(i => ({
       id: i.id, packId: i.packId, title: i.title, type: i.type, tags: i.tags, desc: i.desc,
       fileId: i.fileId, url: i.url, mime: i.mime, size: Number(i.size) || 0, by: i.by,
-      createdAt: i.createdAt, pinned: !!i.pinned,
+      createdAt: i.createdAt, pinned: !!i.pinned, color: i.color || '',
     }));
   return { packs: packs, items: items };
 }
@@ -369,6 +353,7 @@ function str_(v, max) { return String(v == null ? '' : v).slice(0, max); }
 function newId_() { return Utilities.getUuid().replace(/-/g, '').slice(0, 10); }
 function emoji_(v) { return str_(v, 16).trim() || '📦'; }
 function color_(v) { const s = str_(v, 7); return /^#[0-9a-f]{6}$/i.test(s) ? s : DEFAULT_COLOR; }
+function itemColor_(v) { const s = str_(v, 7); return /^#[0-9a-f]{6}$/i.test(s) ? s : ''; } // '' = bài màu trắng
 function tags_(v) {
   const list = Array.isArray(v) ? v : String(v || '').split(/[,#\n]/);
   const seen = {};
