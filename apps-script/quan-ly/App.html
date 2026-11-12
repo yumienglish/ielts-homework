@@ -131,6 +131,11 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:2px s
 nav.tabs a{flex:1;max-width:120px;text-align:center;padding:5px 1px 7px;text-decoration:none;color:var(--muted);font-size:11.5px;font-weight:800;border-radius:16px;margin:2px}
 nav.tabs a .i{display:block;font-size:21px;line-height:1.25}
 nav.tabs a.on{color:var(--pink-ink);background:var(--pink-soft)}
+#undoBox{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:10;background:#4b3a46;color:#fff;border-radius:16px;padding:9px 10px 12px 16px;display:flex;align-items:center;gap:12px;font-size:14px;font-weight:700;width:max-content;max-width:calc(100vw - 32px);box-shadow:0 6px 18px rgba(0,0,0,.25);overflow:hidden}
+#undoBox[hidden]{display:none}
+#undoBox button{border:0;background:var(--pink);color:#5b1b31;border-radius:12px;padding:6px 12px;font-weight:900;cursor:pointer;white-space:nowrap}
+#undoBox i{position:absolute;left:0;bottom:0;height:4px;background:var(--mint);width:100%;animation:undoBar 10s linear forwards}
+@keyframes undoBar{to{width:0}}
 #toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#fff;color:var(--pink-ink);border:2px solid var(--pink);padding:9px 16px;border-radius:16px;font-size:14px;font-weight:800;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9;max-width:90vw;text-align:center;box-shadow:0 4px 0 var(--pink-soft)}
 #toast.show{opacity:1}
 .modal{position:fixed;inset:0;background:rgba(75,58,70,.35);z-index:8;display:flex;align-items:flex-end;justify-content:center}
@@ -274,6 +279,7 @@ body.ro .cc,body.ro .ed,body.ro textarea,body.ro [data-ci],body.ro [data-p],body
 </nav>
 <div id="modal" class="modal" hidden></div>
 <div id="toast"></div>
+<div id="undoBox" hidden></div>
 <script>
 'use strict';
 let DB = null; // dữ liệu tải từ Google Sheet (getAll)
@@ -424,6 +430,17 @@ function bindSubs() {
     r.querySelector('.qok').addEventListener('click', () => { const n = r.querySelector('.qsel').value; if (!n) { toast('Chọn học sinh trước'); return; }
       serverCall('resolveQueue', [ref, n, r.querySelector('.qrem').checked], 'Đã ghép bài cho ' + n); });
     r.querySelector('.qskip').addEventListener('click', () => serverCall('ignoreQueue', [ref], 'Đã bỏ qua bài này')); });
+}
+// Xóa có hoàn tác: chụp lại lịch, giáo án, lớp, học sinh trước khi xóa; ô "↶ Hoàn tác" hiện 10 giây
+let UNDO_T = null;
+function withUndo(msg, act) {
+  const snap = JSON.stringify({ sess: ST.sess, plan: ST.plan, classes: ST.classes, students: ST.students, cinfo: ST.cinfo, full: ST.full });
+  act(); save(); if (READONLY) return;
+  const box = $('#undoBox'); $('#toast').classList.remove('show');
+  box.innerHTML = `<span>🗑️ ${esc(msg)}</span><button type="button">↶ Hoàn tác</button><i></i>`; box.hidden = false;
+  clearTimeout(UNDO_T); UNDO_T = setTimeout(() => { box.hidden = true; }, 10000);
+  box.querySelector('button').onclick = () => { clearTimeout(UNDO_T); box.hidden = true;
+    Object.assign(ST, JSON.parse(snap)); save(); toast('Đã hoàn tác ↶'); route(true); };
 }
 function saveUi() { try { localStorage.setItem(UIKEY, JSON.stringify(ST.ui || {})); } catch (e) {} } // tùy chọn giao diện: chỉ lưu trên máy
 function save() {
@@ -725,7 +742,7 @@ function editSess(id, date, m0) {
     if (id) Object.assign(s, v); else ST.sess.push({ id: uid('s'), ...v });
     save(); close(); toast(id ? 'Đã sửa buổi học' : 'Đã thêm buổi học'); route(true);
   });
-  if (id) $('#eDel').addEventListener('click', () => { ST.sess = ST.sess.filter(x => x.id !== id); save(); close(); toast('Đã xóa buổi'); route(true); });
+  if (id) $('#eDel').addEventListener('click', () => { close(); withUndo(`Đã xóa buổi ${s.cls} ${wdS(s.date)} ${dm(s.date)}`, () => { ST.sess = ST.sess.filter(x => x.id !== id); }); route(true); });
 }
 
 // ================= BUỔI HỌC =================
@@ -794,7 +811,7 @@ function viewBuoi(iso, cls) {
 function bindDay() { V.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => location.hash = '#buoi/' + b.dataset.go)); }
 
 // ================= GIÁO ÁN (dạng bảng Syllabus) =================
-const SYL_COLS = [['lesson', 'Bài dạy', 150], ['content', 'Nội dung bài dạy (chi tiết)', 290], ['mat', 'Tài liệu cần chuẩn bị', 170], ['hw', 'Homework', 190], ['print', 'File cần in', 150], ['note', 'Note sau buổi học', 170]];
+const SYL_COLS = [['lesson', 'Bài dạy', 95], ['content', 'Nội dung bài dạy (chi tiết)', 290], ['mat', 'Tài liệu cần chuẩn bị', 170], ['hw', 'Homework', 190], ['print', 'File cần in', 150], ['note', 'Note sau buổi học', 170]];
 function viewGiaoAn(cls, focus) {
   setTab('giaoan', 'Giáo án');
   if (!CLASS_CFG[cls]) cls = (sessOn(TODAY)[0] || {}).cls || CLASSES[0];
@@ -807,7 +824,7 @@ function viewGiaoAn(cls, focus) {
   const row = (key, d, l, s) => { const g = l && l.guessed;
     return `<tr class="${d === TODAY ? 'today' : d && d < TODAY ? 'past' : ''}" id="r-${key.replace(':', '-')}" data-key="${key}">
     <td><div class="dc">${d ? dm(d) + `<small>${wdS(d)}${s ? ' · ' + hhmm(s.m) : ''}${s && s.num ? ' · #' + s.num : ''}</small>` : `${l && l.num ? 'Buổi ' + esc(l.num) : ''}<small>chưa xếp ngày</small>`}${g ? '<small class="gl" style="color:#a2531f">tự xếp</small>' : ''}${l && l.id && !g ? `<button class="x" data-del="${l.id}" title="Xóa dòng">🗑</button>` : ''}</div></td>
-    ${SYL_COLS.map(([k, , w]) => `<td style="min-width:${w}px;max-width:${w + 90}px" class="${g ? 'guess' : ''}"><div class="cc" contenteditable="true" data-f="${k}">${esc(l ? l[k] : '')}</div></td>`).join('')}</tr>`; };
+    ${SYL_COLS.map(([k, , w]) => `<td style="min-width:${w}px;max-width:${w + (k === 'lesson' ? 25 : 90)}px" class="${g ? 'guess' : ''}"><div class="cc" contenteditable="true" data-f="${k}">${esc(l ? l[k] : '')}</div></td>`).join('')}</tr>`; };
   let h = `<div class="clsbar" style="margin-top:14px">${CLASSES.map(c => chipC(c, c === cls, '#giaoan/' + c)).join('')}</div>`;
   h += `<div class="sylwrap"><div class="sylbar" style="background:${cbg};color:${cfg}"><span>${EMO[cls] || ''} ${esc(cls)}</span><button class="oldtg" id="tgOld" style="color:${cfg};border-color:${cfg}">${showOld ? '🙈 Ẩn buổi cũ' : '👁 Hiện ' + old.length + ' buổi cũ'}</button></div><div class="sylinfo">
     <div class="k">Tên học sinh</div><div class="v">${studentsOf(cls).map(s => esc(s.display)).join(', ') || '—'}</div>
@@ -830,7 +847,7 @@ function viewGiaoAn(cls, focus) {
     if (cur && cur.guessed) { tr.querySelectorAll('td.guess').forEach(td => td.classList.remove('guess')); const gl = tr.querySelector('.gl'); if (gl) gl.remove(); }
   }));
   V.querySelectorAll('[data-ci]').forEach(el => el.addEventListener('blur', () => { ci[el.dataset.ci] = el.innerText.trim(); save(); }));
-  V.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => { if (!confirm('Xóa nội dung dòng này?')) return; ST.plan[cls] = L.filter(x => x.id !== b.dataset.del); save(); toast('Đã xóa dòng'); re(); }));
+  V.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => { withUndo('Đã xóa 1 dòng giáo án ' + cls, () => { ST.plan[cls] = L.filter(x => x.id !== b.dataset.del); }); re(); }));
   const tg = $('#tgOld'); if (tg) tg.addEventListener('click', () => { ui.showOld = !showOld; saveUi(); re(); });
   $('#addRow').addEventListener('click', () => { const x = { id: uid('l'), date: '', lesson: '', content: '', mat: '', hw: '', print: '', note: '' }; L.push(x); save(); re(); const c = document.querySelector(`#r-id-${x.id} .cc`); if (c) { c.scrollIntoView({ block: 'center' }); c.focus(); } });
   if (focus) { const r = document.getElementById('r-' + focus); if (r) { r.scrollIntoView({ block: 'center' }); r.classList.add('flash'); } }
@@ -903,7 +920,7 @@ function classModal(code) {
   M.querySelectorAll('[data-b]').forEach(b => b.addEventListener('click', () => { bg = b.dataset.b; fg = b.dataset.f; $('#cBg').value = bg; $('#cFg').value = fg; pv(); }));
   $('#cBg').addEventListener('input', e => { bg = e.target.value; pv(); }); $('#cFg').addEventListener('input', e => { fg = e.target.value; pv(); });
   M.onclick = e => { if (e.target === M) close(); }; $('#clsCancel').addEventListener('click', close);
-  const del = $('#cDel'); if (del) del.addEventListener('click', () => { if (!confirm('Xóa lớp ' + code + '?')) return; ST.classes = ST.classes.filter(c => c.code !== code); save(); close(); toast('Đã xóa lớp'); route(true); });
+  const del = $('#cDel'); if (del) del.addEventListener('click', () => { if (!confirm('Xóa lớp ' + code + '?')) return; close(); withUndo('Đã xóa lớp ' + code, () => { ST.classes = ST.classes.filter(c => c.code !== code); }); route(true); });
   $('#cSave').addEventListener('click', () => {
     const cd = isNew ? $('#cC').value.trim().toUpperCase() : code;
     if (!/^[A-Z0-9]{2,10}$/.test(cd)) { toast('Mã lớp chỉ gồm chữ và số, VD IE505'); return; }
@@ -932,7 +949,7 @@ function stModal(name) {
   const fl = () => { $('#sFl').textContent = CLASS_CFG[$('#sC').value].type === 'goi' ? 'Giá gói (nghìn)' : 'Học phí/tháng (nghìn)'; }; fl();
   $('#sC').addEventListener('change', () => { fl(); if (!old) $('#sP').value = typFee($('#sC').value); });
   M.onclick = e => { if (e.target === M) close(); }; $('#stCancel').addEventListener('click', close);
-  const del = $('#sDel'); if (del) del.addEventListener('click', () => { if (!confirm('Chuyển ' + name + ' sang Nghỉ học? (dữ liệu cũ vẫn giữ trong tab HocSinh)')) return; old.status = 'Nghỉ học'; save(); close(); toast(name + ' đã chuyển sang Nghỉ học'); location.hash = '#hs'; });
+  const del = $('#sDel'); if (del) del.addEventListener('click', () => { if (!confirm('Chuyển ' + name + ' sang Nghỉ học? (dữ liệu cũ vẫn giữ trong tab HocSinh)')) return; close(); withUndo(name + ' đã chuyển sang Nghỉ học', () => { old.status = 'Nghỉ học'; }); location.hash = '#hs'; });
   $('#sSave').addEventListener('click', () => {
     const n = old ? name : $('#sN').value.trim().replace(/\s+/g, ' ');
     if (!n) { toast('Nhập tên gọi'); return; }

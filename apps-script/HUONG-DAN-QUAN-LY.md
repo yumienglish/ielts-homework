@@ -67,6 +67,7 @@ Lỗi này thường xảy ra khi trình duyệt đang **đăng nhập nhiều t
 - Nếu hiện **⚠️ Chưa lưu được**, thường là do mất mạng. Web app tự thử lại, đừng đóng trang cho đến khi thấy lại chữ **☁️ Đã lưu**.
 - Bấm vào chữ **☁️ Đã lưu** để tải dữ liệu mới nhất, ví dụ khi vừa sửa trên máy tính rồi mở điện thoại.
 - Quay lại web app sau hơn 3 phút không dùng, dữ liệu cũng tự tải lại.
+- **Xóa nhầm?** Sau khi xóa buổi học, xóa dòng giáo án, xóa lớp hoặc cho học sinh nghỉ học, ở cuối màn hình hiện ô **↶ Hoàn tác** trong 10 giây. Bấm vào là mọi thứ trở lại như cũ.
 
 ## Bài học sinh nộp online (BTVN, Speaking)
 
