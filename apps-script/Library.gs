@@ -22,9 +22,19 @@ const ITEM_COLS = [
   ['mime', 'Kiểu file'], ['size', 'Dung lượng (byte)'], ['by', 'Người đăng'], ['createdAt', 'Ngày đăng'],
   ['pinned', 'Ghim'], ['deleted', 'Đã xóa'],
   ['color', 'Màu bài'], // cột mới luôn thêm ở CUỐI để dữ liệu cũ không bị lệch cột
+  ['likes', 'Thả tim (ai)'],
+];
+const COMMENT_COLS = [
+  ['id', 'ID'], ['itemId', 'Bài (ID)'], ['by', 'Người viết'], ['text', 'Bình luận'], ['createdAt', 'Thời gian'], ['deleted', 'Đã xóa'],
 ];
 const DEFAULT_COLOR = '#ffd6cc';
 const MAX_DESC = 20000;
+
+// Lịch tuần lấy từ file "Quản lý lớp học" (tab Lop + Lich). Để trống = tự tìm file theo tên trong Drive.
+const QUAN_LY_SHEET_ID = '';
+const QUAN_LY_FILE_NAME = 'Quản lý lớp học';
+const SCHEDULE_PACK_NAME = 'Việc cần làm'; // bài Lịch tuần nằm trong pack này
+const TIMEZONE = 'Asia/Ho_Chi_Minh';
 
 /* ───────────────────────── Cài đặt ───────────────────────── */
 
@@ -34,6 +44,7 @@ function setup() {
   const ss = ss_();
   table_(ss, 'PACKS', PACK_COLS);
   table_(ss, 'ITEMS', ITEM_COLS);
+  table_(ss, 'COMMENTS', COMMENT_COLS);
   MailApp.sendEmail(TEACHER_EMAIL, 'Thư viện Yumi: cài đặt thành công ✅',
     'Máy chủ Thư viện Yumi đã sẵn sàng.\n\n' +
     '📁 Thư mục Drive chứa file: ' + root.getUrl() + '\n' +
@@ -80,6 +91,10 @@ const ACTIONS = {
   addNote: addNote_,
   updateItem: updateItem_,
   deleteItem: deleteItem_,
+  toggleLike: toggleLike_,
+  addComment: addComment_,
+  deleteComment: deleteComment_,
+  syncSchedule: function () { const r = syncSchedule_(); return { msg: r }; },
 };
 
 /* ───────────────────────── Pack ───────────────────────── */
@@ -221,6 +236,150 @@ function deleteItem_(d) {
   }
 }
 
+/* ───────────────────────── Thả tim + bình luận ───────────────────────── */
+
+function toggleLike_(d) {
+  const who = str_(d.who, 30).trim();
+  if (!who) throw new Error('Chưa chọn người dùng');
+  const t = load_('ITEMS', ITEM_COLS);
+  const it = find_(t, d.id);
+  const list = String(it.likes || '').split(',').map(s => s.trim()).filter(Boolean);
+  const i = list.indexOf(who);
+  if (i >= 0) list.splice(i, 1); else list.push(who);
+  it.likes = list.join(', ');
+  save_(t, it);
+}
+
+function addComment_(d) {
+  const who = str_(d.who, 30).trim();
+  const text = str_(d.text, 5000).trim();
+  if (!who) throw new Error('Chưa chọn người dùng');
+  if (!text) throw new Error('Bình luận đang trống');
+  const it = find_(load_('ITEMS', ITEM_COLS), d.itemId);
+  if (it.deleted) throw new Error('Bài đã bị xóa');
+  append_(load_('COMMENTS', COMMENT_COLS), { id: newId_(), itemId: it.id, by: who, text: text, createdAt: new Date(), deleted: false });
+}
+
+function deleteComment_(d) {
+  const t = load_('COMMENTS', COMMENT_COLS);
+  const c = find_(t, d.id);
+  c.deleted = true;
+  save_(t, c);
+}
+
+/* ───────────────────────── Lịch tuần (từ file Quản lý lớp học) ───────────────────────── */
+
+/** Chạy hàm này 1 lần trong trình soạn thảo: cấp quyền, đồng bộ ngay, và hẹn giờ tự đồng bộ 2 ngày/lần. */
+function enableScheduleSync() {
+  ScriptApp.getProjectTriggers().forEach(tr => { if (tr.getHandlerFunction() === 'syncSchedule') ScriptApp.deleteTrigger(tr); });
+  ScriptApp.newTrigger('syncSchedule').timeBased().everyDays(2).atHour(6).inTimezone(TIMEZONE).create();
+  const msg = syncSchedule();
+  Logger.log(msg + '\nĐã bật tự đồng bộ: 2 ngày/lần, khoảng 6–7 giờ sáng.');
+  return msg;
+}
+
+/** Hẹn giờ gọi hàm này. */
+function syncSchedule() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(25000);
+  try { return syncSchedule_(); } finally { try { lock.releaseLock(); } catch (_) {} }
+}
+
+function quanLy_() {
+  const props = PropertiesService.getScriptProperties();
+  const id = QUAN_LY_SHEET_ID || props.getProperty('QL_ID');
+  if (id) { try { return SpreadsheetApp.openById(id); } catch (_) {} }
+  const files = DriveApp.searchFiles('title = "' + QUAN_LY_FILE_NAME + '" and mimeType = "application/vnd.google-apps.spreadsheet" and trashed = false');
+  while (files.hasNext()) {
+    const f = files.next();
+    const ss = SpreadsheetApp.openById(f.getId());
+    if (ss.getSheetByName('Lich') && ss.getSheetByName('Lop')) { props.setProperty('QL_ID', f.getId()); return ss; }
+  }
+  throw new Error('Không tìm thấy file "' + QUAN_LY_FILE_NAME + '" (có tab Lich và Lop). Dán ID file vào QUAN_LY_SHEET_ID ở đầu Library.gs.');
+}
+
+/** Đọc 1 tab theo tên cột tiêu đề → mảng object {tên cột: chữ hiển thị}. */
+function readByHeader_(sh) {
+  const last = sh.getLastRow(), width = sh.getLastColumn();
+  if (last < 2 || !width) return [];
+  const rg = sh.getRange(1, 1, last, width);
+  const v = rg.getValues(), dv = rg.getDisplayValues();
+  const head = dv[0].map(s => String(s).trim());
+  const out = [];
+  for (let i = 1; i < v.length; i++) {
+    const o = {};
+    head.forEach((h, j) => { o[h] = v[i][j] instanceof Date ? v[i][j] : String(dv[i][j]).trim(); });
+    out.push(o);
+  }
+  return out;
+}
+
+function ymd_(x) {
+  if (x instanceof Date) return Utilities.formatDate(x, TIMEZONE, 'yyyy-MM-dd');
+  const s = String(x || '').trim();
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (m) return m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
+  return '';
+}
+function hm_(x) {
+  if (x instanceof Date) return Utilities.formatDate(x, TIMEZONE, 'HH:mm');
+  const m = String(x || '').match(/(\d{1,2}):(\d{2})/);
+  return m ? ('0' + m[1]).slice(-2) + ':' + m[2] : '';
+}
+
+function syncSchedule_() {
+  const ql = quanLy_();
+  const classes = {};
+  readByHeader_(ql.getSheetByName('Lop')).forEach(r => {
+    const code = String(r['Mã lớp'] || '').trim();
+    if (code) classes[code] = { bg: r['Màu nền'] || '', fg: r['Màu chữ'] || '', emo: r['Sticker'] || '' };
+  });
+  // Lưu 14 ngày (tuần này + tuần sau). Trang chỉ hiện tuần chứa ngày hôm nay, nên sang tuần mới
+  // vẫn đúng lịch dù lần đồng bộ kế tiếp chưa tới (2 ngày/lần).
+  const today = Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd');
+  const base = new Date(today + 'T12:00:00Z');
+  const mon = new Date(base.getTime() - ((base.getUTCDay() + 6) % 7) * 864e5);
+  const days = [];
+  for (let i = 0; i < 14; i++) days.push({ date: new Date(mon.getTime() + i * 864e5).toISOString().slice(0, 10), list: [] });
+  readByHeader_(ql.getSheetByName('Lich')).forEach(r => {
+    const date = ymd_(r['Ngày']);
+    const day = days.find(x => x.date === date);
+    const cls = String(r['Lớp'] || '').trim();
+    if (day && cls) day.list.push({ time: hm_(r['Giờ bắt đầu']), cls: cls, dur: Number(r['Số phút']) || 0 });
+  });
+  days.forEach(d => d.list.sort((a, b) => a.time.localeCompare(b.time)));
+  const used = {};
+  days.forEach(d => d.list.forEach(x => { if (classes[x.cls]) used[x.cls] = classes[x.cls]; }));
+  PropertiesService.getScriptProperties().setProperty('CLASSES', JSON.stringify(classes));
+
+  const data = { mon: days[0].date, sun: days[6].date, days: days, classes: used, syncedAt: new Date().toISOString() };
+  const ddmm = s => s.slice(8, 10) + '/' + s.slice(5, 7);
+  const title = 'Lịch dạy tuần ' + ddmm(data.mon) + ' – ' + ddmm(data.sun);
+
+  // Ghi vào 1 bài cố định (loại "schedule"); chưa có thì tạo trong pack "Việc cần làm"
+  const props = PropertiesService.getScriptProperties();
+  const t = load_('ITEMS', ITEM_COLS);
+  let it = t.rows.find(r => r.id === props.getProperty('SCHEDULE_ITEM_ID') && !r.deleted && r.type === 'schedule');
+  if (!it) it = t.rows.find(r => r.type === 'schedule' && !r.deleted);
+  if (it) {
+    it.title = title; it.desc = JSON.stringify(data);
+    save_(t, it);
+  } else {
+    const packs = load_('PACKS', PACK_COLS);
+    const live = packs.rows.filter(p => !p.deleted);
+    const pack = live.find(p => p.name.toLowerCase() === SCHEDULE_PACK_NAME.toLowerCase()) || live[0];
+    if (!pack) throw new Error('Chưa có pack nào để đặt bài Lịch tuần');
+    it = baseItem_({ who: 'Tự động', pinned: true }, pack, 'schedule');
+    it.title = title; it.desc = JSON.stringify(data);
+    append_(t, it);
+  }
+  props.setProperty('SCHEDULE_ITEM_ID', it.id);
+  const n = days.slice(0, 7).reduce((s, d) => s + d.list.length, 0);
+  return 'Đã đồng bộ ' + title + ': ' + n + ' buổi (kèm sẵn lịch tuần sau).';
+}
+
 function baseItem_(d, pack, type) {
   // createdAt chỉ dùng khi chép bài cũ sang (giữ ngày gốc); không nhận ngày trong tương lai
   const at = d.createdAt ? new Date(d.createdAt) : null;
@@ -243,8 +402,15 @@ function snapshot_() {
       id: i.id, packId: i.packId, title: i.title, type: i.type, tags: i.tags, desc: i.desc,
       fileId: i.fileId, url: i.url, mime: i.mime, size: Number(i.size) || 0, by: i.by,
       createdAt: i.createdAt, pinned: !!i.pinned, color: i.color || '',
+      likes: String(i.likes || '').split(',').map(s => s.trim()).filter(Boolean),
     }));
-  return { packs: packs, items: items };
+  const live = {};
+  items.forEach(i => { live[i.id] = true; });
+  const comments = load_('COMMENTS', COMMENT_COLS).rows.filter(c => !c.deleted && live[c.itemId])
+    .map(c => ({ id: c.id, itemId: c.itemId, by: c.by, text: c.text, createdAt: c.createdAt }));
+  let classes = {};
+  try { classes = JSON.parse(PropertiesService.getScriptProperties().getProperty('CLASSES') || '{}'); } catch (_) {}
+  return { packs: packs, items: items, comments: comments, classes: classes };
 }
 
 /* ───────────────────────── Drive + Sheet ───────────────────────── */
