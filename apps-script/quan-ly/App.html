@@ -177,7 +177,11 @@ nav.tabs a.on{color:var(--pink-ink);background:var(--pink-soft)}
 .sg .cell.gap{border-bottom:3px double #e6d3d8}
 .sg .cell.drop{background:#ffe6ec!important;outline:2px dashed var(--pink);outline-offset:-2px}
 .sg .cell.tcol{background:#fffafb}
-.blk{z-index:1;margin:1px 2px;border-radius:6px;padding:2px 3px;text-align:center;font-weight:800;line-height:1.2;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden;box-shadow:0 2px 0 rgba(0,0,0,.12)}
+.blk{z-index:1;margin:1px 2px;border-radius:6px;padding:2px 3px;text-align:center;font-weight:800;line-height:1.2;cursor:grab;touch-action:pan-x pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;overflow:hidden;box-shadow:0 2px 0 rgba(0,0,0,.12)}
+.blk.lift{transform:scale(1.06);outline:2px solid #fff;box-shadow:0 6px 14px rgba(0,0,0,.3);z-index:3;cursor:grabbing}
+.zbar{display:flex;justify-content:center;align-items:center;gap:6px;margin-bottom:8px}
+.zb{border:2px solid var(--line);background:#fff;border-radius:12px;width:34px;height:32px;font-weight:900;font-size:18px;line-height:1;cursor:pointer;color:var(--pink-ink)}
+.zbar .zl{min-width:44px;text-align:center;font-weight:800;font-size:13px;color:var(--muted)}
 .blk .n{font-weight:700;font-size:12px;opacity:.9}
 .blk.l0{margin-right:50%}.blk.l1{margin-left:50%}
 .blk.moved{outline:3px solid var(--pink);outline-offset:1px}
@@ -421,8 +425,9 @@ function bindSubs() {
       serverCall('resolveQueue', [ref, n, r.querySelector('.qrem').checked], 'Đã ghép bài cho ' + n); });
     r.querySelector('.qskip').addEventListener('click', () => serverCall('ignoreQueue', [ref], 'Đã bỏ qua bài này')); });
 }
+function saveUi() { try { localStorage.setItem(UIKEY, JSON.stringify(ST.ui || {})); } catch (e) {} } // tùy chọn giao diện: chỉ lưu trên máy
 function save() {
-  try { localStorage.setItem(UIKEY, JSON.stringify(ST.ui || {})); } catch (e) {}
+  saveUi();
   if (READONLY) { // chỉ xem: bỏ thay đổi, quay về dữ liệu đã tải
     const M = $('#modal'); M.hidden = true; M.innerHTML = ''; fromServer(DB); route(true);
     toast('👀 Bạn đang ở chế độ chỉ xem – thay đổi không được lưu'); return;
@@ -599,7 +604,17 @@ const slotIdx = m => { if (m >= 720 && m < 840) return SLOTS.indexOf(840); let k
 const RH = 26;
 const ampm = m => { const h = Math.floor(m / 60) % 24; return (h > 12 ? h - 12 : h) + ':' + pd(m % 60); };
 const durOf = c => { const a = SESS.filter(s => s.cls === c).map(s => s.dur); return a.length ? a[a.length - 1] : 90; };
-let LAST_MOVE = null, MOVED = null;
+let LAST_MOVE = null, MOVED = null, Z = 1; // Z = mức thu phóng lưới đang áp dụng
+const lichZoom = () => { const z = (ST.ui || {}).lichZoom; return z === 'fit' ? 'fit' : (+z > 0 ? +z : 1); };
+function applyZoom() { // CSS zoom trên lưới (ảnh hưởng layout nên cột dính/grid vẫn đúng); 'fit' = thu vừa bề ngang để thấy cả 7 ngày
+  const wrap = V.querySelector('.sgwrap'), sg = V.querySelector('.sg'); if (!sg) return;
+  const z = lichZoom(); let v = z;
+  if (z === 'fit') { sg.style.zoom = 1; v = Math.max(0.3, Math.min(1, Math.floor(wrap.clientWidth / sg.scrollWidth * 100) / 100)); }
+  Z = v; sg.style.zoom = v;
+  const l = $('#zLbl'); if (l) l.textContent = Math.round(v * 100) + '%';
+  const f = $('#zFit'); if (f) f.textContent = z === 'fit' ? '🔍 100%' : '🗓 Cả tuần';
+}
+window.addEventListener('resize', () => { if (ST && location.hash.startsWith('#lich') && lichZoom() === 'fit') applyZoom(); });
 function viewLich(mon) {
   mon = mondayOf(mon || TODAY); setTab('lich', 'Lịch dạy');
   const days = [...Array(7)].map((_, i) => addDays(mon, i));
@@ -609,7 +624,8 @@ function viewLich(mon) {
     <div class="row wrapf" style="gap:8px;justify-content:center;margin-bottom:8px">${mon !== mondayOf(TODAY) ? '<a class="chip" href="#lich">↩ Về tuần này</a>' : ''}
     ${!week.length && prev.length ? `<button class="btn sm" id="copyWk">📋 Chép ${prev.length} buổi từ tuần trước</button>` : ''}
     ${LAST_MOVE ? `<button class="btn sm ghost" id="undo">↶ Hoàn tác dời ${LAST_MOVE.cls}</button>` : ''}</div>
-    <div class="small muted" style="text-align:center;margin-bottom:8px">✋ Kéo ô lớp để dời ngày/giờ · bấm ô lớp để mở · bấm ô trống để thêm buổi</div>`;
+    <div class="zbar"><button class="zb" id="zOut" type="button" title="Thu nhỏ">−</button><span class="zl" id="zLbl">100%</span><button class="zb" id="zIn" type="button" title="Phóng to">+</button><button class="chip" id="zFit" type="button">${lichZoom() === 'fit' ? '🔍 100%' : '🗓 Cả tuần'}</button></div>
+    <div class="small muted" style="text-align:center;margin-bottom:8px">✋ Giữ ô lớp ~1 giây rồi kéo để dời ngày/giờ · bấm nhẹ ô lớp để mở · bấm ô trống để thêm buổi</div>`;
   let g = `<div class="title" style="grid-row:1">LỊCH LÀM VIỆC</div>
     <div class="hd s" style="grid-row:2;grid-column:1/3">Thứ</div>${days.map((d, j) => `<div class="hd ${d === TODAY ? 'today' : ''}" style="grid-row:2;grid-column:${j + 3}">${dm(d)}</div>`).join('')}
     <div class="hd s" style="grid-row:3;grid-column:1">Bắt đầu</div><div class="hd e" style="grid-row:3;grid-column:2">Kết thúc</div>${days.map((d, j) => `<div class="hd ${d === TODAY ? 'today' : ''}" style="grid-row:3;grid-column:${j + 3}">${WD[dateOf(d).getDay()].toUpperCase()}</div>`).join('')}`;
@@ -629,6 +645,11 @@ function viewLich(mon) {
     <div class="card tape mint" style="margin:0"><h4>VIỆC CẦN LÀM</h4><textarea data-n="todo" rows="6" placeholder="Việc cần làm tuần này…">${esc(wn.todo || '')}</textarea></div></div>
     <div class="alert info small" style="margin-top:14px">Số dưới mã lớp = buổi thứ mấy trong gói (<b>tự đếm</b>). ❤️‍🔥 = đã soạn giáo án (tự nhận biết). Muốn dời sang tuần khác: bấm ô lớp rồi đổi ngày.</div>`;
   V.innerHTML = h; MOVED = null;
+  applyZoom();
+  const setZ = z => { (ST.ui || (ST.ui = {})).lichZoom = z; saveUi(); applyZoom(); };
+  $('#zIn').addEventListener('click', () => setZ(Math.min(1.4, Math.round((Z + 0.1) * 10) / 10)));
+  $('#zOut').addEventListener('click', () => setZ(Math.max(0.5, Math.round((Z - 0.1) * 10) / 10)));
+  $('#zFit').addEventListener('click', () => setZ(lichZoom() === 'fit' ? 1 : 'fit'));
   V.querySelectorAll('[data-wk]').forEach(b => b.addEventListener('click', () => location.hash = '#lich/' + b.dataset.wk));
   V.querySelectorAll('.cell').forEach(c => c.addEventListener('click', () => editSess(null, c.dataset.d, SLOTS[+c.dataset.i])));
   const cw = $('#copyWk'); if (cw) cw.addEventListener('click', () => { prev.forEach(s => ST.sess.push({ id: uid('s'), date: addDays(s.date, 7), m: s.m, dur: s.dur, cls: s.cls, makeup: false, startNum: null })); save(); toast(`Đã chép ${prev.length} buổi 🐣`); viewLich(mon); });
@@ -636,29 +657,35 @@ function viewLich(mon) {
   V.querySelectorAll('[data-n]').forEach(t => t.addEventListener('input', () => { ST.weekNotes[mon] = { ...(ST.weekNotes[mon] || {}), [t.dataset.n]: t.value }; save(); }));
   bindDrag(mon);
 }
+// Kéo thả: chuột kéo ngay; ngón tay phải GIỮ ~0,45 giây (ô nổi lên, rung nhẹ) rồi mới kéo — vuốt nhanh là cuộn trang, bấm nhẹ là mở buổi
 function bindDrag(mon) {
   const wrap = V.querySelector('.sgwrap'); let D = null, ghost = null, tgt = [];
   const clear = () => { tgt.forEach(c => c.classList.remove('drop')); tgt = []; };
+  const arm = (b, e) => { if (!D || D.b !== b) return; D.armed = true; b.classList.add('lift');
+    try { b.setPointerCapture(e.pointerId); } catch (_) {} try { if (navigator.vibrate) navigator.vibrate(30); } catch (_) {} };
   V.querySelectorAll('.blk').forEach(b => {
-    b.addEventListener('pointerdown', e => { if (e.button > 0) return; const r = b.getBoundingClientRect();
-      D = { id: b.dataset.id, b, x: e.clientX, y: e.clientY, w: r.width, hh: r.height, dx: e.clientX - r.left, dy: e.clientY - r.top, moved: false, hit: null };
-      try { b.setPointerCapture(e.pointerId); } catch (_) {} });
+    b.addEventListener('contextmenu', e => e.preventDefault());
+    b.addEventListener('touchmove', e => { if (D && D.b === b && D.armed) e.preventDefault(); }, { passive: false }); // đã nhấc ô → không cho trình duyệt cuộn
+    b.addEventListener('pointerdown', e => { if (e.button > 0) return; const r = b.getBoundingClientRect(); if (D && D.t) clearTimeout(D.t);
+      D = { id: b.dataset.id, b, x: e.clientX, y: e.clientY, w: r.width, hh: r.height, dx: e.clientX - r.left, dy: e.clientY - r.top, moved: false, armed: false, hit: null, t: null };
+      if (e.pointerType === 'mouse') arm(b, e); else D.t = setTimeout(() => arm(b, e), 450); });
     b.addEventListener('pointermove', e => {
       if (!D || D.b !== b) return;
+      if (!D.armed) { if (Math.hypot(e.clientX - D.x, e.clientY - D.y) > 8) { clearTimeout(D.t); D = null; } return; } // chưa giữ đủ lâu mà đã di = cuộn trang
       if (!D.moved) { if (Math.hypot(e.clientX - D.x, e.clientY - D.y) < 6) return;
-        D.moved = true; ghost = b.cloneNode(true); ghost.classList.add('dragghost'); Object.assign(ghost.style, { width: D.w + 'px', height: D.hh + 'px', margin: 0 }); document.body.appendChild(ghost); b.style.opacity = .3; }
-      ghost.style.left = (e.clientX - D.dx) + 'px'; ghost.style.top = (e.clientY - D.dy) + 'px';
+        D.moved = true; ghost = b.cloneNode(true); ghost.classList.remove('lift'); ghost.classList.add('dragghost'); Object.assign(ghost.style, { width: D.w + 'px', height: D.hh + 'px', margin: 0, zoom: Z }); document.body.appendChild(ghost); b.style.opacity = .3; }
+      ghost.style.left = (e.clientX - D.dx) / Z + 'px'; ghost.style.top = (e.clientY - D.dy) / Z + 'px';
       const wr = wrap.getBoundingClientRect();
       if (e.clientX > wr.right - 30) wrap.scrollLeft += 14; else if (e.clientX < wr.left + 100 && wrap.scrollLeft > 0) wrap.scrollLeft -= 14;
       if (e.clientY > innerHeight - 110) scrollBy(0, 14); else if (e.clientY < 50) scrollBy(0, -14);
       clear();
-      const cell = document.elementsFromPoint(e.clientX, e.clientY - D.dy + RH / 2).find(x => x.classList && x.classList.contains('cell'));
+      const cell = document.elementsFromPoint(e.clientX, e.clientY - D.dy + RH * Z / 2).find(x => x.classList && x.classList.contains('cell'));
       D.hit = cell ? { d: cell.dataset.d, i: +cell.dataset.i } : null;
       if (cell) { const s = SESS.find(x => x.id === D.id); for (let k = 0; k < Math.max(1, Math.round(s.dur / 30)); k++) { const c = V.querySelector(`.cell[data-d="${cell.dataset.d}"][data-i="${+cell.dataset.i + k}"]`); if (c) { c.classList.add('drop'); tgt.push(c); } } }
     });
     const up = e => {
-      if (!D || D.b !== b) return; const d = D; D = null; clear(); if (ghost) { ghost.remove(); ghost = null; } b.style.opacity = '';
-      if (!d.moved) { if (e.type === 'pointerup') editSess(d.id); return; }
+      if (!D || D.b !== b) return; const d = D; D = null; clearTimeout(d.t); clear(); if (ghost) { ghost.remove(); ghost = null; } b.classList.remove('lift'); b.style.opacity = '';
+      if (!d.moved) { if (e.type === 'pointerup' && (!d.armed || e.pointerType === 'mouse')) editSess(d.id); return; } // bấm nhẹ = mở; giữ lâu rồi thả = không làm gì
       if (!d.hit) return;
       const s = ST.sess.find(x => x.id === d.id); const nm = SLOTS[d.hit.i];
       if (s.date === d.hit.d && s.m === nm) return;
@@ -804,7 +831,7 @@ function viewGiaoAn(cls, focus) {
   }));
   V.querySelectorAll('[data-ci]').forEach(el => el.addEventListener('blur', () => { ci[el.dataset.ci] = el.innerText.trim(); save(); }));
   V.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => { if (!confirm('Xóa nội dung dòng này?')) return; ST.plan[cls] = L.filter(x => x.id !== b.dataset.del); save(); toast('Đã xóa dòng'); re(); }));
-  const tg = $('#tgOld'); if (tg) tg.addEventListener('click', () => { ui.showOld = !showOld; save(); re(); });
+  const tg = $('#tgOld'); if (tg) tg.addEventListener('click', () => { ui.showOld = !showOld; saveUi(); re(); });
   $('#addRow').addEventListener('click', () => { const x = { id: uid('l'), date: '', lesson: '', content: '', mat: '', hw: '', print: '', note: '' }; L.push(x); save(); re(); const c = document.querySelector(`#r-id-${x.id} .cc`); if (c) { c.scrollIntoView({ block: 'center' }); c.focus(); } });
   if (focus) { const r = document.getElementById('r-' + focus); if (r) { r.scrollIntoView({ block: 'center' }); r.classList.add('flash'); } }
 }

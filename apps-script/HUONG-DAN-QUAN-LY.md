@@ -45,6 +45,7 @@ Web app quản lý lớp có các màn **Trang chủ · Lịch · Buổi học �
 
    Cài như vậy vẫn an toàn. Mỗi người mở web app bằng chính tài khoản của mình, nên **chỉ người được chia sẻ file Quản lý lớp học mới xem được dữ liệu**. Người khác có link cũng chỉ thấy lỗi không có quyền.
 4. Bấm **Triển khai**, rồi copy **URL ứng dụng web** (link kết thúc bằng `/exec`).
+   Dán link này vào dòng **Link web app** ở tab **CaiDat** (cột *Giá trị*). Menu **🌷 Lớp học → Mở web app** sẽ dùng link đó.
 5. Mở link trên điện thoại, đăng nhập đúng tài khoản Google của cô. Sau đó chọn **Thêm vào màn hình chính** để mở nhanh như một ứng dụng.
    Trong Sheet, menu **🌷 Lớp học → Mở web app** cũng hiện link này.
 
@@ -89,6 +90,12 @@ Nếu hộp thoại báo *không tìm thấy file* (ví dụ cô đã đổi tê
 - **Speaking:** mỗi em, mỗi tuần chỉ có 1 dòng điểm (gửi nhiều đợt thì dòng đó được cập nhật). Cột *Điểm* để trống, cô hoặc trợ lý chấm xong thì điền vào tab Diem.
 - **Màn Điểm danh:** em nào đã nộp bài online kể từ buổi trước được **tự chọn "Đủ"** ở mục *Bài tập buổi trước*, kèm tên bài và điểm. Cô vẫn sửa được trước khi bấm Lưu.
 - Muốn lấy ngay không chờ 4 tiếng: web app → **Học sinh** → **Lấy bài nộp ngay**.
+
+## Dùng Lịch trên điện thoại
+
+- **Dời một lớp sang giờ/ngày khác:** chạm và **giữ ô lớp khoảng 1 giây** cho đến khi ô nổi lên (máy rung nhẹ), rồi kéo đến ô mới và thả. Vuốt nhanh trên lịch chỉ cuộn trang, không dời lớp; bấm nhẹ vào ô lớp để mở buổi học. Trên máy tính, dùng chuột kéo ngay không cần giữ.
+- Lỡ dời nhầm: bấm **↶ Hoàn tác** ngay trên đầu lịch.
+- **Thu phóng:** các nút **− / +** trên đầu lịch phóng to, thu nhỏ lưới; nút **🗓 Cả tuần** thu vừa màn hình để thấy đủ 7 ngày (chữ nhỏ nhưng đủ nhận màu lớp), bấm lại (**🔍 100%**) để về cỡ bình thường. Mức thu phóng được nhớ cho lần sau trên cùng máy.
 
 ## Cho người nhà xem (chỉ xem)
 

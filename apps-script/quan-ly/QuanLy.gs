@@ -47,7 +47,7 @@ const SCHEMA = {
   CaiDat: { key: ['key'], cols: [['key', 'Mục', 't'], ['value', 'Giá trị', '']] },
 };
 const TEXT_KINDS = { t: 1, d: 1, m: 1, h: 1 };
-const DEFAULT_SETTINGS = [['Tên cô (ký báo cáo)', ''], ['Link file bài nộp BTVN', ''], ['Link file bài nộp Speaking', ''], ['Lần lấy bài nộp gần nhất', '']];
+const DEFAULT_SETTINGS = [['Tên cô (ký báo cáo)', ''], ['Link web app', ''], ['Link file bài nộp BTVN', ''], ['Link file bài nộp Speaking', ''], ['Lần lấy bài nộp gần nhất', '']];
 
 // ===================== MENU & WEB APP =====================
 function onOpen() {
@@ -68,12 +68,26 @@ function doGet() {
     .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover');
 }
 
+/**
+ * Mở web app. Ưu tiên link cô dán ở tab CaiDat (dòng "Link web app"), vì
+ * ScriptApp.getService().getUrl() hay trả về link bản thử (/dev) hoặc lần triển khai cũ.
+ */
 function menuOpenApp() {
-  const url = ScriptApp.getService().getUrl();
-  const ui = SpreadsheetApp.getUi();
-  if (!url) { ui.alert('Chưa triển khai web app.\nTrong Apps Script: Triển khai → Tùy chọn triển khai mới → Ứng dụng web (xem hướng dẫn).'); return; }
-  const html = HtmlService.createHtmlOutput('<p style="font-family:sans-serif">Mở web app (nên lưu vào màn hình chính điện thoại):</p>' +
-    '<p><a href="' + url + '" target="_blank" style="font-family:sans-serif;font-size:16px">' + url + '</a></p>').setWidth(460).setHeight(140);
+  const ss = SpreadsheetApp.getActive(); const ui = SpreadsheetApp.getUi();
+  let saved = '';
+  readTable_(ss, 'CaiDat', ss.getSpreadsheetTimeZone()).forEach(function (r) { if (r.key === 'Link web app') saved = String(r.value || '').trim(); });
+  const url = /\/exec(\?|$)/.test(saved) ? saved : '';
+  if (!url) {
+    ui.alert('Chưa có link web app',
+      'Mở Apps Script → Triển khai → Quản lý các lần triển khai → copy "URL ứng dụng web" (đuôi /exec),\n' +
+      'rồi dán vào dòng "Link web app" ở tab CaiDat (cột Giá trị). Lần sau bấm menu này sẽ mở đúng link.\n\n' +
+      '(Chưa có dòng "Link web app"? Chạy 🌷 Lớp học → Kiểm tra / tạo các tab trước.)', ui.ButtonSet.OK);
+    return;
+  }
+  const html = HtmlService.createHtmlOutput('<p style="font-family:sans-serif">Mở web app (nên lưu dấu trang / thêm vào màn hình chính):</p>' +
+    '<p><a href="' + url + '" target="_blank" style="font-family:sans-serif;font-size:16px;word-break:break-all">' + url + '</a></p>' +
+    '<p style="font-family:sans-serif;font-size:12px;color:#777">Báo "không thể mở tệp"? Trình duyệt đang dùng nhầm tài khoản Google: mở trong cửa sổ ẩn danh, hoặc thêm /u/1/ vào link (xem hướng dẫn).</p>')
+    .setWidth(480).setHeight(190);
   ui.showModalDialog(html, APP_TITLE);
 }
 
