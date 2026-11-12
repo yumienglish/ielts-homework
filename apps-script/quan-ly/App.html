@@ -1,0 +1,1000 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lớp học của cô</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff6f3;--card:#fff;--ink:#4b3a46;--muted:#8f7a88;--line:#f6dfe3;
+  --pink:#ff9fb2;--pink-soft:#ffe6ec;--pink-ink:#c2456a;
+  --mint:#9fe3c9;--mint-soft:#e2f7ee;--mint-ink:#2b8466;
+  --peach:#ffcfae;--peach-soft:#fff0e4;--peach-ink:#b65f2a;
+  --butter:#fff1a8;--butter-soft:#fffae0;--butter-ink:#8a6d00;
+  --lav:#d9ccff;--lav-soft:#f1ecff;--lav-ink:#6a55b8;
+  --sky:#cfe6ff;--sky-soft:#eaf4ff;--sky-ink:#3b6ea5;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;color:var(--ink);font-family:Nunito,system-ui,sans-serif;font-size:16px;line-height:1.45;padding-bottom:92px;
+  background:var(--bg) radial-gradient(#ffd9e1 1.2px,transparent 1.6px) 0 0/24px 24px}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--pink-ink)}
+.wrap{max-width:780px;margin:0 auto;padding:0 16px}
+.stk{display:inline-block;filter:drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff) drop-shadow(0 2px 3px rgba(120,60,80,.25))}
+.demo{background:var(--lav-soft);color:var(--lav-ink);font-size:13px;padding:7px 0;border-bottom:1.5px dashed var(--lav)}
+.demo .wrap{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.demo button{background:#fff;border:1.5px solid var(--lav);color:var(--lav-ink);border-radius:999px;padding:2px 10px;cursor:pointer;font-size:12.5px;font-weight:700}
+header.top{position:relative;overflow:hidden;background:linear-gradient(120deg,#ffd3dc 0%,#ffe3d1 55%,#d8f5e8 100%);padding:18px 0 22px;border-radius:0 0 28px 28px;box-shadow:0 4px 18px rgba(255,140,165,.18)}
+header.top .ttl{font-family:'Baloo 2',Nunito,sans-serif;font-size:25px;font-weight:800;color:#a8385c;line-height:1.1}
+header.top #hdrSub{color:#8c5368;font-weight:700;font-size:14.5px;margin-top:3px}
+.deco{position:absolute;font-size:26px;pointer-events:none}
+h2{font-family:'Baloo 2',Nunito,sans-serif;font-size:21px;margin:22px 0 10px;font-weight:800;color:#a8385c;display:flex;align-items:center;gap:8px}
+h2 .stk{font-size:22px}
+h3{font-family:'Baloo 2',Nunito,sans-serif;font-size:17px;margin:0 0 6px;font-weight:800;line-height:1.25}
+.card{position:relative;background:var(--card);border:2px solid var(--line);border-radius:22px;padding:14px 15px;margin-bottom:14px;box-shadow:0 4px 0 #fbe3e8;min-width:0;overflow-wrap:anywhere}
+.card.tape::before{content:'';position:absolute;top:-10px;left:50%;width:74px;height:20px;transform:translateX(-50%) rotate(-3deg);background:repeating-linear-gradient(45deg,rgba(255,159,178,.55) 0 7px,rgba(255,255,255,.7) 7px 14px);border-radius:3px}
+.card.tape.mint::before{background:repeating-linear-gradient(45deg,rgba(159,227,201,.65) 0 7px,rgba(255,255,255,.7) 7px 14px)}
+.card.tape.butter::before{background:repeating-linear-gradient(45deg,rgba(255,224,120,.6) 0 7px,rgba(255,255,255,.7) 7px 14px)}
+.corner{position:absolute;right:-6px;top:-12px;font-size:26px;transform:rotate(12deg);pointer-events:none}
+.muted{color:var(--muted)}.small{font-size:13.5px}
+.row{display:flex;gap:10px;align-items:center}
+.between{justify-content:space-between}
+.wrapf{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.ellip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pre{white-space:pre-line}
+.badge{display:inline-block;border-radius:999px;padding:1px 9px;font-size:12.5px;font-weight:800;background:#f6eef1;color:var(--muted);white-space:nowrap}
+.b-ok{background:var(--mint-soft);color:var(--mint-ink)}.b-warn{background:var(--butter-soft);color:var(--butter-ink)}.b-bad{background:var(--pink-soft);color:var(--pink-ink)}.b-blue{background:var(--sky-soft);color:var(--sky-ink)}.b-lav{background:var(--lav-soft);color:var(--lav-ink)}
+ul.list{margin:0;padding-left:20px}ul.list li{margin:3px 0}
+ul.list li::marker{color:var(--pink)}
+.kv{display:grid;grid-template-columns:110px minmax(0,1fr);gap:4px 10px;font-size:15px}
+.kv dt{color:var(--muted);font-weight:700}.kv dd{margin:0;overflow-wrap:anywhere;min-width:0}
+.btn{display:inline-block;text-decoration:none;background:linear-gradient(#ffb7c6,#ff9cb1);color:#5b1b31;border:0;border-radius:16px;padding:10px 18px;font-weight:800;cursor:pointer;box-shadow:0 3px 0 #ee7d95}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #ee7d95}
+.btn.mint{background:linear-gradient(#b5ecd7,#98e0c4);color:#1d5e48;box-shadow:0 3px 0 #6fcaa6}
+.btn.ghost{background:#fff;color:var(--pink-ink);border:2px solid var(--pink);box-shadow:0 3px 0 var(--pink-soft)}
+.btn.sm{padding:5px 12px;font-size:13.5px;border-radius:12px}
+.seg{display:inline-flex;border:2px solid var(--line);border-radius:14px;overflow:hidden;flex-wrap:wrap;max-width:100%;background:#fff}
+.seg button{border:0;background:#fff;padding:6px 10px;font-size:13.5px;font-weight:800;cursor:pointer;border-right:1.5px solid var(--line);color:var(--muted)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--mint);color:#1d5e48}
+.seg button.on.w{background:var(--butter);color:#6e5600}.seg button.on.x{background:var(--pink);color:#5b1b31}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{display:inline-block;text-decoration:none;color:var(--ink);border:2px solid var(--line);background:#fff;border-radius:999px;padding:3px 11px;font-size:13px;cursor:pointer;font-weight:800}
+.chip.on{background:var(--mint-soft);border-color:var(--mint);color:var(--mint-ink)}
+.chip.neg.on{background:var(--butter-soft);border-color:#f5d76e;color:var(--butter-ink)}
+.chip.sel{background:var(--pink-soft);border-color:var(--pink);color:var(--pink-ink)}
+input[type=text],input[type=date],input[type=time],input[type=number],textarea,select{width:100%;border:2px solid var(--line);border-radius:14px;padding:8px 11px;background:#fff}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--pink)}
+textarea{min-height:64px;resize:vertical}
+.lbl{font-size:12.5px;color:var(--muted);font-weight:800;margin:9px 0 4px}
+.stu{border-top:2px dotted var(--line);padding:12px 0}
+.stu:first-of-type{border-top:0}
+.bar{display:flex;align-items:center;gap:8px;margin:16px 0 10px}
+.bar .d{flex:1;text-align:center;font-weight:800;font-family:'Baloo 2',Nunito,sans-serif;font-size:18px;color:#a8385c}
+.navbtn{border:2px solid var(--line);background:#fff;border-radius:14px;width:40px;height:38px;cursor:pointer;font-size:18px;color:var(--pink-ink);font-weight:800}
+.clsbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.tile{border-radius:18px;padding:10px 12px;background:var(--pink-soft)}
+.tile:nth-child(3n+2){background:var(--mint-soft)}.tile:nth-child(3n){background:var(--butter-soft)}
+.tile .v{font-size:23px;font-weight:800;font-family:'Baloo 2',Nunito,sans-serif;line-height:1.15}
+.tiles.t3{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.tiles.t3 .v{font-size:20px}
+.tile .k{font-size:12.5px;color:var(--muted);font-weight:800}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th,td{text-align:left;padding:6px 6px;border-bottom:1.5px dotted var(--line);vertical-align:middle;overflow-wrap:normal}
+th{font-size:12.5px;color:var(--muted)}
+td.num,th.num{text-align:right;white-space:nowrap}
+td:first-child,th:first-child{white-space:nowrap}
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.alert{border-radius:16px;padding:10px 12px;font-size:14.5px;margin-bottom:12px}
+.alert.warn{background:var(--butter-soft);color:#6e5600;border:2px dashed #f5d76e}.alert.info{background:var(--sky-soft);color:#2d5582;border:2px dashed var(--sky)}
+/* class pill */
+.cp{display:inline-flex;align-items:center;gap:3px;border-radius:999px;padding:1px 9px 1px 6px;font-weight:800;font-size:14px;white-space:nowrap}
+/* session row */
+.sess{display:flex;gap:12px;align-items:center;text-decoration:none;color:inherit}
+.time{border-radius:18px;padding:7px 8px;min-width:68px;text-align:center;font-weight:800;font-size:15px;flex:none;line-height:1.15;font-family:'Baloo 2',Nunito,sans-serif}
+.time small{display:block;font-weight:700;opacity:.85;font-size:12px;font-family:Nunito,sans-serif}
+/* lịch */
+.day{margin-bottom:10px}
+.dayh{display:flex;align-items:center;justify-content:space-between;margin:0 2px 6px}
+.dayh b{font-family:'Baloo 2',Nunito,sans-serif;font-size:16px}
+.dayh.today b{color:var(--pink-ink)}
+.sp{display:flex;align-items:center;gap:8px;background:#fff;border:2px solid var(--line);border-radius:16px;padding:6px 6px 6px 10px;margin-bottom:6px}
+.sp a{display:flex;align-items:center;gap:8px;flex:1;min-width:0;text-decoration:none;color:inherit}
+.sp .t{font-weight:800;min-width:44px;font-family:'Baloo 2',Nunito,sans-serif}
+.ib{border:0;background:var(--pink-soft);border-radius:12px;width:34px;height:32px;cursor:pointer;font-size:15px;flex:none}
+.addb{border:2px dashed var(--pink);background:transparent;color:var(--pink-ink);border-radius:12px;padding:2px 10px;font-weight:800;font-size:13px;cursor:pointer}
+.empty{text-align:center;padding:22px 10px}
+.empty .big{font-size:46px;display:block;margin-bottom:6px}
+/* giáo án */
+.li{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:2px dotted var(--line);cursor:pointer}
+.li:first-child{border-top:0}
+.dbub{flex:none;width:54px;text-align:center;border-radius:16px;padding:4px 0;background:var(--sky-soft);color:var(--sky-ink);font-weight:800;line-height:1.15;font-size:13px}
+.dbub b{display:block;font-size:16px;font-family:'Baloo 2',Nunito,sans-serif}
+.dbub.past{background:#f4eff1;color:var(--muted)}.dbub.today{background:var(--pink);color:#5b1b31}
+.edit{background:var(--peach-soft);border-radius:18px;padding:10px 12px;margin:4px 0 10px;cursor:auto}
+/* học phí */
+table.fee td{padding:7px 6px}
+table.fee tr.grp td{padding:12px 4px 5px;border-bottom:2px solid var(--line)}
+table.fee tr.r{cursor:pointer}
+table.fee tr.r:hover td{background:#fff9fa}
+.box{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:9px;border:2px solid var(--pink);color:transparent;font-weight:900;background:#fff}
+tr.paid .box{background:var(--mint);border-color:var(--mint);color:#1d5e48}
+tr.paid .nm{color:var(--muted)}
+.minus{font-size:12px;color:var(--pink-ink);font-weight:800;margin-left:4px}
+.prog{display:inline-block;width:54px;height:8px;border-radius:99px;background:#f4e6ea;vertical-align:middle;overflow:hidden;margin-left:4px}
+.prog i{display:block;height:100%;background:var(--mint)}
+/* nav */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:2px solid var(--line);border-radius:22px 22px 0 0;display:flex;justify-content:center;z-index:5;padding:4px 4px env(safe-area-inset-bottom);box-shadow:0 -4px 16px rgba(255,140,165,.12)}
+nav.tabs a{flex:1;max-width:120px;text-align:center;padding:5px 1px 7px;text-decoration:none;color:var(--muted);font-size:11.5px;font-weight:800;border-radius:16px;margin:2px}
+nav.tabs a .i{display:block;font-size:21px;line-height:1.25}
+nav.tabs a.on{color:var(--pink-ink);background:var(--pink-soft)}
+#toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:#fff;color:var(--pink-ink);border:2px solid var(--pink);padding:9px 16px;border-radius:16px;font-size:14px;font-weight:800;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9;max-width:90vw;text-align:center;box-shadow:0 4px 0 var(--pink-soft)}
+#toast.show{opacity:1}
+.modal{position:fixed;inset:0;background:rgba(75,58,70,.35);z-index:8;display:flex;align-items:flex-end;justify-content:center}
+.modal[hidden]{display:none}
+.sheet{background:#fff;width:100%;max-width:520px;border-radius:26px 26px 0 0;padding:18px 18px 26px;position:relative;max-height:90vh;overflow:auto}
+.stlist a{display:flex;justify-content:space-between;gap:8px;padding:9px 2px;border-bottom:2px dotted var(--line);text-decoration:none;color:inherit}
+.stlist a:last-child{border-bottom:0}
+.clshead{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.clshead span.small{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* báo cáo */
+.paper{position:relative;background:#fff;max-width:760px;margin:12px auto;padding:30px 34px;border-radius:24px;border:2px solid var(--line);box-shadow:0 6px 0 #fbe3e8;font-size:15px;overflow:hidden}
+.paper .head{background:linear-gradient(120deg,#ffd3dc,#ffe3d1 60%,#d8f5e8);border-radius:20px;padding:14px 18px;margin-bottom:14px;position:relative}
+.paper .head h1{margin:0;font-family:'Baloo 2',Nunito,sans-serif;font-size:26px;color:#a8385c;line-height:1.1}
+.paper h4{font-family:'Baloo 2',Nunito,sans-serif;margin:16px 0 6px;font-size:17px;color:#a8385c}
+.paper .who{display:flex;gap:6px 18px;flex-wrap:wrap;margin:2px 0 4px}
+.cmt{display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:start}
+.cmt .ic{border-radius:14px;padding:4px 10px;font-weight:800;font-size:14px;white-space:nowrap}
+.ed{border:2px dashed transparent;border-radius:12px;padding:4px 8px;white-space:pre-line}
+.ed:hover,.ed:focus{border-color:var(--pink);outline:none;background:#fffafb}
+.ph{background:var(--butter-soft);color:var(--butter-ink);border-radius:8px;padding:0 6px;font-weight:800}
+.sign{display:flex;justify-content:flex-end;margin-top:18px;text-align:center}
+@media (max-width:560px){.paper{padding:16px 12px;margin:8px -6px}.kv{grid-template-columns:1fr}.kv dt{margin-top:6px;font-size:12.5px}.cmt{grid-template-columns:1fr;gap:2px}.cmt .ic{justify-self:start;margin-top:8px}.deco.hide-m{display:none}}
+@media print{
+  body{background:#fff;padding:0}
+  .demo,header.top,nav.tabs,.noprint,#toast,.modal{display:none!important}
+  .wrap{max-width:none;padding:0}
+  .paper{box-shadow:none;margin:0;border:0;max-width:none;padding:0}
+  .ed{border:0;padding:0}
+  .ph{background:none;color:inherit}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  @page{size:A4;margin:14mm}
+}
+/* ===== Lịch dạng trang tính ===== */
+.sgwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:18px;border:2px solid var(--line);background:#fff;box-shadow:0 4px 0 #fbe3e8}
+.sg{display:grid;grid-template-columns:44px 44px repeat(7,minmax(70px,1fr));min-width:582px;font-size:12.5px;position:relative}
+.sg .c{border-right:1px solid #eee;border-bottom:1px solid #f1f1f1;min-height:26px}
+.sg .title{grid-column:1/-1;background:#F9CB9C;color:#274E13;font-weight:800;text-align:center;padding:5px;font-size:15px;letter-spacing:.5px}
+.sg .hd{text-align:center;font-weight:800;color:#0000FF;padding:3px 2px;border-bottom:1px solid #ddd;background:#fff}
+.sg .hd.today{background:var(--pink-soft);color:var(--pink-ink)}
+.sg .tm{text-align:center;font-weight:800;font-size:11.5px;line-height:26px;background:#fff;position:sticky;z-index:2}
+.sg .tm.s{color:#6AA84F;left:0}.sg .tm.e{color:#FF0000;left:44px;border-right:2px solid #ddd}
+.sg .hd.s{position:sticky;left:0;z-index:3;color:#6AA84F}.sg .hd.e{position:sticky;left:44px;z-index:3;color:#FF0000;border-right:2px solid #ddd}
+.sg .cell{cursor:cell}
+.sg .cell.gap{border-bottom:3px double #e6d3d8}
+.sg .cell.drop{background:#ffe6ec!important;outline:2px dashed var(--pink);outline-offset:-2px}
+.sg .cell.tcol{background:#fffafb}
+.blk{z-index:1;margin:1px 2px;border-radius:6px;padding:2px 3px;text-align:center;font-weight:800;line-height:1.2;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden;box-shadow:0 2px 0 rgba(0,0,0,.12)}
+.blk .n{font-weight:700;font-size:12px;opacity:.9}
+.blk.l0{margin-right:50%}.blk.l1{margin-left:50%}
+.blk.moved{outline:3px solid var(--pink);outline-offset:1px}
+.dragghost{position:fixed;z-index:20;pointer-events:none;opacity:.85;transform:rotate(-3deg) scale(1.05);box-shadow:0 8px 20px rgba(0,0,0,.25)}
+.notes2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.notes2 h4{margin:0 0 6px;color:#0F9D58;font-weight:800;font-size:15px}
+@media (max-width:560px){.notes2{grid-template-columns:1fr}}
+/* ===== Giáo án dạng Syllabus ===== */
+.sylwrap{overflow:hidden;border-radius:18px;border:2px solid var(--line);background:#fff;box-shadow:0 4px 0 #fbe3e8}
+.sylbar{background:#C00000;color:#fff;font-weight:800;font-size:18px;padding:6px 12px;font-family:'Baloo 2',Nunito,sans-serif}
+.sylinfo{display:grid;grid-template-columns:130px minmax(0,1fr);font-size:14px}
+.sylinfo div{padding:5px 10px;border-bottom:1px solid #fff}
+.sylinfo .k{background:#C6D9F0;color:#1B3B5F;font-weight:800}
+.sylinfo .v{background:#FDEADA;color:#7F7F00;font-weight:700}
+table.syl{border-collapse:collapse;min-width:1080px;font-size:13.5px}
+table.syl th{background:#B9D175;color:#000;font-weight:800;font-size:13px;padding:6px;border:1px solid #d6dfb8;position:sticky;top:0}
+table.syl td{border:1px solid #eee;padding:0;vertical-align:top;white-space:normal}
+table.syl td:first-child,table.syl th:first-child{position:sticky;left:0;z-index:1;background:#fff;width:70px;min-width:70px}
+table.syl th:first-child{background:#B9D175;z-index:2}
+table.syl tr.today td{background:#fff3f6}table.syl tr.today td:first-child{background:#ffe6ec}
+table.syl tr.past td{color:#6b5f66}
+.dc{padding:5px 6px;font-weight:800;line-height:1.2;font-size:13px}
+.dc small{display:block;font-weight:700;color:var(--muted);font-size:11px}
+.dc .x{border:0;background:none;cursor:pointer;font-size:12px;padding:0;margin-top:2px;opacity:.5}
+.cc{padding:5px 7px;min-height:38px;white-space:pre-line;outline:none;overflow-wrap:anywhere}
+.cc:focus{background:#fffbea;box-shadow:inset 0 0 0 2px #f5d76e}
+.cc:empty::before{content:attr(data-ph);color:#d8c7cf}
+td.guess{background:#fffdf3}
+tr.flash td{animation:fl 1.6s ease}
+@keyframes fl{0%,40%{background:#ffe6ec}100%{}}
+/* ===== Học phí 2 tháng ===== */
+table.fee2{width:100%;border-collapse:collapse;font-size:14px}
+table.fee2 th{font-size:12.5px;color:var(--muted);text-align:center;padding:4px}
+table.fee2 th:first-child{text-align:left}
+table.fee2 td{padding:4px;border-bottom:1.5px dotted var(--line)}
+table.fee2 tr.grp td{padding:12px 2px 5px;border-bottom:2px solid var(--line)}
+.mc{display:flex;align-items:center;justify-content:flex-end;gap:6px;cursor:pointer;border-radius:12px;padding:3px 4px;white-space:nowrap}
+.mc:hover{background:#fff6f8}
+.mc .amt{font-weight:800;text-align:right;line-height:1.1}
+.mc .amt small{display:block;font-size:11px;color:var(--pink-ink)}
+.mc.paid .amt{color:var(--muted);font-weight:700}
+.mc.paid .box{background:var(--mint);border-color:var(--mint);color:#1d5e48}
+.mc.debt .box{border-color:#e05a7a;background:#fff0f3}
+.mc.na{color:#d0c0c8;justify-content:center;cursor:default}
+.sylscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.sylbar{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.oldtg{background:rgba(255,255,255,.22);border:1.5px solid;border-radius:999px;padding:2px 10px;font:800 13px Nunito,sans-serif;cursor:pointer;white-space:nowrap}
+.chip .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:0}
+.chip.sel .dot{box-shadow:0 0 0 1.5px #fff}
+.mc.off{justify-content:center;color:#9a8a93;font-weight:700;font-size:12.5px;background:#f6f1f4}
+.mc.na{cursor:pointer}
+b.nm{cursor:pointer;border-bottom:1.5px dotted #d9b8c4}
+table.fee2 th small{display:block;font-size:10.5px;font-weight:700;opacity:.7}
+.fm{border-top:2px dotted var(--line);padding:8px 0}
+.fm .seg button{padding:5px 9px;font-size:13px}
+.iconb{border:0;background:#fff4f7;border-radius:10px;padding:3px 8px;cursor:pointer;font:800 13px Nunito,sans-serif;color:var(--pink-ink)}
+.emos{display:flex;flex-wrap:wrap;gap:4px}.emos button{font-size:20px;border:2px solid transparent;background:#fff;border-radius:10px;padding:1px 4px;cursor:pointer}.emos button.on{border-color:var(--pink);background:var(--pink-soft)}
+.sws{display:flex;flex-wrap:wrap;gap:6px}.sws button{width:32px;height:32px;border-radius:9px;border:2px solid #fff;box-shadow:0 0 0 1.5px var(--line);cursor:pointer;font-weight:900;font-size:13px}
+input[type=color]{width:48px;height:34px;padding:0 2px;border:2px solid var(--line);border-radius:10px;background:#fff;vertical-align:middle}
+.pvw{display:flex;gap:12px;align-items:center;margin-top:10px;flex-wrap:wrap}.pvw .pb{width:80px;padding:7px 4px;border-radius:4px;text-align:center;font-weight:800;font-size:13px;line-height:1.25}
+.addbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.hwtxt{background:#fff8e1;border:2px dashed #f5d98a;border-radius:14px;padding:8px 11px;font-size:14.5px;margin-top:6px}
+.hwbox{margin-bottom:12px}
+.sync{border:2px solid var(--line);background:#fff;border-radius:999px;padding:1px 10px;font:800 12px Nunito,sans-serif;color:var(--muted);cursor:pointer;margin-top:3px}
+.sync.saving{color:#8a6a00;border-color:#f5d98a;background:#fff8e1}.sync.err{color:#b23a60;border-color:#ff9cb1;background:#fff0f3}
+.sync.ro{color:#2a4f9e;border-color:#b9d0ff;background:#eef4ff}
+/* Chế độ chỉ xem (người được chia sẻ quyền Xem) */
+body.ro #addSt,body.ro #addCl,body.ro #addRow,body.ro #copyWk,body.ro #saveAtt,body.ro #undo,body.ro [data-ec],body.ro #edSt,body.ro #eSave,body.ro #eDel,
+body.ro #cSave,body.ro #cDel,body.ro #sSave,body.ro #sDel,body.ro [data-del],body.ro .fm .seg{display:none!important}
+body.ro .cc,body.ro .ed,body.ro textarea,body.ro [data-ci],body.ro [data-p],body.ro #fullName{pointer-events:none}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap"><div class="ttl">Lớp học của cô <span class="stk">🌷</span></div><div class="row" style="gap:8px;flex-wrap:wrap"><div id="hdrSub"></div><button id="sync" class="sync" type="button" title="Bấm để tải lại dữ liệu mới nhất">☁️ Đã lưu</button></div></div>
+  <span class="deco stk" style="right:22px;top:10px;transform:rotate(14deg)">🍓</span>
+  <span class="deco stk" style="right:70px;top:38px;transform:rotate(-10deg);font-size:22px">🐰</span>
+  <span class="deco stk hide-m" style="right:122px;top:8px;transform:rotate(8deg);font-size:20px">⭐</span>
+  <span class="deco stk hide-m" style="right:170px;top:40px;transform:rotate(-6deg);font-size:20px">☁️</span>
+</header>
+<main class="wrap" id="view"></main>
+<nav class="tabs" id="tabs">
+  <a href="#home" data-t="home"><span class="i">🏡</span>Trang chủ</a>
+  <a href="#lich" data-t="lich"><span class="i">📅</span>Lịch</a>
+  <a href="#giaoan" data-t="giaoan"><span class="i">📒</span>Giáo án</a>
+  <a href="#hs" data-t="hs"><span class="i">🐰</span>Học sinh</a>
+  <a href="#hocphi" data-t="hocphi"><span class="i">🍓</span>Học phí</a>
+  <a href="#baocao" data-t="baocao"><span class="i">💌</span>Báo cáo</a>
+</nav>
+<div id="modal" class="modal" hidden></div>
+<div id="toast"></div>
+<script>
+'use strict';
+let DB = null; // dữ liệu tải từ Google Sheet (getAll)
+const TODAY = (d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'))(new Date());
+// Cấu hình lớp: dựng từ tab Lop (rebuild)
+const CLASS_CFG = {};
+const CLS_COLOR = {};
+const CLASSES = [];
+const EMO = {};
+const colOf = c => { const x = CLS_COLOR[c] || { bg: '#ffe6ec', fg: '#b23a60' }; return [x.bg, x.fg]; };
+const chipC = (c, sel, href, label) => { const [bg, fg] = colOf(c); return `<a class="chip ${sel ? 'sel' : ''}" href="${href}" style="${sel ? `background:${bg};color:${fg};border-color:${bg}` : `border-color:${bg}`}"><i class="dot" style="background:${bg}"></i>${label || (EMO[c] || '📘') + ' ' + c}</a>`; };
+const cp = c => { const [bg, ink] = colOf(c); return `<span class="cp" style="background:${bg};color:${ink}">${EMO[c] || '📘'} ${c}</span>`; };
+const POS = ['M01', 'M04', 'M06', 'M11', 'M12', 'M13', 'M14', 'M15', 'M08'];
+const NEG = ['M02', 'M03', 'M05', 'M07', 'M09', 'M10'];
+const ST_LABEL = { co: 'Có mặt', muon: 'Đi muộn', phep: 'Vắng phép', kp: 'Vắng KP' };
+const HW_LABEL = { du: 'Đủ', thieu: 'Thiếu', khong: 'Không làm' };
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const baseName = n => String(n).split('(')[0].trim();
+const money = n => Math.round(n).toLocaleString('vi-VN') + 'đ';
+const kfmt = n => Math.round(n / 1000).toLocaleString('vi-VN') + 'k';
+const hash = s => { let h = 7; for (const c of s) h = (h * 31 + c.codePointAt(0)) >>> 0; return h; };
+const WD = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+const WDS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+const pd = n => String(n).padStart(2, '0');
+const isoOf = d => d.getFullYear() + '-' + pd(d.getMonth() + 1) + '-' + pd(d.getDate());
+const dateOf = iso => { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (iso, n) => { const d = dateOf(iso); d.setDate(d.getDate() + n); return isoOf(d); };
+const mondayOf = iso => addDays(iso, -((dateOf(iso).getDay() + 6) % 7));
+const dm = iso => { const [, m, d] = iso.split('-'); return (+d) + '/' + (+m); };
+const dmy = iso => { const [y, m, d] = iso.split('-'); return d + '/' + m + '/' + y; };
+const wdName = iso => WD[dateOf(iso).getDay()];
+const wdS = iso => WDS[dateOf(iso).getDay()];
+const fromDMY = s => { const [d, m, y] = s.split('/').map(Number); return y + '-' + pd(m) + '-' + pd(d); };
+const firstLine = s => String(s || '').split('\n').map(x => x.replace(/^[-•\s]+/, '').trim()).filter(Boolean)[0] || '';
+const mins = t => { const m = String(t).match(/(\d+):(\d+)\s*(SA|CH)?/); if (!m) return 0; let h = +m[1]; if (m[3] === 'CH' && h < 12) h += 12; return h * 60 + +m[2]; };
+const hhmm = m => Math.floor(m / 60) + ':' + pd(m % 60);
+let MAU = {}, MAU_LIST = [], SETTINGS = {};
+const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+// ---------- Học sinh ----------
+const STUDENTS = [];
+function relabel() { const c = {}; STUDENTS.forEach(s => c[s.name] = (c[s.name] || 0) + 1); STUDENTS.forEach(s => s.display = c[s.name] > 1 ? s.name + ' · ' + s.cls : s.name); }
+// Dựng lại danh sách lớp / học sinh từ ST.classes, ST.students (tab Lop, HocSinh)
+const isOff = st => /nghỉ|ngừng|off/i.test(st || '');
+function rebuild() {
+  CLASSES.length = 0; [CLASS_CFG, EMO, CLS_COLOR].forEach(o => Object.keys(o).forEach(k => delete o[k]));
+  ST.classes.filter(c => c.code && !isOff(c.status)).forEach(c => {
+    CLASS_CFG[c.code] = { type: c.type, size: +c.size || 10, perWeek: +c.perWeek || 2, book: (ST.cinfo[c.code] || {}).book || c.book || '' };
+    CLASSES.push(c.code); EMO[c.code] = c.emo || '📘'; CLS_COLOR[c.code] = { bg: c.bg || '#ffe6ec', fg: c.fg || '#b23a60' }; });
+  STUDENTS.length = 0;
+  ST.students.filter(x => x.name && !isOff(x.status)).forEach(x => STUDENTS.push({ name: x.name, cls: x.cls, fee: +String(x.fee).replace(/[^\d.]/g, '') || 0, from: x.from || '', added: true }));
+  relabel();
+}
+const studentsOf = cls => STUDENTS.filter(s => s.cls === cls);
+const byName = n => STUDENTS.find(s => s.name === n);
+
+// ---------- Điểm ----------
+let SCORES = [];
+const mkScores = rows => rows.filter(s => s.name && s.date).map(s => {
+  const sc = parseFloat(String(s.score).replace(',', '.')), mx = parseFloat(String(s.max).replace(',', '.'));
+  let p = parseFloat(String(s.pct).replace('%', '').replace(',', '.'));
+  if (isNaN(p) && mx) p = sc / mx * 100;
+  return { ...s, iso: s.date, date: dmy(s.date), sc, mx, p: isNaN(p) ? null : p };
+});
+const TYPE_BADGE = { HW: 'b-blue', XT: 'b-ok', CT: 'b-warn' };
+const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+
+// ---------- Trạng thái (lưu trên máy; bản thật = các tab trong Google Sheet) ----------
+const UIKEY = 'qlh-ui';
+let ST, SESS = [];
+function reindex() { // sắp xếp lịch + tự đếm số buổi trong gói
+  SESS = ST.sess.slice().sort((a, b) => a.date.localeCompare(b.date) || a.m - b.m);
+  const cnt = {};
+  SESS.forEach(s => { const cfg = CLASS_CFG[s.cls]; s.num = null; if (!cfg || cfg.type !== 'goi') return;
+    if (s.startNum) cnt[s.cls] = +s.startNum; else if (cnt[s.cls] != null) cnt[s.cls] = cnt[s.cls] % cfg.size + 1; else cnt[s.cls] = 1;
+    s.num = cnt[s.cls]; });
+}
+const TYPE_IN = v => /g[oó]i/i.test(v || '') ? 'goi' : 'thang';
+const ST_IN = Object.fromEntries(Object.entries(ST_LABEL).map(([k, v]) => [v.toLowerCase(), k]));
+const HW_IN = Object.fromEntries(Object.entries(HW_LABEL).map(([k, v]) => [v.toLowerCase(), k]));
+const PAY_IN = v => /đã/i.test(v) ? true : /nghỉ/i.test(v) ? 'off' : /chưa/i.test(v) ? false : undefined;
+const PAY_OUT = v => v === true ? 'Đã đóng' : v === false ? 'Chưa đóng' : 'Nghỉ';
+const S = v => v == null ? '' : String(v).trim();
+function fromServer(D) { // các tab Google Sheet -> ST
+  DB = D; const T = D.tables;
+  READONLY = D.canEdit === false; document.body.classList.toggle('ro', READONLY);
+  ST = { classes: T.Lop.map(r => ({ ...r, code: S(r.code), type: TYPE_IN(r.type) })), students: T.HocSinh.map(r => ({ ...r, name: S(r.name), cls: S(r.cls) })),
+    sess: T.Lich.filter(r => r.id && r.date).map(r => ({ id: S(r.id), date: S(r.date), m: mins(r.time), dur: +r.dur || 90, cls: S(r.cls), makeup: !!S(r.makeup), startNum: +r.startNum || null })),
+    plan: {}, cinfo: {}, weekNotes: {}, att: {}, paid: {}, full: {}, report: {}, ui: {} };
+  try { ST.ui = JSON.parse(localStorage.getItem(UIKEY)) || {}; } catch (e) {}
+  ST.classes.forEach(c => ST.cinfo[c.code] = { book: S(c.book), extra: S(c.extra) });
+  ST.students.forEach(x => { if (S(x.full)) ST.full[x.name] = S(x.full); });
+  T.GiaoAn.filter(r => r.id).sort((a, b) => (+a.ord || 0) - (+b.ord || 0)).forEach(r => (ST.plan[S(r.cls)] = ST.plan[S(r.cls)] || []).push({ id: S(r.id), date: S(r.date), num: S(r.num), lesson: S(r.lesson), content: S(r.content), mat: S(r.mat), hw: S(r.hw), print: S(r.print), note: S(r.note) }));
+  T.GhiChuTuan.filter(r => r.mon).forEach(r => ST.weekNotes[S(r.mon)] = { gc: S(r.gc), todo: S(r.todo) });
+  T.DiemDanh.filter(r => r.date && r.cls && r.name).forEach(r => { const k = S(r.date) + '|' + S(r.cls); (ST.att[k] = ST.att[k] || { rows: {} }).rows[S(r.name)] = { status: ST_IN[S(r.status).toLowerCase()] || 'co', hw: HW_IN[S(r.hw).toLowerCase()] || '', tpl: S(r.tpl).split(/[,\s]+/).filter(Boolean), note: S(r.note) }; });
+  T.HocPhi.filter(r => r.name && r.ym).forEach(r => { const v = PAY_IN(S(r.state)); if (v !== undefined) (ST.paid[S(r.name)] = ST.paid[S(r.name)] || {})[S(r.ym)] = v; });
+  T.BaoCao.filter(r => r.name).forEach(r => { const o = {}; ['from', 'to', 'learn', 'good', 'weak', 'goal', 'sent'].forEach(k => { if (S(r[k])) o[k] = S(r[k]); }); ST.report[S(r.name)] = o; });
+  MAU_LIST = T.MauNhanXet.filter(m => m.code).map(m => ({ code: S(m.code), label: S(m.label) || S(m.code), teacher: S(m.teacher), next: S(m.next), parent: S(m.parent) }));
+  MAU = Object.fromEntries(MAU_LIST.map(m => [m.code, m]));
+  SETTINGS = Object.fromEntries(T.CaiDat.map(r => [S(r.key), S(r.value)]));
+  SCORES = mkScores(T.Diem.map(r => ({ date: S(r.date), cls: S(r.cls), name: S(r.name), type: S(r.type).toUpperCase(), test: S(r.test), score: S(r.score), max: S(r.max), pct: S(r.pct), ta: S(r.ta), note: S(r.note), res: S(r.res) })));
+  rebuild(); reindex(); SNAP = flat();
+}
+function flat() { // ST -> các dòng theo tab, để so sánh và chỉ gửi dòng thay đổi
+  const o = {}; const put = (t, key, row) => { o[t + '\u0001' + key] = JSON.stringify(row); };
+  const pick = (o, ks) => { const r = {}; ks.forEach(k => r[k] = o[k] == null ? '' : o[k]); Object.keys(o).sort().forEach(k => { if (k[0] === '_') r[k] = o[k]; }); return r; };
+  ST.classes.forEach(c => put('Lop', c.code, { ...pick(c, ['code', 'type', 'size', 'perWeek', 'book', 'extra', 'emo', 'bg', 'fg', 'status']), type: c.type === 'goi' ? 'Gói' : 'Tháng', book: (ST.cinfo[c.code] || {}).book ?? S(c.book), extra: (ST.cinfo[c.code] || {}).extra ?? S(c.extra) }));
+  ST.students.forEach(x => put('HocSinh', x.name, { ...pick(x, ['name', 'full', 'cls', 'fee', 'from', 'status', 'parent', 'phone', 'alias', 'note']), full: ST.full[x.name] || '' }));
+  ST.sess.forEach(x => put('Lich', x.id, { id: x.id, date: x.date, time: pd(Math.floor(x.m / 60)) + ':' + pd(x.m % 60), dur: x.dur, cls: x.cls, makeup: x.makeup ? 'x' : '', startNum: x.startNum || '' }));
+  Object.entries(ST.plan).forEach(([cls, L]) => L.forEach((l, i) => put('GiaoAn', l.id, { id: l.id, cls, date: l.date || '', num: l.num || '', lesson: l.lesson || '', content: l.content || '', mat: l.mat || '', hw: l.hw || '', print: l.print || '', note: l.note || '', ord: i + 1 })));
+  Object.entries(ST.weekNotes).forEach(([mon, w]) => { if (w.gc || w.todo) put('GhiChuTuan', mon, { mon, gc: w.gc || '', todo: w.todo || '' }); });
+  Object.entries(ST.att).forEach(([k, a]) => { const [date, cls] = k.split('|'); Object.entries(a.rows || {}).forEach(([name, r]) => put('DiemDanh', [date, cls, name].join('|'), { date, cls, name, status: ST_LABEL[r.status] || '', hw: HW_LABEL[r.hw] || '', tpl: (r.tpl || []).join(', '), note: r.note || '' })); });
+  Object.entries(ST.paid).forEach(([name, m]) => Object.entries(m).forEach(([ym, v]) => { if (v !== undefined) put('HocPhi', name + '|' + ym, { name, ym, state: PAY_OUT(v) }); }));
+  Object.entries(ST.report).forEach(([name, r]) => put('BaoCao', name, { name, from: r.from || '', to: r.to || '', learn: r.learn ?? '', good: r.good ?? '', weak: r.weak ?? '', goal: r.goal ?? '', sent: r.sent || '' }));
+  return o;
+}
+let SNAP = {}; const QUEUE = []; let BUSY = false, LOADED_AT = 0, READONLY = false;
+function save() {
+  try { localStorage.setItem(UIKEY, JSON.stringify(ST.ui || {})); } catch (e) {}
+  if (READONLY) { // chỉ xem: bỏ thay đổi, quay về dữ liệu đã tải
+    const M = $('#modal'); M.hidden = true; M.innerHTML = ''; fromServer(DB); route(true);
+    toast('👀 Bạn đang ở chế độ chỉ xem – thay đổi không được lưu'); return;
+  }
+  reindex(); rebuild();
+  const now = flat(); const ch = [];
+  for (const k in now) if (now[k] !== SNAP[k]) { const [t, key] = k.split('\u0001'); ch.push({ t, op: 'put', key, row: JSON.parse(now[k]) }); }
+  for (const k in SNAP) if (!(k in now)) { const [t, key] = k.split('\u0001'); ch.push({ t, op: 'del', key }); }
+  SNAP = now; if (ch.length) { QUEUE.push(...ch); flush(); }
+}
+function syncState(st, msg) { const b = $('#sync'); if (!b) return;
+  if (READONLY) { b.className = 'sync ro'; b.textContent = '👀 Chỉ xem'; b.title = 'Bấm để tải lại dữ liệu mới nhất'; return; }
+  b.className = 'sync ' + st;
+  b.textContent = st === 'saving' ? '⏳ Đang lưu…' : st === 'err' ? '⚠️ Chưa lưu được – thử lại sau' : '☁️ Đã lưu'; b.title = msg || 'Bấm để tải lại dữ liệu mới nhất'; }
+function flush() {
+  if (BUSY || !QUEUE.length) return; BUSY = true; const batch = QUEUE.splice(0, 300); syncState('saving');
+  google.script.run.withSuccessHandler(() => { BUSY = false; if (QUEUE.length) flush(); else syncState('ok'); })
+    .withFailureHandler(err => { BUSY = false; QUEUE.unshift(...batch); syncState('err', String(err && err.message || err)); setTimeout(flush, 8000); })
+    .applyChanges(batch);
+}
+function boot(again) {
+  if (!again) V.innerHTML = '<div class="card empty" style="margin-top:30px"><span class="big stk">🧸</span>Đang tải dữ liệu…</div>';
+  google.script.run.withSuccessHandler(D => { fromServer(D); LOADED_AT = Date.now(); route(!!again); syncState('ok'); if (again) toast('Đã tải dữ liệu mới nhất'); })
+    .withFailureHandler(e => { if (again) { toast('Không tải lại được, thử lại sau'); return; } V.innerHTML = `<div class="alert warn" style="margin-top:20px">Không tải được dữ liệu: ${esc(e && e.message || e)}<br>Kiểm tra mạng rồi tải lại trang.</div>`; })
+    .getAll();
+}
+const reload = () => { if (QUEUE.length || BUSY) { toast('Đang lưu, đợi chút rồi bấm lại'); return; } if (document.activeElement && document.activeElement.isContentEditable) return; boot(true); };
+window.addEventListener('beforeunload', e => { if (QUEUE.length || BUSY) { e.preventDefault(); e.returnValue = ''; } });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && ST && Date.now() - LOADED_AT > 3 * 60000) reload(); });
+
+// ---------- Giáo án ----------
+function planMap(cls) { // bài chưa có ngày tự xếp lần lượt vào các buổi sau bài có ngày cuối cùng
+  const L = ST.plan[cls] || []; const dated = new Set(L.filter(x => x.date).map(x => x.date));
+  const lastIso = L.reduce((a, x) => x.date > a ? x.date : a, '');
+  const und = L.filter(x => !x.date); const slots = [];
+  SESS.filter(s => s.cls === cls && s.date > lastIso && !dated.has(s.date)).forEach(s => { if (slots.length < und.length && !slots.some(z => z[0] === s.date)) slots.push([s.date, und[slots.length].id]); });
+  return { L, slots };
+}
+function lessonFor(cls, iso) {
+  const { L, slots } = planMap(cls);
+  const l = L.find(x => x.date === iso); if (l) return l;
+  const k = slots.findIndex(z => z[0] === iso);
+  return k < 0 ? null : { ...L.find(x => x.id === slots[k][1]), guessed: true };
+}
+const hasPlan = l => !!(l && (l.lesson || l.content));
+function lessonAt(cls, iso, create) { // lấy bài của ngày, chốt ngày nếu đang tự xếp
+  const L = ST.plan[cls] || (ST.plan[cls] = []);
+  let l = lessonFor(cls, iso);
+  if (l && l.guessed) { const { slots } = planMap(cls); for (const [d, id] of slots) { L.find(x => x.id === id).date = d; if (d === iso) break; } l = L.find(x => x.id === l.id); }
+  if (!l && create) { l = { id: uid('l'), date: iso, lesson: '', content: '', mat: '', hw: '', print: '', note: '' }; L.push(l); }
+  L.sort((a, b) => (a.date ? 0 : 1) - (b.date ? 0 : 1) || (a.date && b.date ? a.date.localeCompare(b.date) : 0));
+  return l;
+}
+function prevHw(cls, iso) {
+  const ps = SESS.filter(s => s.cls === cls && s.date < iso).pop();
+  if (ps) { const l = lessonFor(cls, ps.date); return l && l.hw ? { date: ps.date, hw: l.hw } : null; }
+  const c = (ST.plan[cls] || []).filter(x => x.date && x.hw && x.date < iso).pop();
+  return c ? { date: c.date, hw: c.hw } : null;
+}
+const isTest = l => l && /review|mid ?term|final|mock|kiểm tra|ôn thi|\btest\b(?! ?practice)/i.test(l.lesson + ' ' + firstLine(l.content));
+
+// ---------- Thống kê ----------
+const fullName = n => (ST.full && ST.full[n]) || '';
+function attOf(name, from, to) {
+  const out = { total: 0, co: 0, muon: 0, phep: 0, kp: 0, hwTotal: 0, du: 0, thieu: 0, khong: 0, tpl: [], notes: [] };
+  Object.entries(ST.att).forEach(([k, v]) => {
+    const [iso, cls] = k.split('|'); if ((from && iso < from) || (to && iso > to)) return;
+    const r = v.rows[name]; if (!r) return;
+    out.total++; out[r.status]++;
+    if (r.hw) { out.hwTotal++; out[r.hw]++; }
+    (r.tpl || []).forEach(c => out.tpl.push({ iso, cls, code: c }));
+    if (r.note) out.notes.push({ iso, cls, note: r.note });
+  });
+  return out;
+}
+const scoresOf = (name, from, to) => SCORES.filter(s => s.name === name && (!from || s.iso >= from) && (!to || s.iso <= to)).sort((a, b) => a.iso.localeCompare(b.iso));
+
+// ---------- Học phí ----------
+const ymOf = iso => iso.slice(0, 7);
+const ymAdd = (ym, n) => { const d = new Date(+ym.slice(0, 4), +ym.slice(5) - 1 + n, 1); return d.getFullYear() + '-' + pd(d.getMonth() + 1); };
+const lastDay = ym => isoOf(new Date(+ym.slice(0, 4), +ym.slice(5), 0));
+const mLabel = ym => 'T' + (+ym.slice(5));
+const CUR_M = ymOf(TODAY);
+// trạng thái 1 ô: true = đã đóng, false = chưa đóng, 'off' = nghỉ không tính, không có = tự động
+const payOf = (n, ym) => (ST.paid[n] || {})[ym];
+const isPaid = (n, ym) => payOf(n, ym) === true;
+function regDays(cls, ym) { // các thứ học cố định của lớp (thứ xuất hiện nhiều nhất, bỏ buổi bù)
+  const cfg = CLASS_CFG[cls]; const from = addDays(ym + '-01', -42), to = lastDay(ym); const cnt = [0, 0, 0, 0, 0, 0, 0];
+  SESS.filter(s => s.cls === cls && !s.makeup && s.date >= from && s.date <= to).forEach(s => cnt[dateOf(s.date).getDay()]++);
+  return cnt.map((n, d) => [n, d]).filter(x => x[0]).sort((a, b) => b[0] - a[0]).slice(0, cfg.perWeek || 2).map(x => x[1]).sort();
+}
+function monthlyCalc(cls, ym) { // tháng = từ ngày 1 đến ngày cuối tháng
+  const a = ym + '-01', b = lastDay(ym); const all = SESS.filter(s => s.cls === cls); const first = all.length ? all[0].date : null;
+  const days = regDays(cls, ym); const known = new Set(SESS.map(s => mondayOf(s.date)));
+  let std = 0, stdK = 0, upto = null;
+  for (let d = a; d <= b; d = addDays(d, 1)) if (days.includes(dateOf(d).getDay())) { std++; if (first && d >= first && known.has(mondayOf(d))) { stdK++; upto = d; } }
+  const n = all.filter(s => s.date >= a && s.date <= b).length;
+  return { days, std: std || (CLASS_CFG[cls].perWeek || 2) * 4, stdK, n, upto, missing: Math.max(0, stdK - n) };
+}
+function packCalc(cls) {
+  const list = SESS.filter(s => s.cls === cls && s.num); const done = list.filter(s => s.date <= TODAY);
+  const nx = list.find(s => s.date > TODAY); const size = CLASS_CFG[cls].size;
+  const cur = done.length ? done[done.length - 1].num : nx ? nx.num - 1 : 0; // chưa học buổi nào: tính theo buổi sắp tới
+  return { cur, size, left: size - cur };
+}
+const packStart = (cls, ym) => (SESS.find(s => s.cls === cls && s.num === 1 && ymOf(s.date) === ym) || {}).date || null;
+function chargeOf(st, ym) { // 'yes' = có thu, 'off' = nghỉ, 'none' = tháng không thu
+  const cfg = CLASS_CFG[st.cls]; if (!cfg) return 'none';
+  const v = payOf(st.name, ym); if (v === 'off') return 'off'; if (v === true || v === false) return 'yes';
+  if (st.from && ym < ymOf(st.from)) return 'none';
+  return cfg.type === 'thang' || packStart(st.cls, ym) ? 'yes' : 'none';
+}
+function feeLine(st, ym) {
+  if (chargeOf(st, ym) !== 'yes') return null; const cfg = CLASS_CFG[st.cls];
+  if (cfg.type === 'thang') { const c = monthlyCalc(st.cls, ym); const per = Math.round(st.fee / c.std / 1000) * 1000; const minus = c.missing * per;
+    return { type: 'thang', fee: st.fee, std: c.std, missing: c.missing, upto: c.upto, per, minus, due: st.fee - minus }; }
+  return { type: 'goi', fee: st.fee, minus: 0, due: st.fee, start: packStart(st.cls, ym) };
+}
+const owes = (st, ym) => !!feeLine(st, ym) && !isPaid(st.name, ym);
+function shownMonths() { // tháng trước (chỉ khi còn em nợ) + tháng này + tháng sau
+  const prev = ymAdd(CUR_M, -1);
+  return [...(STUDENTS.some(s => owes(s, prev)) ? [prev] : []), CUR_M, ymAdd(CUR_M, 1)];
+}
+
+// ---------- UI chung ----------
+const V = $('#view');
+function setTab(t, sub) { document.querySelectorAll('#tabs a').forEach(a => a.classList.toggle('on', a.dataset.t === t)); $('#hdrSub').textContent = sub; }
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2200); }
+const sessOn = iso => SESS.filter(s => s.date === iso);
+
+// ================= TRANG CHỦ =================
+function viewHome() {
+  setTab('home', wdName(TODAY) + ', ' + dmy(TODAY));
+  const today = sessOn(TODAY);
+  let h = `<h2><span class="stk">🧸</span>Hôm nay dạy ${today.length} buổi</h2>`;
+  h += today.map(homeCard).join('') || `<div class="card empty"><span class="big stk">🌈</span>Hôm nay cô được nghỉ!</div>`;
+
+  const wk = SESS.filter(s => s.date >= TODAY && s.date <= addDays(TODAY, 6));
+  const noPlan = [], prints = [], tests = [];
+  wk.forEach(s => {
+    const l = lessonFor(s.cls, s.date); const tag = `${wdS(s.date)} ${dm(s.date)} · <b>${s.cls}</b>`;
+    if (!hasPlan(l)) noPlan.push(`<a href="#giaoan/${s.cls}/${s.date}">${tag}</a>`);
+    if (l && l.print) prints.push(tag + ': ' + esc(firstLine(l.print)));
+    if (isTest(l)) tests.push(tag + ': ' + esc(firstLine(l.lesson || l.content)));
+  });
+  const li = a => '<ul class="list">' + a.map(x => `<li>${x}</li>`).join('') + '</ul>';
+  h += `<h2><span class="stk">🗒️</span>Cần chuẩn bị 7 ngày tới</h2><div class="card tape">
+    <h3>📝 Buổi chưa soạn giáo án <span class="badge b-bad">${noPlan.length}</span></h3>${noPlan.length ? li(noPlan) : '<div class="muted">Đủ giáo án rồi 👍</div>'}
+    <h3 style="margin-top:12px">🧪 Kiểm tra / ôn tập sắp tới</h3>${tests.length ? li(tests) : '<div class="muted small">Không có</div>'}
+    <h3 style="margin-top:12px">🖨️ File cần in</h3>${prints.length ? li(prints) : '<div class="muted small">Không có</div>'}</div>`;
+  const wn = ST.weekNotes[mondayOf(TODAY)] || {}; const note = [wn.gc, wn.todo].filter(Boolean).join('\n');
+  h += `<h2><span class="stk">📌</span>Ghi chú tuần này</h2><a class="card tape butter" href="#lich" style="display:block;text-decoration:none;color:inherit">${note ? `<div class="pre">${esc(note)}</div>` : '<span class="muted">Chưa có ghi chú. Bấm để thêm ở màn hình Lịch.</span>'}</a>`;
+  const owe = ym => STUDENTS.filter(s => feeLine(s, ym) && !isPaid(s.name, ym)).length;
+  const low = CLASSES.filter(c => CLASS_CFG[c].type === 'goi' && studentsOf(c).length && packCalc(c).left <= 2);
+  h += `<h2><span class="stk">🍓</span>Học phí</h2><a class="card" href="#hocphi" style="display:block;text-decoration:none;color:inherit"><div class="row wrapf" style="gap:8px">
+    ${shownMonths().filter(ym => ym <= CUR_M).map(ym => `<span class="badge b-bad">${mLabel(ym)}: ${owe(ym)} em chưa đóng</span>`).join('')}${low.map(c => `<span class="badge b-warn">${c} còn ${packCalc(c).left} buổi</span>`).join('')}</div></a>`;
+  V.innerHTML = h;
+}
+function homeCard(s) {
+  const l = lessonFor(s.cls, s.date); const key = s.date + '|' + s.cls; const att = ST.att[key]; const [bg, ink] = colOf(s.cls);
+  const ph = prevHw(s.cls, s.date); const studs = studentsOf(s.cls);
+  const nBad = att ? studs.filter(st => att.rows[st.name] && /thieu|khong/.test(att.rows[st.name].hw)).length : 0;
+  return `<div class="card"><a class="sess" href="#buoi/${s.date}/${s.cls}"><div class="time" style="background:${bg};color:${ink}">${hhmm(s.m)}<small>${s.num ? 'buổi ' + s.num + '/' + CLASS_CFG[s.cls].size : s.makeup ? 'học bù' : '&nbsp;'}</small></div>
+    <div class="grow"><div class="row between">${cp(s.cls)}${att ? '<span class="badge b-ok">✓ đã điểm danh</span>' : '<span class="badge">chưa điểm danh</span>'}</div>
+    <div class="ellip" style="margin-top:3px">${hasPlan(l) ? '❤️ ' + esc(l.lesson || firstLine(l.content)) : '<span class="muted">⚠️ Chưa soạn giáo án</span>'}</div>
+    <div class="small muted ellip">${studs.map(x => esc(x.display)).join(', ')}</div>
+    <div class="small ellip" style="margin-top:3px">${ph ? `📚 <b>BT buổi trước:</b> ${esc(firstLine(ph.hw))}` : '<span class="muted">📚 Buổi trước không giao BT</span>'}${nBad ? ` <span class="badge b-warn">${nBad} em chưa đủ BT</span>` : ''}</div></div></a></div>`;
+}
+
+// ================= LỊCH (dạng trang tính, kéo thả) =================
+const SLOTS = []; for (let m = 360; m <= 1320; m += 30) if (m < 720 || m >= 840) SLOTS.push(m); // 6:00–11:30, 14:00–22:00 như tab tuần
+const slotIdx = m => { if (m >= 720 && m < 840) return SLOTS.indexOf(840); let k = 0; SLOTS.forEach((x, i) => { if (x <= m) k = i; }); return k; };
+const RH = 26;
+const ampm = m => { const h = Math.floor(m / 60) % 24; return (h > 12 ? h - 12 : h) + ':' + pd(m % 60); };
+const durOf = c => { const a = SESS.filter(s => s.cls === c).map(s => s.dur); return a.length ? a[a.length - 1] : 90; };
+let LAST_MOVE = null, MOVED = null;
+function viewLich(mon) {
+  mon = mondayOf(mon || TODAY); setTab('lich', 'Lịch dạy');
+  const days = [...Array(7)].map((_, i) => addDays(mon, i));
+  const week = SESS.filter(s => s.date >= mon && s.date <= days[6]);
+  const prev = SESS.filter(s => s.date >= addDays(mon, -7) && s.date < mon);
+  let h = `<div class="bar"><button class="navbtn" data-wk="${addDays(mon, -7)}">‹</button><div class="d">${dm(mon)} – ${dm(days[6])}</div><button class="navbtn" data-wk="${addDays(mon, 7)}">›</button></div>
+    <div class="row wrapf" style="gap:8px;justify-content:center;margin-bottom:8px">${mon !== mondayOf(TODAY) ? '<a class="chip" href="#lich">↩ Về tuần này</a>' : ''}
+    ${!week.length && prev.length ? `<button class="btn sm" id="copyWk">📋 Chép ${prev.length} buổi từ tuần trước</button>` : ''}
+    ${LAST_MOVE ? `<button class="btn sm ghost" id="undo">↶ Hoàn tác dời ${LAST_MOVE.cls}</button>` : ''}</div>
+    <div class="small muted" style="text-align:center;margin-bottom:8px">✋ Kéo ô lớp để dời ngày/giờ · bấm ô lớp để mở · bấm ô trống để thêm buổi</div>`;
+  let g = `<div class="title" style="grid-row:1">LỊCH LÀM VIỆC</div>
+    <div class="hd s" style="grid-row:2;grid-column:1/3">Thứ</div>${days.map((d, j) => `<div class="hd ${d === TODAY ? 'today' : ''}" style="grid-row:2;grid-column:${j + 3}">${dm(d)}</div>`).join('')}
+    <div class="hd s" style="grid-row:3;grid-column:1">Bắt đầu</div><div class="hd e" style="grid-row:3;grid-column:2">Kết thúc</div>${days.map((d, j) => `<div class="hd ${d === TODAY ? 'today' : ''}" style="grid-row:3;grid-column:${j + 3}">${WD[dateOf(d).getDay()].toUpperCase()}</div>`).join('')}`;
+  SLOTS.forEach((m, i) => { const r = 4 + i, gap = m === 690 ? 'gap' : '';
+    g += `<div class="c tm s ${gap}" style="grid-row:${r};grid-column:1">${ampm(m)}</div><div class="c tm e ${gap}" style="grid-row:${r};grid-column:2">${ampm(m + 30)}</div>`;
+    days.forEach((d, j) => g += `<div class="c cell ${gap} ${d === TODAY ? 'tcol' : ''}" data-d="${d}" data-i="${i}" style="grid-row:${r};grid-column:${j + 3}"></div>`); });
+  days.forEach((d, j) => { const list = sessOn(d);
+    list.forEach((s, k) => {
+      const ov = o => o !== s && o.m < s.m + s.dur && s.m < o.m + o.dur;
+      const lane = list.slice(0, k).some(ov) ? 'l1' : list.slice(k + 1).some(ov) ? 'l0' : '';
+      const [bg, fg] = colOf(s.cls); const l = lessonFor(s.cls, s.date); const span = Math.max(1, Math.round(s.dur / 30));
+      g += `<div class="blk ${lane} ${MOVED === s.id ? 'moved' : ''}" data-id="${s.id}" title="${s.cls} ${hhmm(s.m)}–${hhmm(s.m + s.dur)}" style="grid-row:${4 + slotIdx(s.m)}/span ${span};grid-column:${j + 3};background:${bg};color:${fg}">${s.cls}<div class="n">${s.num ? s.num : s.makeup ? 'bù' : ''}</div>${hasPlan(l) ? '<div class="n">❤️‍🔥</div>' : ''}</div>`;
+    }); });
+  h += `<div class="sgwrap"><div class="sg" style="grid-template-rows:auto auto auto;grid-auto-rows:${RH}px">${g}</div></div>`;
+  const wn = ST.weekNotes[mon] || {};
+  h += `<div class="notes2"><div class="card tape butter" style="margin:0"><h4>GHI CHÚ</h4><textarea data-n="gc" rows="6" placeholder="Học sinh cần lưu ý…">${esc(wn.gc || '')}</textarea></div>
+    <div class="card tape mint" style="margin:0"><h4>VIỆC CẦN LÀM</h4><textarea data-n="todo" rows="6" placeholder="Việc cần làm tuần này…">${esc(wn.todo || '')}</textarea></div></div>
+    <div class="alert info small" style="margin-top:14px">Số dưới mã lớp = buổi thứ mấy trong gói (<b>tự đếm</b>). ❤️‍🔥 = đã soạn giáo án (tự nhận biết). Muốn dời sang tuần khác: bấm ô lớp rồi đổi ngày.</div>`;
+  V.innerHTML = h; MOVED = null;
+  V.querySelectorAll('[data-wk]').forEach(b => b.addEventListener('click', () => location.hash = '#lich/' + b.dataset.wk));
+  V.querySelectorAll('.cell').forEach(c => c.addEventListener('click', () => editSess(null, c.dataset.d, SLOTS[+c.dataset.i])));
+  const cw = $('#copyWk'); if (cw) cw.addEventListener('click', () => { prev.forEach(s => ST.sess.push({ id: uid('s'), date: addDays(s.date, 7), m: s.m, dur: s.dur, cls: s.cls, makeup: false, startNum: null })); save(); toast(`Đã chép ${prev.length} buổi 🐣`); viewLich(mon); });
+  const un = $('#undo'); if (un) un.addEventListener('click', () => { const s = ST.sess.find(x => x.id === LAST_MOVE.id); if (s) { s.date = LAST_MOVE.date; s.m = LAST_MOVE.m; MOVED = s.id; } LAST_MOVE = null; save(); toast('Đã hoàn tác'); viewLich(mon); });
+  V.querySelectorAll('[data-n]').forEach(t => t.addEventListener('input', () => { ST.weekNotes[mon] = { ...(ST.weekNotes[mon] || {}), [t.dataset.n]: t.value }; save(); }));
+  bindDrag(mon);
+}
+function bindDrag(mon) {
+  const wrap = V.querySelector('.sgwrap'); let D = null, ghost = null, tgt = [];
+  const clear = () => { tgt.forEach(c => c.classList.remove('drop')); tgt = []; };
+  V.querySelectorAll('.blk').forEach(b => {
+    b.addEventListener('pointerdown', e => { if (e.button > 0) return; const r = b.getBoundingClientRect();
+      D = { id: b.dataset.id, b, x: e.clientX, y: e.clientY, w: r.width, hh: r.height, dx: e.clientX - r.left, dy: e.clientY - r.top, moved: false, hit: null };
+      try { b.setPointerCapture(e.pointerId); } catch (_) {} });
+    b.addEventListener('pointermove', e => {
+      if (!D || D.b !== b) return;
+      if (!D.moved) { if (Math.hypot(e.clientX - D.x, e.clientY - D.y) < 6) return;
+        D.moved = true; ghost = b.cloneNode(true); ghost.classList.add('dragghost'); Object.assign(ghost.style, { width: D.w + 'px', height: D.hh + 'px', margin: 0 }); document.body.appendChild(ghost); b.style.opacity = .3; }
+      ghost.style.left = (e.clientX - D.dx) + 'px'; ghost.style.top = (e.clientY - D.dy) + 'px';
+      const wr = wrap.getBoundingClientRect();
+      if (e.clientX > wr.right - 30) wrap.scrollLeft += 14; else if (e.clientX < wr.left + 100 && wrap.scrollLeft > 0) wrap.scrollLeft -= 14;
+      if (e.clientY > innerHeight - 110) scrollBy(0, 14); else if (e.clientY < 50) scrollBy(0, -14);
+      clear();
+      const cell = document.elementsFromPoint(e.clientX, e.clientY - D.dy + RH / 2).find(x => x.classList && x.classList.contains('cell'));
+      D.hit = cell ? { d: cell.dataset.d, i: +cell.dataset.i } : null;
+      if (cell) { const s = SESS.find(x => x.id === D.id); for (let k = 0; k < Math.max(1, Math.round(s.dur / 30)); k++) { const c = V.querySelector(`.cell[data-d="${cell.dataset.d}"][data-i="${+cell.dataset.i + k}"]`); if (c) { c.classList.add('drop'); tgt.push(c); } } }
+    });
+    const up = e => {
+      if (!D || D.b !== b) return; const d = D; D = null; clear(); if (ghost) { ghost.remove(); ghost = null; } b.style.opacity = '';
+      if (!d.moved) { if (e.type === 'pointerup') editSess(d.id); return; }
+      if (!d.hit) return;
+      const s = ST.sess.find(x => x.id === d.id); const nm = SLOTS[d.hit.i];
+      if (s.date === d.hit.d && s.m === nm) return;
+      moveSess(s, d.hit.d, nm); viewLich(mon);
+    };
+    b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up);
+  });
+}
+function moveSess(s, date, m) {
+  LAST_MOVE = { id: s.id, date: s.date, m: s.m, cls: s.cls }; s.date = date; s.m = m; save();
+  const clash = SESS.filter(o => o.id !== s.id && o.date === s.date && o.m < s.m + s.dur && s.m < o.m + o.dur);
+  toast(`Đã dời ${s.cls} sang ${wdS(s.date)} ${dm(s.date)} lúc ${hhmm(s.m)}` + (clash.length ? ` · ⚠️ trùng giờ ${clash.map(x => x.cls).join(', ')}` : ''));
+  MOVED = s.id;
+}
+function editSess(id, date, m0) {
+  const s = id ? ST.sess.find(x => x.id === id) : { date, m: m0 != null ? m0 : 17 * 60, dur: 90, cls: CLASSES[0], makeup: false, startNum: null };
+  if (!id) s.dur = durOf(s.cls);
+  const M = $('#modal'); const auto = id ? (SESS.find(x => x.id === id) || {}).num : null;
+  M.innerHTML = `<div class="sheet"><span class="corner stk" style="right:18px;top:10px">🌷</span>
+    <h3 style="font-size:20px">${id ? `${EMO[s.cls] || ''} ${s.cls} · ${wdS(s.date)} ${dm(s.date)} · ${hhmm(s.m)}–${hhmm(s.m + s.dur)}` : 'Thêm buổi học'}</h3>
+    ${id ? `<div class="row wrapf" style="gap:8px;margin:6px 0 4px"><a class="btn sm mint" href="#buoi/${s.date}/${s.cls}">📋 Điểm danh</a><a class="btn sm ghost" href="#giaoan/${s.cls}/${s.date}">📒 Giáo án</a></div>` : ''}
+    <div class="row" style="gap:10px"><label class="grow"><div class="lbl">Ngày</div><input type="date" id="eD" value="${s.date}"></label><label class="grow"><div class="lbl">Giờ bắt đầu</div><input type="time" id="eT" value="${pd(Math.floor(s.m / 60))}:${pd(s.m % 60)}"></label></div>
+    <div class="row" style="gap:10px"><label class="grow"><div class="lbl">Lớp</div><select id="eC">${CLASSES.map(c => `<option ${c === s.cls ? 'selected' : ''} value="${c}">${EMO[c]} ${c}</option>`).join('')}</select></label>
+      <label style="width:120px"><div class="lbl">Thời lượng</div><select id="eL">${[60, 90, 120, 150].map(v => `<option value="${v}" ${v === s.dur ? 'selected' : ''}>${Math.floor(v / 60)}h${v % 60 ? '30' : ''}</option>`).join('')}</select></label></div>
+    <div id="ePack"><div class="lbl">Buổi số trong gói (để trống = tự đếm${auto ? ', đang là ' + auto : ''})</div><input type="number" id="eN" min="1" value="${s.startNum || ''}" placeholder="Ghi 1 = bắt đầu gói mới"></div>
+    <label class="row" style="margin-top:10px;gap:8px"><input type="checkbox" id="eB" ${s.makeup ? 'checked' : ''} style="width:20px;height:20px"> Buổi học bù</label>
+    <div class="row wrapf" style="margin-top:16px;gap:8px"><button class="btn" id="eSave">💾 Lưu</button>${id ? '<button class="btn ghost" id="eDel">🗑️ Xóa buổi</button>' : ''}<button class="btn ghost" id="eX">Hủy</button></div></div>`;
+  M.hidden = false;
+  const pk = () => $('#ePack').style.display = CLASS_CFG[$('#eC').value].type === 'goi' ? '' : 'none'; pk();
+  $('#eC').addEventListener('change', () => { pk(); if (!id) $('#eL').value = durOf($('#eC').value); });
+  const close = () => { M.hidden = true; M.innerHTML = ''; };
+  M.onclick = e => { if (e.target === M || e.target.closest('a')) close(); };
+  $('#eX').addEventListener('click', close);
+  $('#eSave').addEventListener('click', () => {
+    const [hh, mm] = ($('#eT').value || '00:00').split(':').map(Number); const c = $('#eC').value;
+    const v = { date: $('#eD').value || s.date, m: hh * 60 + mm, dur: +$('#eL').value, cls: c, makeup: $('#eB').checked, startNum: CLASS_CFG[c].type === 'goi' && $('#eN').value ? +$('#eN').value : null };
+    if (id) Object.assign(s, v); else ST.sess.push({ id: uid('s'), ...v });
+    save(); close(); toast(id ? 'Đã sửa buổi học' : 'Đã thêm buổi học'); route(true);
+  });
+  if (id) $('#eDel').addEventListener('click', () => { ST.sess = ST.sess.filter(x => x.id !== id); save(); close(); toast('Đã xóa buổi'); route(true); });
+}
+
+// ================= BUỔI HỌC =================
+let W = null;
+function viewBuoi(iso, cls) {
+  iso = iso || TODAY; setTab('lich', 'Buổi học');
+  const list = sessOn(iso);
+  if (!cls || !list.some(s => s.cls === cls)) cls = list[0] ? list[0].cls : null;
+  let h = `<div class="bar"><button class="navbtn" data-go="${addDays(iso, -1)}">‹</button><div class="d">${wdName(iso)}, ${dm(iso)}${iso === TODAY ? ' 🌟' : ''}</div><button class="navbtn" data-go="${addDays(iso, 1)}">›</button></div>`;
+  h += `<div class="clsbar">${list.map(s => `<a class="chip ${s.cls === cls ? 'sel' : ''}" href="#buoi/${iso}/${s.cls}">${hhmm(s.m)} ${EMO[s.cls] || ''} ${s.cls}${s.num ? ' #' + s.num : ''}</a>`).join('') || '<span class="muted">Không có buổi học. Thêm buổi ở màn hình Lịch.</span>'}</div>`;
+  if (!cls) { V.innerHTML = h; bindDay(); return; }
+  const s = list.find(x => x.cls === cls); const l = lessonFor(cls, iso); const ph = prevHw(cls, iso);
+  const key = iso + '|' + cls; const saved = ST.att[key];
+  W = JSON.parse(JSON.stringify(saved || { rows: {} })); W.classNote = l ? l.note || '' : '';
+  studentsOf(cls).forEach(st => { if (!W.rows[st.name]) W.rows[st.name] = { status: 'co', hw: '', tpl: [], note: '' }; });
+
+  h += `<div class="card tape mint"><div class="row between"><h3>📒 Giáo án ${cls}${s.num ? ' · buổi ' + s.num + '/' + CLASS_CFG[cls].size : ''}</h3><a class="btn sm ghost" href="#giaoan/${cls}/${iso}">✏️ Sửa</a></div>`;
+  if (hasPlan(l)) h += `<dl class="kv">${l.lesson ? `<dt>Bài dạy</dt><dd><b>${esc(l.lesson)}</b>${l.guessed ? ' <span class="badge b-warn">tự xếp theo thứ tự</span>' : ''}</dd>` : ''}
+      ${l.content ? `<dt>Nội dung</dt><dd class="pre">${esc(l.content)}</dd>` : ''}${l.mat ? `<dt>Tài liệu</dt><dd class="pre">${esc(l.mat)}</dd>` : ''}
+      ${l.print ? `<dt>File cần in</dt><dd class="pre">${esc(l.print)}</dd>` : ''}${l.hw ? `<dt>BT giao hôm nay</dt><dd class="pre">${esc(l.hw)}</dd>` : ''}</dl>`;
+  else h += `<div class="alert warn">Chưa soạn giáo án cho buổi này. <a href="#giaoan/${cls}/${iso}">Soạn ngay →</a></div>`;
+  h += `</div>`;
+  { const ps = SESS.filter(x => x.cls === cls && x.date < iso).pop(); const pl = ps ? lessonFor(cls, ps.date) : null;
+    h += ph ? `<div class="card hwbox"><span class="corner stk">📚</span><h3>📚 Bài tập buổi trước <span class="muted" style="font-size:14px">· ${wdS(ph.date)} ${dm(ph.date)}</span></h3><div class="hwtxt pre">${esc(ph.hw)}</div>
+        ${pl && pl.note ? `<div class="small" style="margin-top:8px">📝 <b>Note buổi trước:</b> <span class="pre">${esc(pl.note)}</span></div>` : ''}<div class="small muted" style="margin-top:6px">Tick Đủ / Thiếu / Không làm cho từng em ở phần điểm danh bên dưới.</div></div>`
+      : `<div class="alert info">📚 Buổi trước${ps ? ' (' + wdS(ps.date) + ' ' + dm(ps.date) + ')' : ''} không giao bài tập (cột Homework trong giáo án đang trống).</div>`; }
+  h += `<div class="card"><span class="corner stk">🐰</span><div class="row between"><h3>👥 Điểm danh & nhận xét</h3>${saved ? '<span class="badge b-ok">✓ đã lưu</span>' : '<span class="badge">chưa lưu</span>'}</div>`;
+  studentsOf(cls).forEach(st => {
+    const r = W.rows[st.name];
+    h += `<div class="stu" data-n="${esc(st.name)}"><div class="row between wrapf"><b style="font-size:16.5px">${esc(st.display)}</b>
+      <div class="seg" data-f="status">${Object.entries(ST_LABEL).map(([k, v]) => `<button type="button" data-v="${k}" class="${r.status === k ? 'on' : ''} ${k === 'muon' || k === 'phep' ? 'w' : k === 'kp' ? 'x' : ''}">${v}</button>`).join('')}</div></div>
+      ${ph ? `<div class="lbl">Bài tập buổi trước</div><div class="seg" data-f="hw">${Object.entries(HW_LABEL).map(([k, v]) => `<button type="button" data-v="${k}" class="${r.hw === k ? 'on' : ''} ${k === 'thieu' ? 'w' : k === 'khong' ? 'x' : ''}">${v}</button>`).join('')}</div>` : ''}
+      <div class="lbl">Nhận xét nhanh</div>
+      <div class="chips">${MAU_LIST.map(m => `<button type="button" class="chip ${NEG.includes(m.code) ? 'neg' : ''} ${r.tpl.includes(m.code) ? 'on' : ''}" data-tpl="${m.code}" title="${esc(m.teacher)}">${esc(m.label)}</button>`).join('')}</div>
+      <input type="text" data-f="note" placeholder="Ghi chú thêm về ${esc(st.name)}…" value="${esc(r.note)}" style="margin-top:8px"></div>`;
+  });
+  h += `<div class="lbl" style="margin-top:12px">📝 Note sau buổi học (lưu vào giáo án của buổi này)</div>
+    <textarea id="classNote" placeholder="VD: Các bạn chưa làm bài tập (Grammar + WB)">${esc(W.classNote)}</textarea>
+    <div style="margin-top:12px"><button class="btn" id="saveAtt" type="button">💾 Lưu buổi học</button></div></div>`;
+  V.innerHTML = h; bindDay();
+  V.querySelectorAll('.stu').forEach(el => {
+    const r = W.rows[el.dataset.n];
+    el.querySelectorAll('.seg').forEach(seg => seg.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return; const f = seg.dataset.f;
+      r[f] = r[f] === b.dataset.v && f === 'hw' ? '' : b.dataset.v;
+      seg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.v === r[f]));
+    }));
+    el.querySelector('.chips').addEventListener('click', e => { const b = e.target.closest('[data-tpl]'); if (!b) return; const c = b.dataset.tpl;
+      r.tpl = r.tpl.includes(c) ? r.tpl.filter(x => x !== c) : [...r.tpl, c]; b.classList.toggle('on'); });
+    el.querySelector('[data-f=note]').addEventListener('input', e => r.note = e.target.value);
+  });
+  $('#classNote').addEventListener('input', e => W.classNote = e.target.value);
+  $('#saveAtt').addEventListener('click', () => {
+    const note = W.classNote.trim(); delete W.classNote; ST.att[key] = W;
+    if (note || (l && l.note)) lessonAt(cls, iso, true).note = note;
+    save(); toast('Đã lưu buổi ' + cls + ' ' + dm(iso) + ' 🌷'); viewBuoi(iso, cls);
+  });
+}
+function bindDay() { V.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => location.hash = '#buoi/' + b.dataset.go)); }
+
+// ================= GIÁO ÁN (dạng bảng Syllabus) =================
+const SYL_COLS = [['lesson', 'Bài dạy', 150], ['content', 'Nội dung bài dạy (chi tiết)', 290], ['mat', 'Tài liệu cần chuẩn bị', 170], ['hw', 'Homework', 190], ['print', 'File cần in', 150], ['note', 'Note sau buổi học', 170]];
+function viewGiaoAn(cls, focus) {
+  setTab('giaoan', 'Giáo án');
+  if (!CLASS_CFG[cls]) cls = (sessOn(TODAY)[0] || {}).cls || CLASSES[0];
+  const { L, slots } = planMap(cls); const ci = ST.cinfo[cls] || (ST.cinfo[cls] = {});
+  const dates = [...new Set([...SESS.filter(s => s.cls === cls).map(s => s.date), ...L.filter(x => x.date).map(x => x.date)])].sort();
+  const ui = ST.ui || (ST.ui = {}); const showOld = !!ui.showOld; const old = dates.filter(d => d < TODAY && d !== focus);
+  const shown = showOld ? dates : dates.filter(d => d >= TODAY || d === focus);
+  const [cbg, cfg] = colOf(cls);
+  const pool = L.filter(x => !x.date && !slots.some(z => z[1] === x.id));
+  const row = (key, d, l, s) => { const g = l && l.guessed;
+    return `<tr class="${d === TODAY ? 'today' : d && d < TODAY ? 'past' : ''}" id="r-${key.replace(':', '-')}" data-key="${key}">
+    <td><div class="dc">${d ? dm(d) + `<small>${wdS(d)}${s ? ' · ' + hhmm(s.m) : ''}${s && s.num ? ' · #' + s.num : ''}</small>` : `${l && l.num ? 'Buổi ' + esc(l.num) : ''}<small>chưa xếp ngày</small>`}${g ? '<small class="gl" style="color:#a2531f">tự xếp</small>' : ''}${l && l.id && !g ? `<button class="x" data-del="${l.id}" title="Xóa dòng">🗑</button>` : ''}</div></td>
+    ${SYL_COLS.map(([k, , w]) => `<td style="min-width:${w}px;max-width:${w + 90}px" class="${g ? 'guess' : ''}"><div class="cc" contenteditable="true" data-f="${k}">${esc(l ? l[k] : '')}</div></td>`).join('')}</tr>`; };
+  let h = `<div class="clsbar" style="margin-top:14px">${CLASSES.map(c => chipC(c, c === cls, '#giaoan/' + c)).join('')}</div>`;
+  h += `<div class="sylwrap"><div class="sylbar" style="background:${cbg};color:${cfg}"><span>${EMO[cls] || ''} ${esc(cls)}</span><button class="oldtg" id="tgOld" style="color:${cfg};border-color:${cfg}">${showOld ? '🙈 Ẩn buổi cũ' : '👁 Hiện ' + old.length + ' buổi cũ'}</button></div><div class="sylinfo">
+    <div class="k">Tên học sinh</div><div class="v">${studentsOf(cls).map(s => esc(s.display)).join(', ') || '—'}</div>
+    <div class="k">Giáo trình</div><div class="v"><div class="cc" style="padding:0;min-height:0" contenteditable="true" data-ci="book">${esc(ci.book || '')}</div></div>
+    <div class="k">Extra</div><div class="v"><div class="cc" style="padding:0;min-height:0" contenteditable="true" data-ci="extra" data-ph="(trống)">${esc(ci.extra || '')}</div></div></div>
+    <div class="sylscroll"><table class="syl"><tr><th>Ngày dạy</th>${SYL_COLS.map(([, t]) => `<th>${t}</th>`).join('')}</tr>
+    ${shown.map(d => row(d, d, lessonFor(cls, d), SESS.find(x => x.cls === cls && x.date === d))).join('')}
+    ${pool.map(x => row('id:' + x.id, '', x, null)).join('')}</table></div>
+    <div style="padding:10px"><button class="addb" id="addRow">+ Thêm dòng (bài soạn sẵn)</button>
+    <div class="small muted" style="margin-top:6px">Gõ thẳng vào ô như trang tính, bấm ra ngoài là tự lưu. Dòng <b>chưa xếp ngày</b> sẽ tự xếp lần lượt vào các buổi tiếp theo trong Lịch (ô màu vàng nhạt = tự xếp).</div></div></div>`;
+  V.innerHTML = h;
+  const re = () => viewGiaoAn(cls);
+  V.querySelectorAll('.cc').forEach(el => el.addEventListener('paste', e => { e.preventDefault(); document.execCommand('insertText', false, (e.clipboardData || window.clipboardData).getData('text/plain')); }));
+  V.querySelectorAll('tr[data-key] .cc').forEach(el => el.addEventListener('blur', () => {
+    const tr = el.closest('tr'); const key = tr.dataset.key; const f = el.dataset.f; const v = el.innerText.replace(/\n+$/, '').trim();
+    const cur = key.startsWith('id:') ? L.find(x => x.id === key.slice(3)) : lessonFor(cls, key);
+    if ((cur ? cur[f] || '' : '') === v) return;
+    const l = key.startsWith('id:') ? cur : lessonAt(cls, key, true);
+    l[f] = v; save(); toast('Đã lưu ✓');
+    if (cur && cur.guessed) { tr.querySelectorAll('td.guess').forEach(td => td.classList.remove('guess')); const gl = tr.querySelector('.gl'); if (gl) gl.remove(); }
+  }));
+  V.querySelectorAll('[data-ci]').forEach(el => el.addEventListener('blur', () => { ci[el.dataset.ci] = el.innerText.trim(); save(); }));
+  V.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => { if (!confirm('Xóa nội dung dòng này?')) return; ST.plan[cls] = L.filter(x => x.id !== b.dataset.del); save(); toast('Đã xóa dòng'); re(); }));
+  const tg = $('#tgOld'); if (tg) tg.addEventListener('click', () => { ui.showOld = !showOld; save(); re(); });
+  $('#addRow').addEventListener('click', () => { const x = { id: uid('l'), date: '', lesson: '', content: '', mat: '', hw: '', print: '', note: '' }; L.push(x); save(); re(); const c = document.querySelector(`#r-id-${x.id} .cc`); if (c) { c.scrollIntoView({ block: 'center' }); c.focus(); } });
+  if (focus) { const r = document.getElementById('r-' + focus); if (r) { r.scrollIntoView({ block: 'center' }); r.classList.add('flash'); } }
+}
+
+// ================= HỌC SINH =================
+function viewHS(name) {
+  setTab('hs', 'Học sinh');
+  if (!name) {
+    let h = `<div class="addbar"><button class="btn sm" id="addSt">➕ Thêm học sinh</button><button class="btn sm mint" id="addCl">➕ Thêm lớp</button></div><input type="text" id="q" placeholder="🔍 Tìm tên học sinh…" style="margin:12px 0 14px">`;
+    h += CLASSES.map(c => { const ss = studentsOf(c);
+      return `<div class="card" data-cls="${c}"><div class="clshead">${cp(c)}<span class="small muted grow" style="text-align:right">${esc(CLASS_CFG[c].book)}</span><button class="iconb" data-ec="${c}">✏️ Sửa lớp</button></div><div class="stlist">${ss.length ? '' : '<div class="small muted" style="padding:8px 2px">Chưa có học sinh</div>'}${ss.map(s => {
+        const a = attOf(s.name); const sc = scoresOf(s.name);
+        return `<a href="#hs/${encodeURIComponent(s.name)}" data-n="${esc(s.name.toLowerCase())}"><b>${esc(s.display)}</b><span class="small muted">${a.total ? Math.round((a.co + a.muon) / a.total * 100) + '% đi học' : ''}${sc.length ? ' · ' + sc.length + ' điểm' : ''} ›</span></a>`; }).join('')}</div></div>`; }).join('');
+    V.innerHTML = h;
+    $('#q').addEventListener('input', e => { const q = e.target.value.trim().toLowerCase();
+      V.querySelectorAll('.stlist a').forEach(a => a.style.display = a.dataset.n.includes(q) ? '' : 'none');
+      V.querySelectorAll('[data-cls]').forEach(c => c.style.display = !q || [...c.querySelectorAll('.stlist a')].some(a => a.style.display !== 'none') ? '' : 'none'); });
+    $('#addSt').addEventListener('click', () => stModal()); $('#addCl').addEventListener('click', () => classModal());
+    V.querySelectorAll('[data-ec]').forEach(b => b.addEventListener('click', () => classModal(b.dataset.ec)));
+    return;
+  }
+  const st = byName(name); if (!st) { V.innerHTML = '<p>Không tìm thấy.</p>'; return; }
+  const a = attOf(name); const sc = scoresOf(name);
+  const avgT = t => { const v = avg(sc.filter(s => s.type === t && s.p != null).map(s => s.p)); return v == null ? '—' : Math.round(v) + '%'; };
+  let h = `<p><a href="#hs">← Danh sách</a></p><div class="card tape"><span class="corner stk">${EMO[st.cls]}</span><div class="row between wrapf"><h3 style="font-size:22px">${esc(st.display)}</h3><span class="row" style="gap:6px">${cp(st.cls)}${st.added ? '<button class="iconb" id="edSt">✏️ Sửa</button>' : ''}</span></div>
+    <dl class="kv" style="margin-top:8px"><dt>Họ tên đầy đủ</dt><dd><input type="text" id="fullName" value="${esc(fullName(name))}" placeholder="Dùng trong báo cáo gửi phụ huynh"></dd>
+    <dt>Giáo trình</dt><dd>${esc(CLASS_CFG[st.cls].book)}</dd><dt>Học phí</dt><dd>${money(st.fee)} / ${CLASS_CFG[st.cls].type === 'thang' ? 'tháng' : 'gói ' + CLASS_CFG[st.cls].size + ' buổi'}</dd></dl></div>
+    <div class="tiles"><div class="tile"><div class="k">Đi học</div><div class="v">${a.total ? Math.round((a.co + a.muon) / a.total * 100) + '%' : '—'}</div><div class="small muted">${a.co + a.muon}/${a.total} buổi</div></div>
+    <div class="tile"><div class="k">Bài tập về nhà</div><div class="v">${a.hwTotal ? a.du + '/' + a.hwTotal : '—'}</div><div class="small muted">lần làm đủ</div></div>
+    <div class="tile"><div class="k">Điểm HW / XT / CT</div><div class="v" style="font-size:18px">${avgT('HW')} · ${avgT('XT')} · ${avgT('CT')}</div></div></div>`;
+  h += `<h2><span class="stk">⭐</span>Điểm (trợ lý nhập)</h2><div class="card tscroll">${sc.length ? `<table><tr><th>Ngày</th><th>Loại</th><th>Bài</th><th class="num">Điểm</th></tr>${sc.slice().reverse().map(s => `<tr><td>${s.date.slice(0, 5)}</td><td><span class="badge ${TYPE_BADGE[s.type] || ''}">${s.type}</span></td><td>${esc(s.test)}</td><td class="num"><b>${esc(s.score)}/${esc(s.max)}</b></td></tr>`).join('')}</table>` : '<span class="muted">Chưa có điểm.</span>'}</div>`;
+  const errs = sc.filter(s => s.note);
+  h += `<h2><span class="stk">🔍</span>Lỗi sai trợ lý ghi</h2><div class="card">${errs.length ? '<ul class="list">' + errs.slice().reverse().map(s => `<li><span class="small muted">${s.date.slice(0, 5)} · ${esc(s.test)}:</span> <span class="pre">${esc(s.note)}</span></li>`).join('') + '</ul>' : '<span class="muted">Không có.</span>'}</div>`;
+  const tl = {}; a.tpl.forEach(t => (tl[t.iso] = tl[t.iso] || { tpl: [], notes: [] }).tpl.push(t.code)); a.notes.forEach(n => (tl[n.iso] = tl[n.iso] || { tpl: [], notes: [] }).notes.push(n.note));
+  h += `<h2><span class="stk">💬</span>Nhận xét các buổi</h2><div class="card">${Object.keys(tl).length ? Object.keys(tl).sort().reverse().map(iso => `<div style="margin-bottom:6px"><b>${dm(iso)}</b> ${tl[iso].tpl.map(c => `<span class="badge ${NEG.includes(c) ? 'b-warn' : 'b-ok'}">${esc(MAU[c] ? MAU[c].label : c)}</span>`).join(' ')} ${tl[iso].notes.map(esc).join('; ')}</div>`).join('') : '<span class="muted">Chưa có.</span>'}</div>
+    <p><a class="btn" href="#baocao/${encodeURIComponent(name)}">💌 Tạo báo cáo cho ${esc(st.name)}</a></p>`;
+  V.innerHTML = h;
+  $('#fullName').addEventListener('change', e => { ST.full[name] = e.target.value.trim(); save(); toast('Đã lưu họ tên'); });
+  const es = $('#edSt'); if (es) es.addEventListener('click', () => stModal(name));
+}
+
+// ================= THÊM / SỬA LỚP & HỌC SINH =================
+const EMO_SET = ['🦊', '🐼', '🐨', '🐣', '🦄', '🐻', '🐶', '🐱', '🐰', '🐥', '🐸', '🐯', '🦁', '🐧', '🐙', '🦋', '🐝', '🐳', '🍓', '🌷', '⭐', '📘'];
+const SWATCH = [['#ffd6e0', '#a2284f'], ['#c9f2e3', '#1d6b50'], ['#fff1b8', '#8a5a00'], ['#dbe8ff', '#2a4f9e'], ['#eadcff', '#5b2ca0'], ['#ffe0c7', '#a24a12'],
+  ['#00b050', '#ffffff'], ['#7030a0', '#ffffff'], ['#c00000', '#ffffff'], ['#0070c0', '#ffffff'], ['#ff66cc', '#ffffff'], ['#ffc000', '#000000']];
+function classModal(code) {
+  const isNew = !code; const M = $('#modal');
+  const c0 = code ? CLASS_CFG[code] : { type: 'thang', perWeek: 2, size: 10, book: '' };
+  let [bg, fg] = code ? colOf(code) : SWATCH[(CLASSES.length) % SWATCH.length]; let emo = code ? EMO[code] || '📘' : EMO_SET.find(e => !Object.values(EMO).includes(e)) || '📘';
+  M.innerHTML = `<div class="sheet"><span class="corner stk" style="right:18px;top:10px">🎨</span><h3 style="font-size:20px">${isNew ? 'Thêm lớp mới' : 'Sửa lớp ' + esc(code)}</h3>
+    <div class="row" style="gap:10px"><label class="grow"><div class="lbl">Mã lớp</div><input type="text" id="cC" value="${esc(code || '')}" placeholder="VD: IE505" ${isNew ? '' : 'disabled'} style="text-transform:uppercase"></label>
+      <label class="grow"><div class="lbl">Kiểu học phí</div><select id="cT"><option value="thang" ${c0.type === 'thang' ? 'selected' : ''}>Theo tháng</option><option value="goi" ${c0.type === 'goi' ? 'selected' : ''}>Theo gói buổi</option></select></label>
+      <label style="width:96px"><div class="lbl" id="cNl">Buổi</div><input type="number" id="cN" min="1"></label></div>
+    <label><div class="lbl">Giáo trình</div><input type="text" id="cB" value="${esc(c0.book || '')}" placeholder="VD: Mindset for IELTS 1"></label>
+    <div class="lbl">Sticker</div><div class="emos" id="cE">${EMO_SET.map(e => `<button data-e="${e}" class="${e === emo ? 'on' : ''}">${e}</button>`).join('')}</div>
+    <div class="lbl">Màu lớp (dùng ở Lịch, Giáo án, Học phí)</div><div class="sws" id="cS">${SWATCH.map(([b, f]) => `<button data-b="${b}" data-f="${f}" style="background:${b};color:${f}">A</button>`).join('')}</div>
+    <div class="row wrapf" style="gap:14px;margin-top:8px"><label class="row" style="gap:6px">Nền <input type="color" id="cBg" value="${bg}"></label><label class="row" style="gap:6px">Chữ <input type="color" id="cFg" value="${fg}"></label></div>
+    <div class="pvw"><span class="small muted">Xem trước:</span><div class="pb" id="pvB"></div><span id="pvC"></span></div>
+    <div class="row wrapf" style="margin-top:16px;gap:8px"><button class="btn" id="cSave">💾 Lưu</button>${code && !studentsOf(code).length && !ST.sess.some(x => x.cls === code) ? '<button class="btn ghost" id="cDel">🗑️ Xóa lớp</button>' : ''}<button class="btn ghost" id="clsCancel">Hủy</button></div></div>`;
+  M.hidden = false;
+  const close = () => { M.hidden = true; M.innerHTML = ''; };
+  const nl = () => { const g = $('#cT').value === 'goi'; $('#cNl').textContent = g ? 'Buổi/gói' : 'Buổi/tuần'; $('#cN').value = g ? (c0.type === 'goi' ? c0.size : 10) : (c0.type === 'thang' ? c0.perWeek || 2 : 2); };
+  const pv = () => { const cd = ($('#cC').value || 'MÃ LỚP').toUpperCase(); $('#pvB').style.cssText = `background:${bg};color:${fg}`; $('#pvB').innerHTML = esc(cd) + '<br><small>1 ❤️‍🔥</small>';
+    $('#pvC').innerHTML = `<span class="cp" style="background:${bg};color:${fg}">${emo} ${esc(cd)}</span>`; };
+  nl(); pv();
+  $('#cT').addEventListener('change', nl); $('#cC').addEventListener('input', pv);
+  M.querySelectorAll('[data-e]').forEach(b => b.addEventListener('click', () => { emo = b.dataset.e; M.querySelectorAll('[data-e]').forEach(x => x.classList.toggle('on', x === b)); pv(); }));
+  M.querySelectorAll('[data-b]').forEach(b => b.addEventListener('click', () => { bg = b.dataset.b; fg = b.dataset.f; $('#cBg').value = bg; $('#cFg').value = fg; pv(); }));
+  $('#cBg').addEventListener('input', e => { bg = e.target.value; pv(); }); $('#cFg').addEventListener('input', e => { fg = e.target.value; pv(); });
+  M.onclick = e => { if (e.target === M) close(); }; $('#clsCancel').addEventListener('click', close);
+  const del = $('#cDel'); if (del) del.addEventListener('click', () => { if (!confirm('Xóa lớp ' + code + '?')) return; ST.classes = ST.classes.filter(c => c.code !== code); save(); close(); toast('Đã xóa lớp'); route(true); });
+  $('#cSave').addEventListener('click', () => {
+    const cd = isNew ? $('#cC').value.trim().toUpperCase() : code;
+    if (!/^[A-Z0-9]{2,10}$/.test(cd)) { toast('Mã lớp chỉ gồm chữ và số, VD IE505'); return; }
+    if (isNew && CLASS_CFG[cd]) { toast('Mã lớp ' + cd + ' đã có'); return; }
+    const t = $('#cT').value; const n = Math.max(1, +$('#cN').value || (t === 'goi' ? 10 : 2));
+    const row = { type: t, book: $('#cB').value.trim(), emo, bg, fg, ...(t === 'goi' ? { size: n } : { perWeek: n }) };
+    if (isNew) ST.classes.push({ code: cd, status: 'Đang học', extra: '', size: '', perWeek: '', ...row }); else Object.assign(ST.classes.find(c => c.code === cd), row);
+    ST.cinfo[cd] = { ...(ST.cinfo[cd] || {}), book: row.book };
+    save(); close(); toast(isNew ? 'Đã thêm lớp ' + cd + ' 🎉' : 'Đã lưu lớp ' + cd); route(true);
+  });
+}
+function stModal(name) {
+  const M = $('#modal'); const old = name ? ST.students.find(x => x.name === name) : null;
+  const typFee = c => { const o = STUDENTS.find(x => x.cls === c && x.fee); return o ? o.fee / 1000 : ''; };
+  const c1 = old ? old.cls : CLASSES[0];
+  M.innerHTML = `<div class="sheet"><span class="corner stk" style="right:18px;top:10px">🐰</span><h3 style="font-size:20px">${old ? 'Sửa ' + esc(name) : 'Thêm học sinh'}</h3>
+    <div class="row" style="gap:10px"><label class="grow"><div class="lbl">Tên gọi (dùng hằng ngày)</div><input type="text" id="sN" value="${esc(name || '')}" placeholder="VD: Minh 11" ${old ? 'disabled' : ''}></label>
+      <label class="grow"><div class="lbl">Họ tên đầy đủ (báo cáo)</div><input type="text" id="sF" value="${esc(name ? ST.full[name] || '' : '')}" placeholder="VD: Nguyễn Minh An"></label></div>
+    <div class="row" style="gap:10px"><label class="grow"><div class="lbl">Lớp</div><select id="sC">${CLASSES.map(c => `<option value="${c}" ${c === c1 ? 'selected' : ''}>${EMO[c] || ''} ${c}</option>`).join('')}</select></label>
+      <label style="width:120px"><div class="lbl" id="sFl">Học phí (nghìn)</div><input type="number" id="sP" min="0" step="10" value="${old ? (+String(old.fee).replace(/[^\d.]/g, '') || 0) / 1000 : typFee(c1)}"></label></div>
+    <label><div class="lbl">Bắt đầu học từ (tính học phí từ tháng này)</div><input type="date" id="sD" value="${old ? old.from : TODAY}"></label>
+    <div class="row wrapf" style="margin-top:16px;gap:8px"><button class="btn" id="sSave">💾 Lưu</button>${old ? '<button class="btn ghost" id="sDel">🌙 Cho nghỉ học</button>' : ''}<button class="btn ghost" id="stCancel">Hủy</button></div>
+    <div class="small muted" style="margin-top:8px">Lớp chưa có? Bấm "➕ Thêm lớp" trước. Tên trùng với em khác thì thêm số/ký hiệu (VD "Minh 11").</div></div>`;
+  M.hidden = false;
+  const close = () => { M.hidden = true; M.innerHTML = ''; };
+  const fl = () => { $('#sFl').textContent = CLASS_CFG[$('#sC').value].type === 'goi' ? 'Giá gói (nghìn)' : 'Học phí/tháng (nghìn)'; }; fl();
+  $('#sC').addEventListener('change', () => { fl(); if (!old) $('#sP').value = typFee($('#sC').value); });
+  M.onclick = e => { if (e.target === M) close(); }; $('#stCancel').addEventListener('click', close);
+  const del = $('#sDel'); if (del) del.addEventListener('click', () => { if (!confirm('Chuyển ' + name + ' sang Nghỉ học? (dữ liệu cũ vẫn giữ trong tab HocSinh)')) return; old.status = 'Nghỉ học'; save(); close(); toast(name + ' đã chuyển sang Nghỉ học'); location.hash = '#hs'; });
+  $('#sSave').addEventListener('click', () => {
+    const n = old ? name : $('#sN').value.trim().replace(/\s+/g, ' ');
+    if (!n) { toast('Nhập tên gọi'); return; }
+    if (!old && ST.students.some(x => x.name === n)) { toast('Đã có em tên "' + n + '", thêm số/ký hiệu để phân biệt'); return; }
+    const v = { name: n, cls: $('#sC').value, fee: Math.round((+$('#sP').value || 0) * 1000), from: $('#sD').value || TODAY };
+    if (old) Object.assign(old, v); else ST.students.push({ ...v, status: 'Đang học' });
+    const full = $('#sF').value.trim(); if (full) ST.full[n] = full;
+    save(); close(); toast(old ? 'Đã lưu' : 'Đã thêm ' + n + ' vào ' + v.cls + ' 🎉'); route(true);
+  });
+}
+
+// ================= HỌC PHÍ (tháng trước nếu còn nợ + tháng này + tháng sau) =================
+let HP_FILTER = 'all';
+function viewHocPhi() {
+  const MS = shownMonths(); const nxt = MS[MS.length - 1]; const due = MS.filter(ym => ym <= CUR_M);
+  setTab('hocphi', 'Học phí ' + MS.map(mLabel).join(' · '));
+  const rows = STUDENTS.filter(s => CLASS_CFG[s.cls]).map(s => ({ s, f: Object.fromEntries(MS.map(ym => [ym, feeLine(s, ym)])) }));
+  const owe = (r, ym) => r.f[ym] && !isPaid(r.s.name, ym);
+  const debtor = r => due.some(ym => owe(r, ym));
+  const nDebt = rows.filter(debtor).length;
+  const pre = rows.filter(r => isPaid(r.s.name, nxt));
+  let h = `<div class="tiles t3" style="margin-top:16px">${due.map(ym => { const u = rows.filter(r => owe(r, ym)); return `<div class="tile"><div class="k">${mLabel(ym)} chưa đóng</div><div class="v">${u.length} em</div><div class="small muted">${kfmt(u.reduce((t, r) => t + r.f[ym].due, 0))}</div></div>`; }).join('')}
+    <div class="tile"><div class="k">Đã thu ${mLabel(CUR_M)}</div><div class="v">${kfmt(rows.filter(r => r.f[CUR_M] && isPaid(r.s.name, CUR_M)).reduce((t, r) => t + r.f[CUR_M].due, 0))}</div></div>
+    <div class="tile"><div class="k">${mLabel(nxt)} đóng trước</div><div class="v">${pre.length} em</div></div></div>
+    <div class="row between wrapf" style="margin:14px 0 8px;gap:6px"><div class="seg" id="hpf"><button data-v="all" class="${HP_FILTER === 'all' ? 'on' : ''}">Tất cả</button><button data-v="un" class="${HP_FILTER === 'un' ? 'on x' : ''}">Còn nợ (${nDebt})</button></div><span class="small muted">Bấm ô tiền = tick · bấm tên = nghỉ/sửa</span></div>
+    <div class="card" style="padding:6px 10px 10px"><table class="fee2"><tr><th>Học sinh</th>${MS.map(ym => `<th>${mLabel(ym)}${ym === nxt ? '<small>tháng sau</small>' : ''}</th>`).join('')}</tr>`;
+  const cell = (r, ym) => { const f = r.f[ym]; const n = esc(r.s.name);
+    if (!f) return chargeOf(r.s, ym) === 'off' ? `<td><div class="mc off" data-m="${n}">💤 nghỉ</div></td>` : `<td><div class="mc na" data-m="${n}" title="Tháng này không thu">—</div></td>`;
+    const p = isPaid(r.s.name, ym);
+    return `<td><div class="mc ${p ? 'paid' : ym < CUR_M ? 'debt' : ''}" data-p="${n}|${ym}"><span class="amt">${kfmt(f.due)}${f.minus ? `<small>−${kfmt(f.minus)}</small>` : f.start ? `<small style="color:var(--muted)">gói từ ${dm(f.start)}</small>` : ''}</span><span class="box">✓</span></div></td>`; };
+  ['thang', 'goi'].forEach(type => CLASSES.filter(c => CLASS_CFG[c].type === type).forEach(c => {
+    const rs = rows.filter(r => r.s.cls === c && (HP_FILTER === 'all' || debtor(r))); if (!rs.length) return;
+    let info;
+    if (type === 'thang') info = due.map(ym => { const m = monthlyCalc(c, ym); return m.missing ? `<span class="badge b-bad">${mLabel(ym)} thiếu ${m.missing}b</span>` : ''; }).join(' ') || '<span class="badge b-ok">đủ buổi</span>';
+    else { const p = packCalc(c); info = `<span class="small muted">gói ${p.cur}/${p.size}</span><span class="prog"><i style="width:${Math.round(p.cur / p.size * 100)}%"></i></span>${p.left <= 2 ? ' <span class="badge b-warn">sắp hết</span>' : ''}`; }
+    h += `<tr class="grp"><td colspan="${MS.length + 1}"><div class="row between">${cp(c)}<span>${info}</span></div></td></tr>`;
+    h += rs.map(r => `<tr><td><b class="nm" data-m="${esc(r.s.name)}">${esc(r.s.display)}</b></td>${MS.map(ym => cell(r, ym)).join('')}</tr>`).join('');
+  }));
+  h += `</table></div><details class="small muted" style="margin:4px 4px 0"><summary>Cách tính</summary>
+    <b>Lớp tháng:</b> tháng tính từ ngày 1 đến ngày cuối tháng. Buổi chuẩn = số ngày trong tháng rơi vào các thứ học cố định của lớp (VD lớp T3–T5 tháng 11 có 8 buổi). Thiếu buổi mà trong tháng không học bù thì trừ học phí ÷ buổi chuẩn cho mỗi buổi; chỉ đếm những tuần đã có lịch.<br>
+    <b>Lớp gói:</b> mặc định thu ở tháng bắt đầu gói mới (buổi số 1).<br>
+    <b>Nghỉ:</b> bấm tên học sinh → chọn "Nghỉ" cho tháng em nghỉ, tháng đó không tính tiền (giống xóa ô tick trong tab Quote).<br>
+    Tháng trước chỉ hiện khi còn em chưa đóng. Trạng thái từng tháng lưu ở tab HocPhi.</details>`;
+  V.innerHTML = h;
+  V.querySelectorAll('#hpf button').forEach(b => b.addEventListener('click', () => { HP_FILTER = b.dataset.v; viewHocPhi(); }));
+  V.querySelectorAll('[data-p]').forEach(el => el.addEventListener('click', () => { const [n, ym] = el.dataset.p.split('|'); setPay(n, ym, !isPaid(n, ym)); viewHocPhi(); }));
+  V.querySelectorAll('[data-m]').forEach(el => el.addEventListener('click', () => feeMenu(el.dataset.m)));
+}
+function setPay(n, ym, v) { const o = { ...(ST.paid[n] || {}) }; if (v === undefined) delete o[ym]; else o[ym] = v; ST.paid[n] = o; save(); }
+function feeMenu(name) {
+  const st = byName(name); if (!st) return; const cfg = CLASS_CFG[st.cls]; const M = $('#modal');
+  const ms = shownMonths();
+  const draw = () => {
+    M.innerHTML = `<div class="sheet"><span class="corner stk" style="right:18px;top:10px">🍓</span>
+      <div class="row wrapf" style="gap:8px"><h3 style="font-size:20px">${esc(st.display)}</h3>${cp(st.cls)}</div>
+      <div class="small muted" style="margin:2px 0 10px">Học phí gốc ${money(st.fee)} / ${cfg.type === 'thang' ? 'tháng' : 'gói ' + cfg.size + ' buổi'}</div>
+      ${ms.map(ym => { const f = feeLine(st, ym); const ch = chargeOf(st, ym); const v = payOf(name, ym);
+        const cur = v === true ? 'paid' : v === false ? 'un' : v === 'off' ? 'off' : 'auto';
+        const det = f ? (f.type === 'thang' ? `${kfmt(f.fee)}${f.missing ? ` − ${f.missing} buổi × ${kfmt(f.per)}` : ''} = <b>${kfmt(f.due)}</b> <span class="muted">(chuẩn ${f.std} buổi)</span>` : `Gói ${cfg.size} buổi${f.start ? ', bắt đầu ' + dm(f.start) : ''}: <b>${kfmt(f.due)}</b>`)
+          : ch === 'off' ? '<span class="muted">💤 Nghỉ, không tính tiền</span>' : '<span class="muted">Tháng này không thu (không bắt đầu gói mới)</span>';
+        return `<div class="fm"><div class="row between"><b>${mLabel(ym)}/${ym.slice(0, 4)}</b><span class="small">${det}</span></div>
+          <div class="seg" style="margin-top:6px">${[['paid', '✓ Đã đóng'], ['un', 'Chưa đóng'], ['off', '💤 Nghỉ'], ['auto', 'Tự động']].map(([k, t]) => `<button data-ym="${ym}" data-v="${k}" class="${cur === k ? 'on' : ''}">${t}</button>`).join('')}</div></div>`; }).join('')}
+      <div class="small muted" style="margin-top:8px">"Tự động" = lớp tháng luôn thu, lớp gói thu ở tháng bắt đầu gói mới.</div>
+      <div class="row" style="margin-top:14px"><button class="btn ghost" id="fmX">Đóng</button></div></div>`;
+    M.querySelectorAll('[data-ym]').forEach(b => b.addEventListener('click', () => { const v = { paid: true, un: false, off: 'off', auto: undefined }[b.dataset.v]; setPay(name, b.dataset.ym, v); draw(); if (location.hash.startsWith('#hocphi')) viewHocPhi(); }));
+    $('#fmX').addEventListener('click', close);
+  };
+  const close = () => { M.hidden = true; M.innerHTML = ''; route(true); };
+  M.onclick = e => { if (e.target === M) close(); };
+  draw(); M.hidden = false;
+}
+
+// ================= BÁO CÁO =================
+function viewBaoCao(name) {
+  setTab('baocao', 'Báo cáo phụ huynh');
+  const st = byName(name) || STUDENTS[0]; if (!st) { V.innerHTML = '<p class="muted">Chưa có học sinh.</p>'; return; } name = st.name;
+  const R = ST.report[name] || {}; const from = R.from || ymAdd(CUR_M, -1) + '-01', to = R.to || TODAY;
+  const a = attOf(name, from, to); const sc = scoresOf(name, from, to);
+  const learned = [...new Set((ST.plan[st.cls] || []).filter(l => l.date && l.date >= from && l.date <= to && l.date <= TODAY && hasPlan(l))
+    .map(l => (l.lesson && !/^cont/i.test(l.lesson) ? l.lesson : firstLine(l.content)).split(/\s[–-]\s?Buổi|:/)[0].trim()).filter(Boolean))];
+  const freq = arr => { const m = {}; arr.forEach(x => m[x] = (m[x] || 0) + 1); return Object.keys(m).sort((x, y) => m[y] - m[x]); };
+  const posC = freq(a.tpl.filter(t => !NEG.includes(t.code)).map(t => t.code)), negC = freq(a.tpl.filter(t => NEG.includes(t.code)).map(t => t.code));
+  const errs = sc.filter(s => s.note).map(s => firstLine(s.note));
+  const res = sc.filter(s => s.res).map(s => s.res);
+  const sp = c => MAU[c] && MAU[c].parent;
+  const dLearn = R.learn ?? (learned.join(' · ') || '(chưa có bài trong kỳ)');
+  const dGood = R.good ?? (posC.slice(0, 2).map(sp).filter(Boolean).join(' ') || '…');
+  const dWeak = R.weak ?? (negC.length ? sp(negC[0]) : errs.length ? 'Con cần chú ý: ' + errs[0] : '…');
+  const dGoal = R.goal ?? (res.length ? res[res.length - 1] : '(Cô ghi mục tiêu kỳ tới)');
+  const allP = sc.filter(s => s.p != null).map(s => s.p); const fn = fullName(name);
+  let h = `<div class="card noprint" style="margin-top:14px"><div class="row wrapf" style="gap:10px;align-items:flex-end">
+    <label style="flex:1 1 160px"><div class="lbl">Học sinh</div><select id="rStu">${CLASSES.map(c => `<optgroup label="${c}">${studentsOf(c).map(s => `<option ${s.name === name ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</optgroup>`).join('')}</select></label>
+    <label style="flex:1 1 130px"><div class="lbl">Từ ngày</div><input type="date" id="rFrom" value="${from}"></label>
+    <label style="flex:1 1 130px"><div class="lbl">Đến ngày</div><input type="date" id="rTo" value="${to}"></label></div>
+    <div class="row wrapf" style="gap:10px;margin-top:12px"><button class="btn" id="rPrint" type="button">🖨️ In / Lưu PDF</button><span class="small muted">Chữ trong báo cáo bấm vào sửa trực tiếp được.</span></div></div>`;
+  h += `<div class="paper" id="paper"><div class="head"><span class="corner stk" style="right:14px;top:8px;font-size:30px">🌷</span><span class="corner stk" style="right:58px;top:30px;font-size:22px;transform:rotate(-12deg)">⭐</span>
+    <h1>Báo cáo học tập</h1><div style="color:#8c5368;font-weight:700">${dmy(from)} – ${dmy(to)}</div></div>
+    <div class="who"><div>👧 <b style="font-size:17px">${fn ? esc(fn) : `<span class="ph">${esc(st.name)} (chưa có họ tên đầy đủ)</span>`}</b></div><div>${cp(st.cls)}</div></div>
+    <div class="tiles t3" style="margin-top:12px"><div class="tile"><div class="k">🗓️ Đi học</div><div class="v">${a.total ? (a.co + a.muon) + '/' + a.total : '—'}</div><div class="small muted">buổi${a.muon ? ' · ' + a.muon + ' lần muộn' : ''}</div></div>
+      <div class="tile"><div class="k">📚 Bài tập về nhà</div><div class="v">${a.hwTotal ? a.du + '/' + a.hwTotal : '—'}</div><div class="small muted">lần làm đủ</div></div>
+      <div class="tile"><div class="k">⭐ Điểm trung bình</div><div class="v">${allP.length ? Math.round(avg(allP)) + '%' : '—'}</div><div class="small muted">${allP.length} bài chấm</div></div></div>
+    <h4>📖 Kỳ này con đã học</h4><div class="ed" contenteditable="true" data-k="learn">${esc(dLearn)}</div>
+    <h4>💬 Nhận xét của cô</h4><div class="cmt">
+      <span class="ic" style="background:var(--mint-soft);color:var(--mint-ink)">🌟 Con làm tốt</span><div class="ed" contenteditable="true" data-k="good">${esc(dGood)}</div>
+      <span class="ic" style="background:var(--butter-soft);color:var(--butter-ink)">🌱 Cần cố gắng</span><div class="ed" contenteditable="true" data-k="weak">${esc(dWeak)}</div>
+      <span class="ic" style="background:var(--pink-soft);color:var(--pink-ink)">🎯 Mục tiêu</span><div class="ed" contenteditable="true" data-k="goal">${esc(dGoal)}</div></div>
+    <div class="sign"><div><div class="muted small">Giáo viên</div><div style="height:30px"></div>${SETTINGS['Tên cô (ký báo cáo)'] ? '<b>' + esc(SETTINGS['Tên cô (ký báo cáo)']) + '</b>' : '<span class="ph">[Tên cô – điền ở tab CaiDat]</span>'}</div></div></div>`;
+  V.innerHTML = h;
+  const upd = (k, v) => { ST.report[name] = { ...(ST.report[name] || {}), [k]: v }; save(); };
+  $('#rStu').addEventListener('change', e => location.hash = '#baocao/' + encodeURIComponent(e.target.value));
+  $('#rFrom').addEventListener('change', e => { upd('from', e.target.value); viewBaoCao(name); });
+  $('#rTo').addEventListener('change', e => { upd('to', e.target.value); viewBaoCao(name); });
+  V.querySelectorAll('.ed').forEach(el => el.addEventListener('blur', () => upd(el.dataset.k, el.innerText.trim())));
+  $('#rPrint').addEventListener('click', () => window.print());
+}
+
+let LAST = '';
+function route(keep) {
+  const p = location.hash.replace(/^#/, '').split('/').map(decodeURIComponent);
+  if (!keep && p[0] !== LAST) window.scrollTo(0, 0);
+  LAST = p[0];
+  if (p[0] === 'lich') viewLich(p[1]);
+  else if (p[0] === 'buoi') viewBuoi(p[1], p[2]);
+  else if (p[0] === 'giaoan') viewGiaoAn(p[1], p[2]);
+  else if (p[0] === 'hs') viewHS(p[1]);
+  else if (p[0] === 'hocphi') viewHocPhi();
+  else if (p[0] === 'baocao') viewBaoCao(p[1]);
+  else viewHome();
+}
+window.addEventListener('hashchange', () => route());
+$('#sync').addEventListener('click', reload);
+boot();
+</script>
+</body>
+</html>
