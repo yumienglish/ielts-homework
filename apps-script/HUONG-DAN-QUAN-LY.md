@@ -67,6 +67,29 @@ Lỗi này thường xảy ra khi trình duyệt đang **đăng nhập nhiều t
 - Bấm vào chữ **☁️ Đã lưu** để tải dữ liệu mới nhất, ví dụ khi vừa sửa trên máy tính rồi mở điện thoại.
 - Quay lại web app sau hơn 3 phút không dùng, dữ liệu cũng tự tải lại.
 
+## Bài học sinh nộp online (BTVN, Speaking)
+
+File Quản lý **tự đọc** 2 file bài nộp mà các trang bài tập đang ghi vào, rồi chép bài mới vào tab **Diem** (cột *Nguồn* ghi `BTVN online` hoặc `Speaking`). Hai script nhận bài (`Code.gs`, `Speaking.gs`) giữ nguyên, học sinh nộp bài như cũ.
+
+### Cài đặt (1 lần, chỉ 1 bước)
+Bài nộp của **mọi học sinh** đều ghi chung vào 2 file trong Drive của cô: **BTVN – Bài nộp của học sinh** và **Speaking 10 tuần – Bài nộp**. Cô **không phải copy gì từ email**.
+
+- Chọn menu **🌷 Lớp học → 📥 Lấy bài nộp online ngay**, hoặc trong web app: **Học sinh → Lấy bài nộp ngay**.
+  Google hỏi thêm quyền xem Drive và quyền chạy hẹn giờ một lần, cô bấm **Cho phép**. Script sẽ:
+  - tự tìm 2 file trên theo tên trong Drive, rồi lưu link vào tab **CaiDat**;
+  - chép **toàn bộ bài đã nộp từ trước tới nay** vào tab Diem;
+  - **tự bật lấy bài 4 tiếng một lần**. Từ đó cô không cần bấm gì nữa.
+
+Nếu hộp thoại báo *không tìm thấy file* (ví dụ cô đã đổi tên file), mở file đó trên Drive, copy link trên thanh địa chỉ rồi dán vào dòng tương ứng trong tab **CaiDat**.
+
+### Cách hoạt động
+- **Khớp tên tự động:** tên học sinh tự gõ được so với *Tên gọi*, *Họ tên đầy đủ*, tên trong ngoặc (VD `An (Tom)` gõ `Tom`) và cột *Tên khác (bài nộp online)*. Khi so không phân biệt dấu hay chữ hoa, và nếu trùng tên thì xét thêm lớp. Ví dụ em gõ đủ họ tên `Nguyễn Minh An`, lớp `AB01`: nếu lớp đó chỉ có một An thì bài tự khớp.
+- **Bài không khớp tên:** vào mục **📥 Bài nộp online** ở đầu màn **Học sinh** (Trang chủ cũng nhắc). Cô chọn đúng em rồi bấm **Ghép**. Nếu để tick **Nhớ tên này**, tên em đã gõ được lưu vào cột *Tên khác*, lần sau tự khớp. Bài rác hay bài thử thì bấm **Bỏ qua**.
+- **Không chép trùng:** mỗi bài có *Mã bài nộp*, lấy lại nhiều lần cũng không bị nhân đôi.
+- **Speaking:** mỗi em, mỗi tuần chỉ có 1 dòng điểm (gửi nhiều đợt thì dòng đó được cập nhật). Cột *Điểm* để trống, cô hoặc trợ lý chấm xong thì điền vào tab Diem.
+- **Màn Điểm danh:** em nào đã nộp bài online kể từ buổi trước được **tự chọn "Đủ"** ở mục *Bài tập buổi trước*, kèm tên bài và điểm. Cô vẫn sửa được trước khi bấm Lưu.
+- Muốn lấy ngay không chờ 4 tiếng: web app → **Học sinh** → **Lấy bài nộp ngay**.
+
 ## Cho người nhà xem (chỉ xem)
 
 1. Trong file **Quản lý lớp học**, bấm **Chia sẻ**, nhập Gmail của người nhà và chọn quyền **Người xem**.
@@ -92,7 +115,8 @@ Cô vẫn sửa trực tiếp trong các tab được. Sửa xong, mở lại we
 | **GhiChuTuan** | Ghi chú và việc cần làm theo tuần | |
 | **DiemDanh** | Mỗi dòng một em trong một buổi | Web app tự ghi. |
 | **HocPhi** | Mỗi dòng: học sinh, tháng (`2026-11`), trạng thái | Trạng thái là `Đã đóng`, `Chưa đóng` hoặc `Nghỉ`. Xóa dòng = trả về *Tự động*. |
-| **Diem** | Điểm HW / XT / CT (chép từ tab SCORES cũ) | Hiện tại nhập tay ở đây. Sau này điểm từ file của trợ lý sẽ tự đổ về. |
+| **Diem** | Điểm HW / XT / CT: tab SCORES cũ + bài nộp online | Nhập tay được. Không sửa cột *Mã bài nộp*. Bài Speaking: điền điểm vào cột *Điểm* / *Max* sau khi chấm. |
+| **ChoGhepTen** | Bài nộp online chưa khớp tên | Xử lý trong web app (Học sinh → Bài nộp online). |
 | **MauNhanXet** | Mẫu nhận xét M01–M15 | Thêm hoặc sửa mẫu tự do. |
 | **BaoCao** | Nội dung báo cáo đã sửa của từng em | |
 | **CaiDat** | Tên cô ký báo cáo | |
@@ -109,4 +133,4 @@ Cô vẫn sửa trực tiếp trong các tab được. Sửa xong, mở lại we
 
 - **Dữ liệu ban đầu được chép ngày 12/11/2026.** Nếu sau ngày này cô còn sửa trên file Lịch, Syllabus hoặc Quote cũ, hãy sửa lại trên web app, hoặc nhờ Claude xuất lại file dữ liệu trước khi cài.
 - Những gì cô bấm thử trong **bản xem thử** chỉ nằm trong trình duyệt, không được chép sang.
-- Chưa có (giai đoạn sau): file **Điểm – Trợ lý** và đồng bộ điểm 15 phút một lần, nhập bài nộp online (BTVN/Speaking), tạo PDF báo cáo tự động. Hiện tại báo cáo dùng nút **🖨️ In / Lưu PDF** của trình duyệt.
+- Chưa có (giai đoạn sau): file **Điểm – Trợ lý** và đồng bộ điểm 15 phút một lần, tạo PDF báo cáo tự động. Hiện tại báo cáo dùng nút **🖨️ In / Lưu PDF** của trình duyệt.

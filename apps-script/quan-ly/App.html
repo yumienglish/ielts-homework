@@ -239,6 +239,8 @@ table.fee2 th small{display:block;font-size:10.5px;font-weight:700;opacity:.7}
 input[type=color]{width:48px;height:34px;padding:0 2px;border:2px solid var(--line);border-radius:10px;background:#fff;vertical-align:middle}
 .pvw{display:flex;gap:12px;align-items:center;margin-top:10px;flex-wrap:wrap}.pvw .pb{width:80px;padding:7px 4px;border-radius:4px;text-align:center;font-weight:800;font-size:13px;line-height:1.25}
 .addbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.qrow{border-top:2px dotted var(--line);padding:9px 0 4px;margin-top:8px}.qsel{min-width:150px}
+body.ro #impNow,body.ro .qact{display:none!important}
 .hwtxt{background:#fff8e1;border:2px dashed #f5d98a;border-radius:14px;padding:8px 11px;font-size:14.5px;margin-top:6px}
 .hwbox{margin-bottom:12px}
 .sync{border:2px solid var(--line);background:#fff;border-radius:999px;padding:1px 10px;font:800 12px Nunito,sans-serif;color:var(--muted);cursor:pointer;margin-top:3px}
@@ -370,7 +372,8 @@ function fromServer(D) { // các tab Google Sheet -> ST
   MAU_LIST = T.MauNhanXet.filter(m => m.code).map(m => ({ code: S(m.code), label: S(m.label) || S(m.code), teacher: S(m.teacher), next: S(m.next), parent: S(m.parent) }));
   MAU = Object.fromEntries(MAU_LIST.map(m => [m.code, m]));
   SETTINGS = Object.fromEntries(T.CaiDat.map(r => [S(r.key), S(r.value)]));
-  SCORES = mkScores(T.Diem.map(r => ({ date: S(r.date), cls: S(r.cls), name: S(r.name), type: S(r.type).toUpperCase(), test: S(r.test), score: S(r.score), max: S(r.max), pct: S(r.pct), ta: S(r.ta), note: S(r.note), res: S(r.res) })));
+  SCORES = mkScores(T.Diem.map(r => ({ date: S(r.date), cls: S(r.cls), name: S(r.name), type: S(r.type).toUpperCase(), test: S(r.test), score: S(r.score), max: S(r.max), pct: S(r.pct), ta: S(r.ta), note: S(r.note), res: S(r.res), src: S(r.src) })));
+  SUBQ = (T.ChoGhepTen || []).filter(r => r.ref && !S(r.status)).map(r => ({ ref: S(r.ref), src: S(r.src), date: S(r.date), typedName: S(r.typedName), typedCls: S(r.typedCls), test: S(r.test), score: S(r.score), max: S(r.max) }));
   rebuild(); reindex(); SNAP = flat();
 }
 function flat() { // ST -> các dòng theo tab, để so sánh và chỉ gửi dòng thay đổi
@@ -386,7 +389,38 @@ function flat() { // ST -> các dòng theo tab, để so sánh và chỉ gửi d
   Object.entries(ST.report).forEach(([name, r]) => put('BaoCao', name, { name, from: r.from || '', to: r.to || '', learn: r.learn ?? '', good: r.good ?? '', weak: r.weak ?? '', goal: r.goal ?? '', sent: r.sent || '' }));
   return o;
 }
-let SNAP = {}; const QUEUE = []; let BUSY = false, LOADED_AT = 0, READONLY = false;
+let SNAP = {}; const QUEUE = []; let BUSY = false, LOADED_AT = 0, READONLY = false, SUBQ = [];
+// Gọi 1 hàm phía Google rồi nạp lại toàn bộ dữ liệu nó trả về (lấy bài nộp, ghép tên...)
+function serverCall(fn, args, okMsg, btn) {
+  if (QUEUE.length || BUSY) { toast('Đang lưu, đợi chút rồi bấm lại'); return; }
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Đang lấy…'; }
+  syncState('saving');
+  google.script.run.withSuccessHandler(D => { fromServer(D); LOADED_AT = Date.now(); route(true); syncState('ok'); toast(D.importText || okMsg); })
+    .withFailureHandler(e => { syncState('ok'); if (btn) { btn.disabled = false; btn.textContent = 'Lấy bài nộp ngay'; } toast('Không thực hiện được: ' + (e && e.message || e)); })[fn](...args);
+}
+// Bài nộp online (BTVN, Speaking) của 1 em trong khoảng ngày
+const onlineSubs = (name, from, to) => SCORES.filter(x => x.name === name && /online|speaking/i.test(x.src || '') && x.iso >= from && x.iso <= to);
+function subsCard() {
+  const last = SETTINGS['Lần lấy bài nộp gần nhất']; const linked = SETTINGS['Link file bài nộp BTVN'] || SETTINGS['Link file bài nộp Speaking'];
+  let h = `<div class="card" id="subs"><div class="row between wrapf" style="gap:6px"><h3>📥 Bài nộp online ${SUBQ.length ? `<span class="badge b-bad">${SUBQ.length} chờ ghép tên</span>` : ''}</h3><button class="btn sm ghost" id="impNow" type="button">Lấy bài nộp ngay</button></div>
+    <div class="small muted">${linked ? 'Tự lấy 4 tiếng/lần' + (last ? ' · lần gần nhất ' + esc(last) : '') + '. Bài khớp tên tự vào điểm của từng em.' : 'Chưa lấy bài lần nào. Bấm <b>Lấy bài nộp ngay</b>: tự tìm 2 file bài nộp (BTVN, Speaking) trong Drive của cô và bật tự lấy 4 tiếng/lần.'}</div>`;
+  h += SUBQ.map(q => {
+    const tc = (q.typedCls.match(/[A-Za-z]{2,4}\s*-?\s*\d{2,3}/) || [''])[0].replace(/[\s-]/g, '').toUpperCase();
+    const opts = [...CLASSES.filter(c => c === tc), ...CLASSES.filter(c => c !== tc)].map(c => `<optgroup label="${c}">${studentsOf(c).map(s => `<option value="${esc(s.name)}">${esc(s.display)}</option>`).join('')}</optgroup>`).join('');
+    return `<div class="qrow" data-ref="${esc(q.ref)}"><div><b>${esc(q.typedName)}</b> <span class="muted small">· lớp gõ: ${esc(q.typedCls || '—')}</span></div>
+      <div class="small muted">${esc(q.src)}${q.date ? ' · ' + dm(q.date) : ''} · ${esc(q.test)}${q.score ? ' · ' + esc(q.score) + '/' + esc(q.max) : ''}</div>
+      <div class="row wrapf qact" style="gap:6px;margin-top:6px"><select class="qsel grow"><option value="">— chọn học sinh —</option>${opts}</select>
+      <label class="small row" style="gap:4px"><input type="checkbox" class="qrem" checked style="width:18px;height:18px"> Nhớ tên này</label>
+      <button class="btn sm mint qok" type="button">Ghép</button><button class="btn sm ghost qskip" type="button">Bỏ qua</button></div></div>`; }).join('');
+  return h + '</div>';
+}
+function bindSubs() {
+  const b = $('#impNow'); if (b) b.addEventListener('click', () => serverCall('importNow', [], 'Đã lấy bài nộp', b));
+  V.querySelectorAll('.qrow').forEach(r => { const ref = r.dataset.ref;
+    r.querySelector('.qok').addEventListener('click', () => { const n = r.querySelector('.qsel').value; if (!n) { toast('Chọn học sinh trước'); return; }
+      serverCall('resolveQueue', [ref, n, r.querySelector('.qrem').checked], 'Đã ghép bài cho ' + n); });
+    r.querySelector('.qskip').addEventListener('click', () => serverCall('ignoreQueue', [ref], 'Đã bỏ qua bài này')); });
+}
 function save() {
   try { localStorage.setItem(UIKEY, JSON.stringify(ST.ui || {})); } catch (e) {}
   if (READONLY) { // chỉ xem: bỏ thay đổi, quay về dữ liệu đã tải
@@ -525,6 +559,7 @@ function viewHome() {
   const today = sessOn(TODAY);
   let h = `<h2><span class="stk">🧸</span>Hôm nay dạy ${today.length} buổi</h2>`;
   h += today.map(homeCard).join('') || `<div class="card empty"><span class="big stk">🌈</span>Hôm nay cô được nghỉ!</div>`;
+  if (SUBQ.length && !READONLY) h += `<a class="card" href="#hs" style="display:block;text-decoration:none;color:inherit">📥 <b>${SUBQ.length} bài nộp online</b> chưa khớp tên học sinh – bấm để ghép <span class="muted">›</span></a>`;
 
   const wk = SESS.filter(s => s.date >= TODAY && s.date <= addDays(TODAY, 6));
   const noPlan = [], prints = [], tests = [];
@@ -679,6 +714,10 @@ function viewBuoi(iso, cls) {
   const key = iso + '|' + cls; const saved = ST.att[key];
   W = JSON.parse(JSON.stringify(saved || { rows: {} })); W.classNote = l ? l.note || '' : '';
   studentsOf(cls).forEach(st => { if (!W.rows[st.name]) W.rows[st.name] = { status: 'co', hw: '', tpl: [], note: '' }; });
+  // em đã nộp bài online kể từ buổi trước → tự chọn "Đủ" (cô vẫn sửa được, bấm Lưu mới ghi)
+  const psD = (SESS.filter(x => x.cls === cls && x.date < iso).pop() || {}).date || addDays(iso, -7);
+  const subsOf = n => onlineSubs(n, psD, iso);
+  studentsOf(cls).forEach(st => { const r = W.rows[st.name]; if (!r.hw && subsOf(st.name).length) { r.hw = 'du'; r.autoHw = true; } });
 
   h += `<div class="card tape mint"><div class="row between"><h3>📒 Giáo án ${cls}${s.num ? ' · buổi ' + s.num + '/' + CLASS_CFG[cls].size : ''}</h3><a class="btn sm ghost" href="#giaoan/${cls}/${iso}">✏️ Sửa</a></div>`;
   if (hasPlan(l)) h += `<dl class="kv">${l.lesson ? `<dt>Bài dạy</dt><dd><b>${esc(l.lesson)}</b>${l.guessed ? ' <span class="badge b-warn">tự xếp theo thứ tự</span>' : ''}</dd>` : ''}
@@ -688,14 +727,17 @@ function viewBuoi(iso, cls) {
   h += `</div>`;
   { const ps = SESS.filter(x => x.cls === cls && x.date < iso).pop(); const pl = ps ? lessonFor(cls, ps.date) : null;
     h += ph ? `<div class="card hwbox"><span class="corner stk">📚</span><h3>📚 Bài tập buổi trước <span class="muted" style="font-size:14px">· ${wdS(ph.date)} ${dm(ph.date)}</span></h3><div class="hwtxt pre">${esc(ph.hw)}</div>
-        ${pl && pl.note ? `<div class="small" style="margin-top:8px">📝 <b>Note buổi trước:</b> <span class="pre">${esc(pl.note)}</span></div>` : ''}<div class="small muted" style="margin-top:6px">Tick Đủ / Thiếu / Không làm cho từng em ở phần điểm danh bên dưới.</div></div>`
-      : `<div class="alert info">📚 Buổi trước${ps ? ' (' + wdS(ps.date) + ' ' + dm(ps.date) + ')' : ''} không giao bài tập (cột Homework trong giáo án đang trống).</div>`; }
+        ${pl && pl.note ? `<div class="small" style="margin-top:8px">📝 <b>Note buổi trước:</b> <span class="pre">${esc(pl.note)}</span></div>` : ''}
+        ${(n => n ? `<div class="small" style="margin-top:8px">📥 <b>${n}/${studentsOf(cls).length} em</b> đã nộp bài online từ ${dm(psD)} → đã tự chọn "Đủ".</div>` : '')(studentsOf(cls).filter(st => subsOf(st.name).length).length)}
+        <div class="small muted" style="margin-top:6px">Tick Đủ / Thiếu / Không làm cho từng em ở phần điểm danh bên dưới.</div></div>`
+      : `<div class="alert info">📚 Buổi trước${ps ? ' (' + wdS(ps.date) + ' ' + dm(ps.date) + ')' : ''} không ghi bài tập trong giáo án (cột Homework đang trống).${(n => n ? `<br>📥 <b>${n}/${studentsOf(cls).length} em</b> đã nộp bài online từ ${dm(psD)} → đã tự chọn "Đủ" ở phần điểm danh.` : '')(studentsOf(cls).filter(st => subsOf(st.name).length).length)}</div>`; }
   h += `<div class="card"><span class="corner stk">🐰</span><div class="row between"><h3>👥 Điểm danh & nhận xét</h3>${saved ? '<span class="badge b-ok">✓ đã lưu</span>' : '<span class="badge">chưa lưu</span>'}</div>`;
   studentsOf(cls).forEach(st => {
     const r = W.rows[st.name];
     h += `<div class="stu" data-n="${esc(st.name)}"><div class="row between wrapf"><b style="font-size:16.5px">${esc(st.display)}</b>
       <div class="seg" data-f="status">${Object.entries(ST_LABEL).map(([k, v]) => `<button type="button" data-v="${k}" class="${r.status === k ? 'on' : ''} ${k === 'muon' || k === 'phep' ? 'w' : k === 'kp' ? 'x' : ''}">${v}</button>`).join('')}</div></div>
-      ${ph ? `<div class="lbl">Bài tập buổi trước</div><div class="seg" data-f="hw">${Object.entries(HW_LABEL).map(([k, v]) => `<button type="button" data-v="${k}" class="${r.hw === k ? 'on' : ''} ${k === 'thieu' ? 'w' : k === 'khong' ? 'x' : ''}">${v}</button>`).join('')}</div>` : ''}
+      ${ph || subsOf(st.name).length ? `<div class="lbl">Bài tập buổi trước</div><div class="seg" data-f="hw">${Object.entries(HW_LABEL).map(([k, v]) => `<button type="button" data-v="${k}" class="${r.hw === k ? 'on' : ''} ${k === 'thieu' ? 'w' : k === 'khong' ? 'x' : ''}">${v}</button>`).join('')}</div>
+        ${subsOf(st.name).map(x => `<div class="small" style="margin-top:4px;color:var(--mint-ink)">📥 Đã nộp online ${dm(x.iso)}: ${esc(x.test)}${x.score ? ' · <b>' + esc(x.score) + '/' + esc(x.mx || x.max) + '</b>' : ' · chờ chấm'}</div>`).join('')}` : ''}
       <div class="lbl">Nhận xét nhanh</div>
       <div class="chips">${MAU_LIST.map(m => `<button type="button" class="chip ${NEG.includes(m.code) ? 'neg' : ''} ${r.tpl.includes(m.code) ? 'on' : ''}" data-tpl="${m.code}" title="${esc(m.teacher)}">${esc(m.label)}</button>`).join('')}</div>
       <input type="text" data-f="note" placeholder="Ghi chú thêm về ${esc(st.name)}…" value="${esc(r.note)}" style="margin-top:8px"></div>`;
@@ -771,7 +813,7 @@ function viewGiaoAn(cls, focus) {
 function viewHS(name) {
   setTab('hs', 'Học sinh');
   if (!name) {
-    let h = `<div class="addbar"><button class="btn sm" id="addSt">➕ Thêm học sinh</button><button class="btn sm mint" id="addCl">➕ Thêm lớp</button></div><input type="text" id="q" placeholder="🔍 Tìm tên học sinh…" style="margin:12px 0 14px">`;
+    let h = `<div class="addbar"><button class="btn sm" id="addSt">➕ Thêm học sinh</button><button class="btn sm mint" id="addCl">➕ Thêm lớp</button></div><div style="margin-top:12px">${subsCard()}</div><input type="text" id="q" placeholder="🔍 Tìm tên học sinh…" style="margin:0 0 14px">`;
     h += CLASSES.map(c => { const ss = studentsOf(c);
       return `<div class="card" data-cls="${c}"><div class="clshead">${cp(c)}<span class="small muted grow" style="text-align:right">${esc(CLASS_CFG[c].book)}</span><button class="iconb" data-ec="${c}">✏️ Sửa lớp</button></div><div class="stlist">${ss.length ? '' : '<div class="small muted" style="padding:8px 2px">Chưa có học sinh</div>'}${ss.map(s => {
         const a = attOf(s.name); const sc = scoresOf(s.name);
@@ -782,6 +824,7 @@ function viewHS(name) {
       V.querySelectorAll('[data-cls]').forEach(c => c.style.display = !q || [...c.querySelectorAll('.stlist a')].some(a => a.style.display !== 'none') ? '' : 'none'); });
     $('#addSt').addEventListener('click', () => stModal()); $('#addCl').addEventListener('click', () => classModal());
     V.querySelectorAll('[data-ec]').forEach(b => b.addEventListener('click', () => classModal(b.dataset.ec)));
+    bindSubs();
     return;
   }
   const st = byName(name); if (!st) { V.innerHTML = '<p>Không tìm thấy.</p>'; return; }
