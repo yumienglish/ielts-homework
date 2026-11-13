@@ -253,7 +253,7 @@ body.ro #impNow,body.ro .qact{display:none!important}
 .hwtxt{background:#fff8e1;border:2px dashed #f5d98a;border-radius:14px;padding:8px 11px;font-size:14.5px;margin-top:6px}
 .hwbox{margin-bottom:12px}
 .sync{border:2px solid var(--line);background:#fff;border-radius:999px;padding:1px 10px;font:800 12px Nunito,sans-serif;color:var(--muted);cursor:pointer;margin-top:3px}
-.sync.saving{color:#8a6a00;border-color:#f5d98a;background:#fff8e1}.sync.err{color:#b23a60;border-color:#ff9cb1;background:#fff0f3}
+.sync.saving,.sync.loading{color:#8a6a00;border-color:#f5d98a;background:#fff8e1}.sync.err{color:#b23a60;border-color:#ff9cb1;background:#fff0f3}
 .sync.ro{color:#2a4f9e;border-color:#b9d0ff;background:#eef4ff}
 /* Chế độ chỉ xem (người được chia sẻ quyền Xem) */
 body.ro #addSt,body.ro #addCl,body.ro #addRow,body.ro #copyWk,body.ro #saveAtt,body.ro #undo,body.ro [data-ec],body.ro #edSt,body.ro #eSave,body.ro #eDel,
@@ -352,7 +352,9 @@ const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
 // ---------- Trạng thái (lưu trên máy; bản thật = các tab trong Google Sheet) ----------
 const UIKEY = 'qlh-ui';
 let ST, SESS = [];
+let MC_MEMO = {}, KNOWN_WEEKS = null; // nhớ kết quả tính học phí; xóa mỗi khi lịch thay đổi
 function reindex() { // sắp xếp lịch + tự đếm số buổi trong gói
+  MC_MEMO = {}; KNOWN_WEEKS = null;
   SESS = ST.sess.slice().sort((a, b) => a.date.localeCompare(b.date) || a.m - b.m);
   const cnt = {};
   SESS.forEach(s => { const cfg = CLASS_CFG[s.cls]; s.num = null; if (!cfg || cfg.type !== 'goi') return;
@@ -402,10 +404,11 @@ function flat() { // ST -> các dòng theo tab, để so sánh và chỉ gửi d
 let SNAP = {}; const QUEUE = []; let BUSY = false, LOADED_AT = 0, READONLY = false, SUBQ = [];
 // Gọi 1 hàm phía Google rồi nạp lại toàn bộ dữ liệu nó trả về (lấy bài nộp, ghép tên...)
 function serverCall(fn, args, okMsg, btn) {
+  if (SAVE_T) commit();
   if (QUEUE.length || BUSY) { toast('Đang lưu, đợi chút rồi bấm lại'); return; }
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Đang lấy…'; }
   syncState('saving');
-  google.script.run.withSuccessHandler(D => { fromServer(D); LOADED_AT = Date.now(); route(true); syncState('ok'); toast(D.importText || okMsg); })
+  google.script.run.withSuccessHandler(D => { fromServer(D); LOADED_AT = Date.now(); route(true); syncState('ok'); writeCache(); toast(D.importText || okMsg); })
     .withFailureHandler(e => { syncState('ok'); if (btn) { btn.disabled = false; btn.textContent = 'Lấy bài nộp ngay'; } toast('Không thực hiện được: ' + (e && e.message || e)); })[fn](...args);
 }
 // Bài nộp online (BTVN, Speaking) của 1 em trong khoảng ngày
@@ -443,6 +446,9 @@ function withUndo(msg, act) {
     Object.assign(ST, JSON.parse(snap)); save(); toast('Đã hoàn tác ↶'); route(true); };
 }
 function saveUi() { try { localStorage.setItem(UIKEY, JSON.stringify(ST.ui || {})); } catch (e) {} } // tùy chọn giao diện: chỉ lưu trên máy
+// save(): cập nhật ngay trên màn hình; việc so sánh + gửi Google gộp lại, chạy 0,4 giây sau lần sửa cuối (gõ chữ liên tục chỉ gửi 1 lần)
+let SAVE_T = null;
+const dirty = () => !!(QUEUE.length || BUSY || SAVE_T);
 function save() {
   saveUi();
   if (READONLY) { // chỉ xem: bỏ thay đổi, quay về dữ liệu đã tải
@@ -450,30 +456,83 @@ function save() {
     toast('👀 Bạn đang ở chế độ chỉ xem – thay đổi không được lưu'); return;
   }
   reindex(); rebuild();
+  clearTimeout(SAVE_T); SAVE_T = setTimeout(commit, 400);
+}
+function commit() { // so với lần lưu trước, chỉ gửi những dòng thay đổi
+  clearTimeout(SAVE_T); SAVE_T = null; if (READONLY || !ST) return;
   const now = flat(); const ch = [];
   for (const k in now) if (now[k] !== SNAP[k]) { const [t, key] = k.split('\u0001'); ch.push({ t, op: 'put', key, row: JSON.parse(now[k]) }); }
   for (const k in SNAP) if (!(k in now)) { const [t, key] = k.split('\u0001'); ch.push({ t, op: 'del', key }); }
   SNAP = now; if (ch.length) { QUEUE.push(...ch); flush(); }
+  cacheLater();
 }
+// ---- Lưu tạm dữ liệu trên máy để mở app tức thì (cô đã đồng ý) ----
+const CACHEKEY = 'qlh-cache-v1'; let CACHE_T = null;
+function cacheLater() { clearTimeout(CACHE_T); CACHE_T = setTimeout(writeCache, 1500); }
+function writeCache() { // bảng = dữ liệu Google lần cuối + các dòng cô vừa sửa (đã có trong SNAP)
+  CACHE_T = null; if (!DB) return;
+  try {
+    const tables = {}; Object.keys(DB.tables).forEach(t => { tables[t] = DB.tables[t]; });
+    const mine = {}; Object.keys(SNAP).forEach(k => { const t = k.slice(0, k.indexOf('\u0001')); (mine[t] = mine[t] || []).push(JSON.parse(SNAP[k])); });
+    ['Lop', 'HocSinh', 'Lich', 'GiaoAn', 'GhiChuTuan', 'DiemDanh', 'HocPhi', 'BaoCao'].forEach(t => { tables[t] = mine[t] || []; });
+    localStorage.setItem(CACHEKEY, JSON.stringify({ at: Date.now(), canEdit: DB.canEdit, tables }));
+  } catch (e) { try { localStorage.removeItem(CACHEKEY); } catch (_) {} }
+}
+function readCache() { try { const c = JSON.parse(localStorage.getItem(CACHEKEY)); return c && c.tables ? c : null; } catch (e) { return null; } }
 function syncState(st, msg) { const b = $('#sync'); if (!b) return;
   if (READONLY) { b.className = 'sync ro'; b.textContent = '👀 Chỉ xem'; b.title = 'Bấm để tải lại dữ liệu mới nhất'; return; }
   b.className = 'sync ' + st;
-  b.textContent = st === 'saving' ? '⏳ Đang lưu…' : st === 'err' ? '⚠️ Chưa lưu được – thử lại sau' : '☁️ Đã lưu'; b.title = msg || 'Bấm để tải lại dữ liệu mới nhất'; }
+  b.textContent = st === 'saving' ? '⏳ Đang lưu…' : st === 'loading' ? '🔄 Đang cập nhật…' : st === 'err' ? '⚠️ Chưa lưu được – thử lại sau' : '☁️ Đã lưu'; b.title = msg || 'Bấm để tải lại dữ liệu mới nhất'; }
+let REFRESH_AFTER_SAVE = false;
 function flush() {
   if (BUSY || !QUEUE.length) return; BUSY = true; const batch = QUEUE.splice(0, 300); syncState('saving');
-  google.script.run.withSuccessHandler(() => { BUSY = false; if (QUEUE.length) flush(); else syncState('ok'); })
+  google.script.run.withSuccessHandler(() => { BUSY = false; if (QUEUE.length) flush(); else { syncState('ok'); if (REFRESH_AFTER_SAVE) { REFRESH_AFTER_SAVE = false; boot(true, true); } } })
     .withFailureHandler(err => { BUSY = false; QUEUE.unshift(...batch); syncState('err', String(err && err.message || err)); setTimeout(flush, 8000); })
     .applyChanges(batch);
 }
-function boot(again) {
-  if (!again) V.innerHTML = '<div class="card empty" style="margin-top:30px"><span class="big stk">🧸</span>Đang tải dữ liệu…</div>';
-  google.script.run.withSuccessHandler(D => { fromServer(D); LOADED_AT = Date.now(); route(!!again); syncState('ok'); if (again) toast('Đã tải dữ liệu mới nhất'); })
-    .withFailureHandler(e => { if (again) { toast('Không tải lại được, thử lại sau'); return; } V.innerHTML = `<div class="alert warn" style="margin-top:20px">Không tải được dữ liệu: ${esc(e && e.message || e)}<br>Kiểm tra mạng rồi tải lại trang.</div>`; })
-    .getAll();
+let PENDING_D = null, PENDING_I = null;
+const RO_TABLES = ['Diem', 'MauNhanXet', 'CaiDat', 'ChoGhepTen'];
+const stateSig = () => JSON.stringify(SNAP) + '|' + RO_TABLES.map(t => JSON.stringify((DB.tables || {})[t] || [])).join('|') + '|' + DB.canEdit;
+function applyServer(D, again, quiet) { // chỉ vẽ lại khi dữ liệu thật sự khác → không giật màn hình, không mất vị trí đang xem
+  const had = !!ST; const before = had ? stateSig() : '';
+  const keep = { ST, SNAP, SCORES, MAU, MAU_LIST, SETTINGS, SUBQ, READONLY };
+  fromServer(D);
+  if (had && stateSig() === before) { // giống hệt → giữ nguyên trạng thái + màn hình đang hiện
+    ({ ST, SNAP, SCORES, MAU, MAU_LIST, SETTINGS, SUBQ, READONLY } = keep); rebuild(); reindex();
+    if (again && !quiet) toast('Dữ liệu đã là mới nhất ✓');
+  } else { route(true); if (had) toast('Đã cập nhật dữ liệu mới nhất'); }
+  writeCache(); syncState('ok');
 }
-const reload = () => { if (QUEUE.length || BUSY) { toast('Đang lưu, đợi chút rồi bấm lại'); return; } if (document.activeElement && document.activeElement.isContentEditable) return; boot(true); };
-window.addEventListener('beforeunload', e => { if (QUEUE.length || BUSY) { e.preventDefault(); e.returnValue = ''; } });
-document.addEventListener('visibilitychange', () => { if (!document.hidden && ST && Date.now() - LOADED_AT > 3 * 60000) reload(); });
+const editing = () => { const a = document.activeElement; return !!(a && (a.isContentEditable || /^(TEXTAREA|INPUT|SELECT)$/.test(a.tagName))) || !$('#modal').hidden; };
+// boot(): có dữ liệu lưu trên máy → hiện ngay, rồi lấy bản mới từ Google ở phía sau.
+// again = tải lại (bấm ☁️ / quay lại app); quiet = không báo gì nếu dữ liệu không đổi.
+function boot(again, quiet) {
+  if (!again) {
+    const c = readCache();
+    if (c) { fromServer({ tables: c.tables, canEdit: c.canEdit, cached: true }); route(); syncState('loading'); }
+    else V.innerHTML = '<div class="card empty" style="margin-top:30px"><span class="big stk">🧸</span>Đang tải dữ liệu…</div>';
+  } else syncState('loading');
+  google.script.run.withSuccessHandler(D => {
+    LOADED_AT = Date.now(); syncState('ok');
+    if (dirty()) { REFRESH_AFTER_SAVE = true; return; } // còn thay đổi chưa gửi → gửi xong sẽ lấy lại bản mới
+    if (ST && editing()) { // đang gõ / mở hộp thoại → giữ bản mới, áp dụng khi cô ngừng tay
+      PENDING_D = D; clearInterval(PENDING_I);
+      PENDING_I = setInterval(() => { if (dirty()) { clearInterval(PENDING_I); PENDING_D = null; REFRESH_AFTER_SAVE = true; return; }
+        if (!editing()) { clearInterval(PENDING_I); const d = PENDING_D; PENDING_D = null; applyServer(d, again, quiet); } }, 1500);
+      return;
+    }
+    applyServer(D, again, quiet);
+  }).withFailureHandler(e => {
+    syncState('ok');
+    if (ST) { toast(DB && DB.cached ? '📴 Chưa kết nối được Google – đang xem dữ liệu lưu trên máy' : 'Không tải lại được, thử lại sau'); return; }
+    V.innerHTML = `<div class="alert warn" style="margin-top:20px">Không tải được dữ liệu: ${esc(e && e.message || e)}<br>Kiểm tra mạng rồi tải lại trang.</div>`;
+  }).getAll();
+}
+const reload = () => { if (dirty()) { toast('Đang lưu, đợi chút rồi bấm lại'); return; } if (editing()) return; boot(true); };
+const leaving = () => { if (SAVE_T) commit(); if (CACHE_T) writeCache(); }; // rời app / tắt màn hình → gửi ngay phần đang chờ
+window.addEventListener('pagehide', leaving);
+window.addEventListener('beforeunload', e => { leaving(); if (QUEUE.length || BUSY) { e.preventDefault(); e.returnValue = ''; } });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { leaving(); return; } if (ST && Date.now() - LOADED_AT > 3 * 60000 && !dirty() && !editing()) boot(true, true); });
 
 // ---------- Giáo án ----------
 function planMap(cls) { // bài chưa có ngày tự xếp lần lượt vào các buổi sau bài có ngày cuối cùng
@@ -536,13 +595,14 @@ function regDays(cls, ym) { // các thứ học cố định của lớp (thứ 
   SESS.filter(s => s.cls === cls && !s.makeup && s.date >= from && s.date <= to).forEach(s => cnt[dateOf(s.date).getDay()]++);
   return cnt.map((n, d) => [n, d]).filter(x => x[0]).sort((a, b) => b[0] - a[0]).slice(0, cfg.perWeek || 2).map(x => x[1]).sort();
 }
-function monthlyCalc(cls, ym) { // tháng = từ ngày 1 đến ngày cuối tháng
+function monthlyCalc(cls, ym) { // tháng = từ ngày 1 đến ngày cuối tháng (kết quả được nhớ tới lần sửa lịch sau)
+  const mk = cls + '|' + ym; if (MC_MEMO[mk]) return MC_MEMO[mk];
   const a = ym + '-01', b = lastDay(ym); const all = SESS.filter(s => s.cls === cls); const first = all.length ? all[0].date : null;
-  const days = regDays(cls, ym); const known = new Set(SESS.map(s => mondayOf(s.date)));
+  const days = regDays(cls, ym); const known = KNOWN_WEEKS || (KNOWN_WEEKS = new Set(SESS.map(s => mondayOf(s.date))));
   let std = 0, stdK = 0, upto = null;
   for (let d = a; d <= b; d = addDays(d, 1)) if (days.includes(dateOf(d).getDay())) { std++; if (first && d >= first && known.has(mondayOf(d))) { stdK++; upto = d; } }
   const n = all.filter(s => s.date >= a && s.date <= b).length;
-  return { days, std: std || (CLASS_CFG[cls].perWeek || 2) * 4, stdK, n, upto, missing: Math.max(0, stdK - n) };
+  return (MC_MEMO[mk] = { days, std: std || (CLASS_CFG[cls].perWeek || 2) * 4, stdK, n, upto, missing: Math.max(0, stdK - n) });
 }
 function packCalc(cls) {
   const list = SESS.filter(s => s.cls === cls && s.num); const done = list.filter(s => s.date <= TODAY);
@@ -631,7 +691,8 @@ function applyZoom() { // CSS zoom trên lưới (ảnh hưởng layout nên c�
   const l = $('#zLbl'); if (l) l.textContent = Math.round(v * 100) + '%';
   const f = $('#zFit'); if (f) f.textContent = z === 'fit' ? '🔍 100%' : '🗓 Cả tuần';
 }
-window.addEventListener('resize', () => { if (ST && location.hash.startsWith('#lich') && lichZoom() === 'fit') applyZoom(); });
+let LAST_W = innerWidth; // chỉ tính lại khi bề ngang đổi (xoay máy) — thanh địa chỉ ẩn/hiện lúc cuộn chỉ đổi chiều cao
+window.addEventListener('resize', () => { if (innerWidth === LAST_W) return; LAST_W = innerWidth; if (ST && location.hash.startsWith('#lich') && lichZoom() === 'fit') applyZoom(); });
 function viewLich(mon) {
   mon = mondayOf(mon || TODAY); setTab('lich', 'Lịch dạy');
   const days = [...Array(7)].map((_, i) => addDays(mon, i));
@@ -678,11 +739,14 @@ function viewLich(mon) {
 function bindDrag(mon) {
   const wrap = V.querySelector('.sgwrap'); let D = null, ghost = null, tgt = [];
   const clear = () => { tgt.forEach(c => c.classList.remove('drop')); tgt = []; };
+  // Chỉ chặn cuộn trong lúc đang nhấc ô (gắn khi nhấc, gỡ khi thả) → bình thường lướt hoàn toàn tự do, không phải chờ code
+  const stopScroll = e => { if (e.cancelable) e.preventDefault(); };
+  const unblock = () => document.removeEventListener('touchmove', stopScroll, { passive: false });
   const arm = (b, e) => { if (!D || D.b !== b) return; D.armed = true; b.classList.add('lift');
+    document.addEventListener('touchmove', stopScroll, { passive: false });
     try { b.setPointerCapture(e.pointerId); } catch (_) {} try { if (navigator.vibrate) navigator.vibrate(30); } catch (_) {} };
   V.querySelectorAll('.blk').forEach(b => {
     b.addEventListener('contextmenu', e => e.preventDefault());
-    b.addEventListener('touchmove', e => { if (D && D.b === b && D.armed) e.preventDefault(); }, { passive: false }); // đã nhấc ô → không cho trình duyệt cuộn
     b.addEventListener('pointerdown', e => { if (e.button > 0) return; const r = b.getBoundingClientRect(); if (D && D.t) clearTimeout(D.t);
       D = { id: b.dataset.id, b, x: e.clientX, y: e.clientY, w: r.width, hh: r.height, dx: e.clientX - r.left, dy: e.clientY - r.top, moved: false, armed: false, hit: null, t: null };
       if (e.pointerType === 'mouse') arm(b, e); else D.t = setTimeout(() => arm(b, e), 450); });
@@ -701,7 +765,7 @@ function bindDrag(mon) {
       if (cell) { const s = SESS.find(x => x.id === D.id); for (let k = 0; k < Math.max(1, Math.round(s.dur / 30)); k++) { const c = V.querySelector(`.cell[data-d="${cell.dataset.d}"][data-i="${+cell.dataset.i + k}"]`); if (c) { c.classList.add('drop'); tgt.push(c); } } }
     });
     const up = e => {
-      if (!D || D.b !== b) return; const d = D; D = null; clearTimeout(d.t); clear(); if (ghost) { ghost.remove(); ghost = null; } b.classList.remove('lift'); b.style.opacity = '';
+      if (!D || D.b !== b) return; const d = D; D = null; clearTimeout(d.t); unblock(); clear(); if (ghost) { ghost.remove(); ghost = null; } b.classList.remove('lift'); b.style.opacity = '';
       if (!d.moved) { if (e.type === 'pointerup' && (!d.armed || e.pointerType === 'mouse')) editSess(d.id); return; } // bấm nhẹ = mở; giữ lâu rồi thả = không làm gì
       if (!d.hit) return;
       const s = ST.sess.find(x => x.id === d.id); const nm = SLOTS[d.hit.i];
@@ -1068,6 +1132,7 @@ function viewBaoCao(name) {
 
 let LAST = '';
 function route(keep) {
+  if (!ST) return; // dữ liệu chưa tải xong: boot() sẽ tự vẽ đúng màn đang chọn khi có dữ liệu
   const p = location.hash.replace(/^#/, '').split('/').map(decodeURIComponent);
   if (!keep && p[0] !== LAST) window.scrollTo(0, 0);
   LAST = p[0];

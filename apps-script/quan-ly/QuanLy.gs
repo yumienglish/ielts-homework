@@ -155,22 +155,30 @@ function getAll() {
 function canEdit_(ss) {
   const me = String(Session.getActiveUser().getEmail() || '').toLowerCase();
   if (!me) return true; // không biết email (chạy dưới quyền chủ file) → Google tự chặn nếu không có quyền
+  // Hỏi Drive danh sách người sửa rất chậm (~0,5–1 giây) → nhớ kết quả 10 phút
+  let cache = null; try { cache = CacheService.getScriptCache(); } catch (e) {}
+  const ck = 'canEdit:' + me; const hit = cache && cache.get(ck); if (hit) return hit === '1';
   const owner = ss.getOwner();
-  if (owner && String(owner.getEmail()).toLowerCase() === me) return true;
-  return ss.getEditors().some(function (u) { return String(u.getEmail()).toLowerCase() === me; });
+  const ok = (owner && String(owner.getEmail()).toLowerCase() === me) || ss.getEditors().some(function (u) { return String(u.getEmail()).toLowerCase() === me; });
+  if (cache) try { cache.put(ck, ok ? '1' : '0', 600); } catch (e) {}
+  return ok;
 }
 
+/** Đọc 1 tab: 1 lần gọi Google cho cả bảng; chỉ gọi thêm "chữ hiển thị" cho cột giờ khi Sheet tự đổi thành kiểu thời gian. */
 function readTable_(ss, t, tz) {
   const sc = SCHEMA[t]; const sh = ss.getSheetByName(t); if (!sh) return [];
-  const last = sh.getLastRow(), width = sh.getLastColumn(); if (last < 2 || !width) return [];
-  const rg = sh.getRange(1, 1, last, width); const v = rg.getValues(), dv = rg.getDisplayValues();
+  const v = sh.getDataRange().getValues(); if (v.length < 2) return [];
   const head = v[0].map(String); const out = [];
+  const dispCol = {}; // cột giờ (h) có ô kiểu Date → đọc chữ hiển thị của riêng cột đó
+  sc.cols.forEach(function (c) { if (c[2] !== 'h') return; const j = head.indexOf(c[1]);
+    if (j >= 0 && v.some(function (r, i) { return i > 0 && r[j] instanceof Date; })) dispCol[j] = sh.getRange(1, j + 1, v.length, 1).getDisplayValues(); });
+  const dsp = function (i, j) { return dispCol[j] ? dispCol[j][i][0] : ''; };
   for (let i = 1; i < v.length; i++) {
     if (v[i].every(function (x) { return x === '' || x === null; })) continue;
     const o = {};
     // giữ cả các cột cô tự thêm (theo tên tiêu đề), để ghi lại không bị mất
-    head.forEach(function (h, j) { if (h) o['_' + h] = cellOut_(v[i][j], dv[i][j], '', tz); });
-    sc.cols.forEach(function (c) { const j = head.indexOf(c[1]); if (j >= 0) { o[c[0]] = cellOut_(v[i][j], dv[i][j], c[2], tz); delete o['_' + c[1]]; } });
+    head.forEach(function (h, j) { if (h) o['_' + h] = cellOut_(v[i][j], '', '', tz); });
+    sc.cols.forEach(function (c) { const j = head.indexOf(c[1]); if (j >= 0) { o[c[0]] = cellOut_(v[i][j], dsp(i, j), c[2], tz); delete o['_' + c[1]]; } });
     out.push(o);
   }
   return out;
@@ -206,19 +214,27 @@ function applyChanges(changes) {
   } finally { lock.releaseLock(); }
 }
 
+/**
+ * Ghi các thay đổi vào 1 tab. Sửa/thêm vài dòng → chỉ ghi đúng những dòng đó (nhanh);
+ * có xóa dòng hoặc sửa rất nhiều dòng → ghi lại cả bảng (để dồn dòng, không chừa dòng trống).
+ */
 function writeTable_(ss, t, chs, tz) {
-  const sc = SCHEMA[t]; const sh = ensureSheet_(ss, t);
-  const last = sh.getLastRow(), width = sh.getLastColumn();
-  const rg = sh.getRange(1, 1, Math.max(last, 1), width);
-  const vals = rg.getValues(), dv = rg.getDisplayValues(); const head = vals[0].map(String);
+  const sc = SCHEMA[t]; let sh = ss.getSheetByName(t);
+  let vals = sh ? sh.getDataRange().getValues() : [[]]; let head = vals[0].map(String);
+  if (!sh || sc.cols.some(function (c) { return head.indexOf(c[1]) < 0; })) { // tab/cột còn thiếu → tạo rồi đọc lại
+    sh = ensureSheet_(ss, t); vals = sh.getDataRange().getValues(); head = vals[0].map(String);
+  }
+  const last = vals.length;
   const col = {}; sc.cols.forEach(function (c) { col[c[0]] = { j: head.indexOf(c[1]), kind: c[2] }; });
-  const keyOf = function (i) { return sc.key.map(function (k) { return String(cellOut_(vals[i][col[k].j], dv[i][col[k].j], col[k].kind, tz)); }).join('|'); };
+  const keyOf = function (i) { return sc.key.map(function (k) { return String(cellOut_(vals[i][col[k].j], '', col[k].kind, tz)); }).join('|'); };
   const index = {}; for (let i = 1; i < vals.length; i++) index[keyOf(i)] = i;
-  const rows = vals.slice(); let deleted = false;
+  const rows = vals.map(function (r) { return r.length < head.length ? r.concat(new Array(head.length - r.length).fill('')) : r; });
+  let deleted = false; const touched = {};
   chs.forEach(function (ch) {
     let i = index[ch.key];
     if (ch.op === 'del') { if (i !== undefined) { rows[i] = null; delete index[ch.key]; deleted = true; } return; }
     if (i === undefined || rows[i] === null) { rows.push(new Array(head.length).fill('')); i = rows.length - 1; index[ch.key] = i; }
+    touched[i] = true;
     Object.keys(ch.row || {}).forEach(function (f) {
       if (f.charAt(0) === '_') { const j = head.indexOf(f.slice(1)); if (j >= 0) rows[i][j] = ch.row[f]; return; }
       const c = col[f]; if (!c || c.j < 0) return;
@@ -231,8 +247,17 @@ function writeTable_(ss, t, chs, tz) {
     const add = out.length - sh.getMaxRows() + 50; sh.insertRowsAfter(sh.getMaxRows(), add);
     sc.cols.forEach(function (c) { if (TEXT_KINDS[c[2]] && col[c[0]].j >= 0) sh.getRange(2, col[c[0]].j + 1, sh.getMaxRows() - 1, 1).setNumberFormat('@'); });
   }
-  sh.getRange(1, 1, out.length, head.length).setValues(out);
-  if (deleted && last > out.length) sh.getRange(out.length + 1, 1, last - out.length, head.length).clearContent();
+  const idx = Object.keys(touched).map(Number).sort(function (a, b) { return a - b; });
+  if (deleted || idx.length > 30) { // ghi lại cả bảng
+    sh.getRange(1, 1, out.length, head.length).setValues(out);
+    if (deleted && last > out.length) sh.getRange(out.length + 1, 1, last - out.length, head.length).clearContent();
+    return;
+  }
+  for (let k = 0; k < idx.length;) { // ghi từng cụm dòng liền nhau
+    let e = k; while (e + 1 < idx.length && idx[e + 1] === idx[e] + 1) e++;
+    sh.getRange(idx[k] + 1, 1, e - k + 1, head.length).setValues(rows.slice(idx[k], idx[e] + 1));
+    k = e + 1;
+  }
 }
 
 // ===================== BÀI NỘP ONLINE (BTVN, Speaking) =====================

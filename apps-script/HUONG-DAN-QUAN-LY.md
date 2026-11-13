@@ -67,6 +67,7 @@ Lỗi này thường xảy ra khi trình duyệt đang **đăng nhập nhiều t
 - Nếu hiện **⚠️ Chưa lưu được**, thường là do mất mạng. Web app tự thử lại, đừng đóng trang cho đến khi thấy lại chữ **☁️ Đã lưu**.
 - Bấm vào chữ **☁️ Đã lưu** để tải dữ liệu mới nhất, ví dụ khi vừa sửa trên máy tính rồi mở điện thoại.
 - Quay lại web app sau hơn 3 phút không dùng, dữ liệu cũng tự tải lại.
+- **Mở app tức thì:** web app lưu tạm bản dữ liệu gần nhất ngay trên trình duyệt của máy đang dùng, nên mở app là thấy ngay. Trong lúc lấy bản mới từ Google, đầu trang hiện **🔄 Đang cập nhật…**. Nếu có gì khác, màn hình tự cập nhật và báo "Đã cập nhật dữ liệu mới nhất". Khi sửa liên tục (như gõ ghi chú), app đợi cô ngừng tay khoảng nửa giây rồi mới gửi lên Google một lần. Muốn xóa bản lưu tạm trên một máy thì xóa dữ liệu duyệt web của trình duyệt đó.
 - **Xóa nhầm?** Sau khi xóa buổi học, xóa dòng giáo án, xóa lớp hoặc cho học sinh nghỉ học, ở cuối màn hình hiện ô **↶ Hoàn tác** trong 10 giây. Bấm vào là mọi thứ trở lại như cũ.
 
 ## Bài học sinh nộp online (BTVN, Speaking)
