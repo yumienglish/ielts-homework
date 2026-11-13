@@ -33,11 +33,11 @@ Có 2 phần: **(A) máy chủ nhận bài** bằng Google Apps Script, dùng đ
 1. Tạo repo mới trên GitHub, ví dụ `btvn`, để chế độ **Public**.
 2. Push thư mục `d:\Syllabus` lên repo đó.
 3. Trên GitHub, vào repo → **Settings → Pages** → Source: **Deploy from a branch** → Branch: `main` / `(root)` → **Save**.
-4. Sau 1–2 phút, trang có địa chỉ (repo hiện tại là `grammar-homework`):
-   - Mục lục **Homework - IELTS Foundation. Pack 1**: <https://miathoday.github.io/grammar-homework/>
-   - Unit 1 · MS Foundation: <https://miathoday.github.io/grammar-homework/unit-01-ms-foundation-ls/>
-   - Grammar · Present Simple: <https://miathoday.github.io/grammar-homework/grammar/>
-   - Basic Listening · Letters: <https://miathoday.github.io/grammar-homework/basic-listening-letters/>. Đáp án nằm ở hằng số `KEY` đầu phần script trong `basic-listening-letters/index.html`; ô nào để trống thì câu đó hiện "cô chấm sau".
+4. Sau 1–2 phút, trang có địa chỉ (repo hiện tại là `ielts-homework`; link cũ `…/grammar-homework/…` vẫn tự chuyển sang link mới):
+   - Mục lục **Homework - IELTS Foundation. Pack 1**: <https://miathoday.github.io/ielts-homework/>
+   - Unit 1 · MS Foundation: <https://miathoday.github.io/ielts-homework/unit-01-ms-foundation-ls/>
+   - Grammar · Present Simple: <https://miathoday.github.io/ielts-homework/grammar/>
+   - Basic Listening · Letters: <https://miathoday.github.io/ielts-homework/basic-listening-letters/>. Đáp án nằm ở hằng số `KEY` đầu phần script trong `basic-listening-letters/index.html`; ô nào để trống thì câu đó hiện "cô chấm sau".
    - Link cũ `…/unit-02-present-simple/` vẫn dùng được, trang sẽ tự chuyển sang `…/grammar/`.
 
 Gửi link mục lục cho học sinh là tiện nhất: các em tự chọn bài, mỗi trang bài tập đều có nút **← Homework · IELTS Foundation · Pack 1** để quay về mục lục.
@@ -74,7 +74,7 @@ Trang luyện Speaking dùng **một dự án Apps Script riêng**, có Google S
    const SCRIPT_URL = 'PASTE_SPEAKING_SCRIPT_URL_HERE';
    ```
    thay bằng URL vừa copy, rồi push lên GitHub.
-6. Link cho học sinh: <https://miathoday.github.io/grammar-homework/speaking-10-weeks/>
+6. Link cho học sinh: <https://miathoday.github.io/ielts-homework/speaking-10-weeks/>
 
 **Lịch:** Tuần 1 bắt đầu Thứ Ba 10/11/2026. Mỗi tuần mở vào Thứ Ba và có deadline vào Thứ Hai tuần sau. Tuần chưa tới thì bị khóa. Muốn dời cả lịch, chỉ cần sửa `START_DATE` ở đầu `app.js`.
 **Cô xem trước các tuần bị khóa:** thêm `?unlock` vào cuối link, ví dụ `…/speaking-10-weeks/?unlock`.
