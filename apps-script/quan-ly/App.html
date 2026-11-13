@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lớp học của cô</title>
+<title>Mia's Classroom</title>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -232,8 +232,10 @@ table.fee2 tr.grp td{padding:12px 2px 5px;border-bottom:2px solid var(--line)}
 .mc.debt .box{border-color:#e05a7a;background:#fff0f3}
 .mc.na{color:#d0c0c8;justify-content:center;cursor:default}
 .sylscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.sylbar{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sylbar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .oldtg{background:rgba(255,255,255,.22);border:1.5px solid;border-radius:999px;padding:2px 10px;font:800 13px Nunito,sans-serif;cursor:pointer;white-space:nowrap}
+.oldtg.on{background:rgba(255,255,255,.55)}
+.oldbtns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .chip .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:0}
 .chip.sel .dot{box-shadow:0 0 0 1.5px #fff}
 .mc.off{justify-content:center;color:#9a8a93;font-weight:700;font-size:12.5px;background:#f6f1f4}
@@ -262,7 +264,7 @@ body.ro .cc,body.ro .ed,body.ro textarea,body.ro [data-ci],body.ro [data-p],body
 </style>
 </head>
 <body>
-<header class="top"><div class="wrap"><div class="ttl">Lớp học của cô <span class="stk">🌷</span></div><div class="row" style="gap:8px;flex-wrap:wrap"><div id="hdrSub"></div><button id="sync" class="sync" type="button" title="Bấm để tải lại dữ liệu mới nhất">☁️ Đã lưu</button></div></div>
+<header class="top"><div class="wrap"><div class="ttl">Mia's Classroom <span class="stk">🌷</span></div><div class="row" style="gap:8px;flex-wrap:wrap"><div id="hdrSub"></div><button id="sync" class="sync" type="button" title="Bấm để tải lại dữ liệu mới nhất">☁️ Đã lưu</button></div></div>
   <span class="deco stk" style="right:22px;top:10px;transform:rotate(14deg)">🍓</span>
   <span class="deco stk" style="right:70px;top:38px;transform:rotate(-10deg);font-size:22px">🐰</span>
   <span class="deco stk hide-m" style="right:122px;top:8px;transform:rotate(8deg);font-size:20px">⭐</span>
@@ -881,16 +883,20 @@ function viewGiaoAn(cls, focus) {
   if (!CLASS_CFG[cls]) cls = (sessOn(TODAY)[0] || {}).cls || CLASSES[0];
   const { L, slots } = planMap(cls); const ci = ST.cinfo[cls] || (ST.cinfo[cls] = {});
   const dates = [...new Set([...SESS.filter(s => s.cls === cls).map(s => s.date), ...L.filter(x => x.date).map(x => x.date)])].sort();
-  const ui = ST.ui || (ST.ui = {}); const showOld = !!ui.showOld; const old = dates.filter(d => d < TODAY && d !== focus);
-  const shown = showOld ? dates : dates.filter(d => d >= TODAY || d === focus);
+  // Buổi cũ: '' = ẩn hết · 'one' = hiện 1 buổi ngay trước · 'all' = hiện tất cả
+  const ui = ST.ui || (ST.ui = {}); const oldMode = ui.oldMode || (ui.showOld ? 'all' : ''); const old = dates.filter(d => d < TODAY && d !== focus);
+  const keepOld = oldMode === 'all' ? old : oldMode === 'one' ? old.slice(-1) : [];
+  const shown = dates.filter(d => d >= TODAY || d === focus || keepOld.includes(d));
   const [cbg, cfg] = colOf(cls);
+  const oldBtn = (m, on, off) => `<button class="oldtg${oldMode === m ? ' on' : ''}" data-old="${m}" style="color:${cfg};border-color:${cfg}">${oldMode === m ? on : off}</button>`;
+  const oldBtns = !old.length ? '' : `<span class="oldbtns">${oldBtn('one', '🙈 Ẩn buổi trước', '👁 Hiện 1 buổi trước')}${old.length > 1 ? oldBtn('all', '🙈 Ẩn buổi cũ', '📜 Hiện tất cả ' + old.length + ' buổi cũ') : ''}</span>`;
   const pool = L.filter(x => !x.date && !slots.some(z => z[1] === x.id));
   const row = (key, d, l, s) => { const g = l && l.guessed;
     return `<tr class="${d === TODAY ? 'today' : d && d < TODAY ? 'past' : ''}" id="r-${key.replace(':', '-')}" data-key="${key}">
     <td><div class="dc">${d ? dm(d) + `<small>${wdS(d)}${s ? ' · ' + hhmm(s.m) : ''}${s && s.num ? ' · #' + s.num : ''}</small>` : `${l && l.num ? 'Buổi ' + esc(l.num) : ''}<small>chưa xếp ngày</small>`}${g ? '<small class="gl" style="color:#a2531f">tự xếp</small>' : ''}${l && l.id && !g ? `<button class="x" data-del="${l.id}" title="Xóa dòng">🗑</button>` : ''}</div></td>
     ${SYL_COLS.map(([k, , w]) => `<td style="min-width:${w}px;max-width:${w + (k === 'lesson' ? 25 : 90)}px" class="${g ? 'guess' : ''}"><div class="cc" contenteditable="true" data-f="${k}">${esc(l ? l[k] : '')}</div></td>`).join('')}</tr>`; };
   let h = `<div class="clsbar" style="margin-top:14px">${CLASSES.map(c => chipC(c, c === cls, '#giaoan/' + c)).join('')}</div>`;
-  h += `<div class="sylwrap"><div class="sylbar" style="background:${cbg};color:${cfg}"><span>${EMO[cls] || ''} ${esc(cls)}</span><button class="oldtg" id="tgOld" style="color:${cfg};border-color:${cfg}">${showOld ? '🙈 Ẩn buổi cũ' : '👁 Hiện ' + old.length + ' buổi cũ'}</button></div><div class="sylinfo">
+  h += `<div class="sylwrap"><div class="sylbar" style="background:${cbg};color:${cfg}"><span>${EMO[cls] || ''} ${esc(cls)}</span>${oldBtns}</div><div class="sylinfo">
     <div class="k">Tên học sinh</div><div class="v">${studentsOf(cls).map(s => esc(s.display)).join(', ') || '—'}</div>
     <div class="k">Giáo trình</div><div class="v"><div class="cc" style="padding:0;min-height:0" contenteditable="true" data-ci="book">${esc(ci.book || '')}</div></div>
     <div class="k">Extra</div><div class="v"><div class="cc" style="padding:0;min-height:0" contenteditable="true" data-ci="extra" data-ph="(trống)">${esc(ci.extra || '')}</div></div></div>
@@ -912,7 +918,7 @@ function viewGiaoAn(cls, focus) {
   }));
   V.querySelectorAll('[data-ci]').forEach(el => el.addEventListener('blur', () => { ci[el.dataset.ci] = el.innerText.trim(); save(); }));
   V.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => { withUndo('Đã xóa 1 dòng giáo án ' + cls, () => { ST.plan[cls] = L.filter(x => x.id !== b.dataset.del); }); re(); }));
-  const tg = $('#tgOld'); if (tg) tg.addEventListener('click', () => { ui.showOld = !showOld; saveUi(); re(); });
+  V.querySelectorAll('[data-old]').forEach(b => b.addEventListener('click', () => { const m = b.dataset.old; ui.oldMode = oldMode === m ? '' : m; delete ui.showOld; saveUi(); re(); }));
   $('#addRow').addEventListener('click', () => { const x = { id: uid('l'), date: '', lesson: '', content: '', mat: '', hw: '', print: '', note: '' }; L.push(x); save(); re(); const c = document.querySelector(`#r-id-${x.id} .cc`); if (c) { c.scrollIntoView({ block: 'center' }); c.focus(); } });
   if (focus) { const r = document.getElementById('r-' + focus); if (r) { r.scrollIntoView({ block: 'center' }); r.classList.add('flash'); } }
 }

@@ -8,7 +8,7 @@
  * và chỉ gửi về những dòng đã thay đổi (applyChanges). Cô vẫn sửa tay trong Sheet được.
  */
 
-const APP_TITLE = 'Lớp học của cô';
+const APP_TITLE = "Mia's Classroom";
 
 // Kiểu cột: t = chữ, d = ngày (yyyy-mm-dd), m = tháng (yyyy-mm), h = giờ (HH:mm), n = số, '' = tự do.
 // Cột t/d/m/h được định dạng "Văn bản thuần" để Sheet không tự đổi kiểu.

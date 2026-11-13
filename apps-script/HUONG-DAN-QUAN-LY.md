@@ -1,6 +1,6 @@
 # Quản lý lớp học — hướng dẫn cài đặt
 
-Web app quản lý lớp có các màn **Trang chủ · Lịch · Buổi học · Giáo án · Học sinh · Học phí · Báo cáo**. Dữ liệu nằm trong một file Google Sheet riêng của cô, gọi là **file chính**.
+Web app quản lý lớp tên là **Mia's Classroom**, có các màn **Trang chủ · Lịch · Buổi học · Giáo án · Học sinh · Học phí · Báo cáo**. Dữ liệu nằm trong một file Google Sheet riêng của cô, gọi là **file chính**.
 
 - Code: [`quan-ly/QuanLy.gs`](quan-ly/QuanLy.gs) (xử lý phía Google) và [`quan-ly/App.html`](quan-ly/App.html) (giao diện).
 - **File chính có học phí.** Chỉ chia sẻ cho người nhà, quyền Xem (xem mục [Cho người nhà xem](#cho-người-nhà-xem-chỉ-xem)). Không bao giờ chia sẻ cho trợ lý.
@@ -68,6 +68,7 @@ Lỗi này thường xảy ra khi trình duyệt đang **đăng nhập nhiều t
 - Bấm vào chữ **☁️ Đã lưu** để tải dữ liệu mới nhất, ví dụ khi vừa sửa trên máy tính rồi mở điện thoại.
 - Quay lại web app sau hơn 3 phút không dùng, dữ liệu cũng tự tải lại.
 - **Mở app tức thì:** web app lưu tạm bản dữ liệu gần nhất ngay trên trình duyệt của máy đang dùng, nên mở app là thấy ngay. Trong lúc lấy bản mới từ Google, đầu trang hiện **🔄 Đang cập nhật…**. Nếu có gì khác, màn hình tự cập nhật và báo "Đã cập nhật dữ liệu mới nhất". Khi sửa liên tục (như gõ ghi chú), app đợi cô ngừng tay khoảng nửa giây rồi mới gửi lên Google một lần. Muốn xóa bản lưu tạm trên một máy thì xóa dữ liệu duyệt web của trình duyệt đó.
+- **Giáo án — xem buổi cũ:** bình thường chỉ hiện các buổi từ hôm nay trở đi. Trên thanh tên lớp có 2 nút: **👁 Hiện 1 buổi trước** (chỉ buổi gần nhất đã dạy) và **📜 Hiện tất cả buổi cũ**. Bấm lại nút đang bật để ẩn đi. App nhớ lựa chọn này cho lần mở sau.
 - **Xóa nhầm?** Sau khi xóa buổi học, xóa dòng giáo án, xóa lớp hoặc cho học sinh nghỉ học, ở cuối màn hình hiện ô **↶ Hoàn tác** trong 10 giây. Bấm vào là mọi thứ trở lại như cũ.
 
 ## Bài học sinh nộp online (BTVN, Speaking)
