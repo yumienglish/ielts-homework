@@ -159,20 +159,13 @@ function orderPacks_(d) {
 function upload_(d) {
   const packs = load_('PACKS', PACK_COLS);
   const pack = livePack_(packs, d.packId);
-  if (typeof d.b64 !== 'string' || !d.b64) throw new Error('Thiếu nội dung file');
-  if (d.b64.length > Math.ceil(MAX_FILE_BYTES / 3) * 4 + 8) throw new Error('File quá lớn (tối đa 20MB). Hãy tải lên Drive rồi dán link.');
-  const name = str_(d.name, 150).replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'file';
-  let mime = str_(d.mime, 120).split(';')[0].trim();
-  if (!/^[\w.+-]+\/[\w.+-]+$/.test(mime)) mime = 'application/octet-stream';
-  const bytes = Utilities.base64Decode(d.b64);
-  const file = packFolder_(pack, packs).createFile(Utilities.newBlob(bytes, mime, name));
-  try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (_) {}
+  const f = saveFile_(d, pack, packs);
   const item = baseItem_(d, pack, 'file');
-  item.title = str_(d.title, 150).trim() || name.replace(/\.[^.]+$/, '');
-  item.fileId = file.getId();
-  item.url = file.getUrl();
-  item.mime = mime;
-  item.size = bytes.length;
+  item.title = str_(d.title, 150).trim() || f.name.replace(/\.[^.]+$/, '');
+  item.fileId = f.id;
+  item.url = f.url;
+  item.mime = f.mime;
+  item.size = f.size;
   append_(load_('ITEMS', ITEM_COLS), item);
   return { id: item.id };
 }
@@ -208,11 +201,6 @@ function updateItem_(d) {
   if (d.tags != null) it.tags = tags_(d.tags);
   if (d.pinned != null) it.pinned = !!d.pinned;
   if (d.color != null) it.color = itemColor_(d.color);
-  if (d.url != null && it.type === 'link') {
-    const url = str_(d.url, 2000).trim();
-    if (!/^https?:\/\/\S+$/i.test(url)) throw new Error('Link phải bắt đầu bằng http:// hoặc https://');
-    it.url = url;
-  }
   if (d.packId != null && String(d.packId) !== it.packId) {
     const packs = load_('PACKS', PACK_COLS);
     const pack = livePack_(packs, d.packId);
@@ -222,7 +210,44 @@ function updateItem_(d) {
     it.packId = pack.id;
     it.packName = pack.name;
   }
+  // Đổi đính kèm: attach = 'none' (gỡ) | 'link' (gắn/đổi link) | 'file' (thay bằng file mới, gửi kèm b64)
+  const attach = String(d.attach || '');
+  if (attach === 'none' || attach === 'link' || attach === 'file') {
+    const oldFile = it.type === 'file' ? it.fileId : '';
+    if (attach === 'file') {
+      const packs = load_('PACKS', PACK_COLS);
+      const f = saveFile_(d, livePack_(packs, it.packId), packs);
+      it.type = 'file'; it.fileId = f.id; it.url = f.url; it.mime = f.mime; it.size = f.size;
+      if (!str_(d.title, 150).trim()) it.title = f.name.replace(/\.[^.]+$/, '');
+    } else if (attach === 'link') {
+      const url = str_(d.url, 2000).trim();
+      if (!/^https?:\/\/\S+$/i.test(url)) throw new Error('Link phải bắt đầu bằng http:// hoặc https://');
+      const m = url.match(/(?:\/d\/|[?&]id=)([\w-]{20,})/);
+      it.type = 'link'; it.url = url; it.fileId = m && /google\.com/i.test(url) ? m[1] : ''; it.mime = ''; it.size = '';
+    } else {
+      it.type = 'note'; it.url = ''; it.fileId = ''; it.mime = ''; it.size = '';
+    }
+    // file cũ do trang tải lên → bỏ vào Thùng rác Drive (khôi phục được 30 ngày)
+    if (oldFile && oldFile !== it.fileId) { try { DriveApp.getFileById(oldFile).setTrashed(true); } catch (_) {} }
+  } else if (d.url != null && it.type === 'link') {
+    const url = str_(d.url, 2000).trim();
+    if (!/^https?:\/\/\S+$/i.test(url)) throw new Error('Link phải bắt đầu bằng http:// hoặc https://');
+    it.url = url;
+  }
   save_(t, it);
+}
+
+/** Lưu 1 file (base64) vào thư mục của pack, chia sẻ "ai có link đều xem". */
+function saveFile_(d, pack, packs) {
+  if (typeof d.b64 !== 'string' || !d.b64) throw new Error('Thiếu nội dung file');
+  if (d.b64.length > Math.ceil(MAX_FILE_BYTES / 3) * 4 + 8) throw new Error('File quá lớn (tối đa 20MB). Hãy tải lên Drive rồi dán link.');
+  const name = str_(d.name, 150).replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'file';
+  let mime = str_(d.mime, 120).split(';')[0].trim();
+  if (!/^[\w.+-]+\/[\w.+-]+$/.test(mime)) mime = 'application/octet-stream';
+  const bytes = Utilities.base64Decode(d.b64);
+  const file = packFolder_(pack, packs).createFile(Utilities.newBlob(bytes, mime, name));
+  try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (_) {}
+  return { id: file.getId(), url: file.getUrl(), mime: mime, size: bytes.length, name: name };
 }
 
 function deleteItem_(d) {
@@ -410,7 +435,7 @@ function snapshot_() {
     .map(c => ({ id: c.id, itemId: c.itemId, by: c.by, text: c.text, createdAt: c.createdAt }));
   let classes = {};
   try { classes = JSON.parse(PropertiesService.getScriptProperties().getProperty('CLASSES') || '{}'); } catch (_) {}
-  return { packs: packs, items: items, comments: comments, classes: classes };
+  return { ver: 2, packs: packs, items: items, comments: comments, classes: classes };
 }
 
 /* ───────────────────────── Drive + Sheet ───────────────────────── */
