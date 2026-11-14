@@ -29,8 +29,12 @@ const SCHEMA = {
   GhiChuTuan: { key: ['mon'], cols: [['mon', 'Thứ Hai của tuần', 'd'], ['gc', 'Ghi chú', ''], ['todo', 'Việc cần làm', '']] },
   DiemDanh: { key: ['date', 'cls', 'name'], cols: [
     ['date', 'Ngày', 'd'], ['cls', 'Lớp', 't'], ['name', 'Học sinh', 't'], ['status', 'Trạng thái', ''], ['hw', 'BT buổi trước', ''],
-    ['tpl', 'Mẫu nhận xét', ''], ['note', 'Ghi chú', '']] },
+    ['tpl', 'Mẫu nhận xét', ''], ['note', 'Ghi chú', ''], ['lucky', 'Lucky Draw (điểm cộng buổi này)', '']] },
   HocPhi: { key: ['name', 'ym'], cols: [['name', 'Học sinh', 't'], ['ym', 'Tháng (yyyy-mm)', 'm'], ['state', 'Trạng thái (Đã đóng/Chưa đóng/Nghỉ)', '']] },
+  // Lucky Draw: điểm mang sang, lần bốc thăm (−50) + quà, điều chỉnh tay. Điểm cộng từng buổi nằm ở cột Lucky Draw của DiemDanh.
+  LuckyDraw: { key: ['id'], cols: [
+    ['id', 'id', 't'], ['date', 'Ngày', 'd'], ['name', 'Học sinh', 't'], ['kind', 'Loại (Mang sang/Bốc thăm/Điều chỉnh)', ''],
+    ['pts', 'Điểm (+/−)', 'n'], ['gift', 'Quà đã nhận / ghi chú', '']] },
   Diem: { key: ['ref'], readOnly: true, cols: [
     ['date', 'Ngày', 'd'], ['cls', 'Lớp', 't'], ['name', 'Học sinh', 't'], ['type', 'Loại (HW/XT/CT)', 't'], ['test', 'Bài', ''],
     ['score', 'Điểm', 't'], ['max', 'Max', 't'], ['pct', '%', 't'], ['ta', 'Người chấm', ''], ['note', 'Lỗi sai', ''], ['res', 'Hướng xử lý', ''], ['src', 'Nguồn', ''],
@@ -325,6 +329,37 @@ function resolveQueue(ref, studentName, remember) {
     }
   } finally { lock.releaseLock(); }
   return getAll();
+}
+/**
+ * Web app: đổi tên gọi 1 học sinh ở MỌI tab có cột tên học sinh (HocSinh, DiemDanh, HocPhi, BaoCao, LuckyDraw, Diem),
+ * để lịch sử điểm danh, học phí, điểm, Lucky Draw, báo cáo đi theo tên mới.
+ * Tên cũ được thêm vào cột "Tên khác" → bài nộp online còn gõ tên cũ vẫn tự khớp.
+ */
+const RENAME_TABS = ['HocSinh', 'DiemDanh', 'HocPhi', 'BaoCao', 'LuckyDraw', 'Diem'];
+function renameStudent(oldName, newName) {
+  const ss = SpreadsheetApp.getActive(); if (!canEdit_(ss)) throw new Error('Bạn chỉ có quyền xem.');
+  oldName = String(oldName || '').trim(); newName = String(newName || '').trim().replace(/\s+/g, ' ');
+  if (!oldName || !newName) throw new Error('Thiếu tên học sinh.');
+  if (oldName === newName) return getAll();
+  const lock = LockService.getScriptLock(); lock.waitLock(30000); const counts = {};
+  try {
+    const tz = ss.getSpreadsheetTimeZone(); const hs = readTable_(ss, 'HocSinh', tz);
+    const st = hs.filter(function (r) { return r.name === oldName; })[0];
+    if (!st) throw new Error('Không tìm thấy học sinh "' + oldName + '".');
+    if (hs.some(function (r) { return r.name === newName; })) throw new Error('Đã có học sinh tên "' + newName + '" – thêm số/ký hiệu để phân biệt.');
+    RENAME_TABS.forEach(function (t) {
+      const sh = ss.getSheetByName(t); if (!sh || sh.getLastRow() < 2) return;
+      const head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+      const label = SCHEMA[t].cols.filter(function (c) { return c[0] === 'name'; })[0][1]; const j = head.indexOf(label); if (j < 0) return;
+      const rg = sh.getRange(2, j + 1, sh.getLastRow() - 1, 1); const v = rg.getValues(); let n = 0;
+      const out = v.map(function (r) { if (String(r[0]).trim() === oldName) { n++; return [newName]; } return [r[0]]; });
+      if (n) { rg.setValues(out); counts[t] = n; }
+    });
+    const al = String(st.alias || '').split(/[,;\n]/).map(function (x) { return x.trim(); }).filter(function (x) { return x && norm_(x) !== norm_(newName); });
+    if (al.map(norm_).indexOf(norm_(oldName)) < 0 && norm_(oldName) !== norm_(newName)) al.push(oldName);
+    writeTable_(ss, 'HocSinh', [{ op: 'put', key: newName, row: { alias: al.join(', ') } }], tz);
+  } finally { lock.releaseLock(); }
+  const d = getAll(); d.renamed = counts; return d;
 }
 /** Web app: bỏ qua 1 bài nộp (không chép vào điểm, không hỏi lại). */
 function ignoreQueue(ref) {

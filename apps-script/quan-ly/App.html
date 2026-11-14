@@ -131,6 +131,21 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:2px s
 nav.tabs a{flex:1;max-width:120px;text-align:center;padding:5px 1px 7px;text-decoration:none;color:var(--muted);font-size:11.5px;font-weight:800;border-radius:16px;margin:2px}
 nav.tabs a .i{display:block;font-size:21px;line-height:1.25}
 nav.tabs a.on{color:var(--pink-ink);background:var(--pink-soft)}
+@media (max-width:480px){nav.tabs{padding-left:2px;padding-right:2px}nav.tabs a{font-size:10.5px;margin:2px 0;padding:5px 0 7px;white-space:nowrap;letter-spacing:-.2px}nav.tabs a .i{font-size:20px}}
+/* Lucky Draw */
+table.lkt{width:100%;border-collapse:collapse;font-size:14px}
+table.lkt th{font-size:12px;color:var(--muted);padding:4px}
+table.lkt th small{display:block;font-size:10.5px;font-weight:700;opacity:.7}
+table.lkt td{padding:6px 4px;border-bottom:1.5px dotted var(--line)}
+table.lkt tr.grp td{padding:12px 2px 5px;border-bottom:2px solid var(--line)}
+table.lkt tr[data-lkn]{cursor:pointer}
+table.lkt tr[data-lkn]:hover td{background:#fff9fa}
+.lkgo{border:0;border-radius:12px;padding:4px 9px;font:900 14px Nunito,sans-serif;cursor:pointer;background:linear-gradient(#ffe27a,#ffc94d);color:#6e4a00;box-shadow:0 2px 0 #e6a800;white-space:nowrap}
+.lkbig{font:800 34px 'Baloo 2',Nunito,sans-serif;color:#a8385c;line-height:1.1;margin-top:6px}.lkbig small{font-size:15px;color:var(--muted)}
+.lkrow{display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:2px dotted var(--line)}
+.lkp{min-width:74px;text-align:center}.lkp.neg{color:var(--pink-ink)}
+.chips.lk .chip.on,.lkall .chip:active{background:var(--butter-soft);border-color:#f5d76e;color:#7a5c00}
+.lkall{background:#fffbea;border:2px dashed #f5d98a;border-radius:16px;padding:4px 10px 10px;margin:8px 0 4px}
 #undoBox{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:10;background:#4b3a46;color:#fff;border-radius:16px;padding:9px 10px 12px 16px;display:flex;align-items:center;gap:12px;font-size:14px;font-weight:700;width:max-content;max-width:calc(100vw - 32px);box-shadow:0 6px 18px rgba(0,0,0,.25);overflow:hidden}
 #undoBox[hidden]{display:none}
 #undoBox button{border:0;background:var(--pink);color:#5b1b31;border-radius:12px;padding:6px 12px;font-weight:900;cursor:pointer;white-space:nowrap}
@@ -260,6 +275,8 @@ body.ro #impNow,body.ro .qact{display:none!important}
 /* Chế độ chỉ xem (người được chia sẻ quyền Xem) */
 body.ro #addSt,body.ro #addCl,body.ro #addRow,body.ro #copyWk,body.ro #saveAtt,body.ro #undo,body.ro [data-ec],body.ro #edSt,body.ro #eSave,body.ro #eDel,
 body.ro #cSave,body.ro #cDel,body.ro #sSave,body.ro #sDel,body.ro [data-del],body.ro .fm .seg{display:none!important}
+body.ro .lkact,body.ro .lkall,body.ro .lkdel{display:none!important}
+body.ro .lkrow input,body.ro [data-lk]{pointer-events:none}
 body.ro .cc,body.ro .ed,body.ro textarea,body.ro [data-ci],body.ro [data-p],body.ro #fullName{pointer-events:none}
 </style>
 </head>
@@ -276,6 +293,7 @@ body.ro .cc,body.ro .ed,body.ro textarea,body.ro [data-ci],body.ro [data-p],body
   <a href="#lich" data-t="lich"><span class="i">📅</span>Lịch</a>
   <a href="#giaoan" data-t="giaoan"><span class="i">📒</span>Giáo án</a>
   <a href="#hs" data-t="hs"><span class="i">🐰</span>Học sinh</a>
+  <a href="#lucky" data-t="lucky"><span class="i">🎁</span>Lucky</a>
   <a href="#hocphi" data-t="hocphi"><span class="i">🍓</span>Học phí</a>
   <a href="#baocao" data-t="baocao"><span class="i">💌</span>Báo cáo</a>
 </nav>
@@ -298,6 +316,13 @@ const POS = ['M01', 'M04', 'M06', 'M11', 'M12', 'M13', 'M14', 'M15', 'M08'];
 const NEG = ['M02', 'M03', 'M05', 'M07', 'M09', 'M10'];
 const ST_LABEL = { co: 'Có mặt', muon: 'Đi muộn', phep: 'Vắng phép', kp: 'Vắng KP' };
 const HW_LABEL = { du: 'Đủ', thieu: 'Thiếu', khong: 'Không làm' };
+// Lucky Draw: mỗi tiêu chí +1 điểm/buổi; đủ 50 điểm được bốc thăm 1 lần (bốc xong trừ 50). Chỉ lớp từ 2 bạn trở lên.
+const LUCKY = [['dg', '⏰', 'Đúng giờ'], ['bt', '📚', 'Làm bài đầy đủ'], ['game', '🎮', 'Game'], ['tb', '📈', 'Tiến bộ'],
+  ['top', '🏆', 'Đúng hết / cao nhất lớp'], ['tv', '🔤', 'Học từ vựng'], ['tc', '🙋', 'Tích cực tập trung'], ['ns', '✍️', 'Làm bài nghiêm túc']];
+const LUCKY_GOAL = 50;
+const nrm = s => String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd').toLowerCase().replace(/\s+/g, ' ').trim();
+const LK_IN = Object.fromEntries(LUCKY.flatMap(([k, , l]) => [[nrm(l), k], [k, k]]));
+const lkOut = a => LUCKY.filter(([k]) => (a || []).includes(k)).map(x => x[2]).join(', ');
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -374,13 +399,14 @@ function fromServer(D) { // các tab Google Sheet -> ST
   READONLY = D.canEdit === false; document.body.classList.toggle('ro', READONLY);
   ST = { classes: T.Lop.map(r => ({ ...r, code: S(r.code), type: TYPE_IN(r.type) })), students: T.HocSinh.map(r => ({ ...r, name: S(r.name), cls: S(r.cls) })),
     sess: T.Lich.filter(r => r.id && r.date).map(r => ({ id: S(r.id), date: S(r.date), m: mins(r.time), dur: +r.dur || 90, cls: S(r.cls), makeup: !!S(r.makeup), startNum: +r.startNum || null })),
-    plan: {}, cinfo: {}, weekNotes: {}, att: {}, paid: {}, full: {}, report: {}, ui: {} };
+    plan: {}, cinfo: {}, weekNotes: {}, att: {}, paid: {}, full: {}, report: {}, ui: {},
+    lucky: (T.LuckyDraw || []).filter(r => r.id && r.name).map(r => ({ id: S(r.id), date: S(r.date), name: S(r.name), kind: S(r.kind) || 'Điều chỉnh', pts: +r.pts || 0, gift: S(r.gift) })) };
   try { ST.ui = JSON.parse(localStorage.getItem(UIKEY)) || {}; } catch (e) {}
   ST.classes.forEach(c => ST.cinfo[c.code] = { book: S(c.book), extra: S(c.extra) });
   ST.students.forEach(x => { if (S(x.full)) ST.full[x.name] = S(x.full); });
   T.GiaoAn.filter(r => r.id).sort((a, b) => (+a.ord || 0) - (+b.ord || 0)).forEach(r => (ST.plan[S(r.cls)] = ST.plan[S(r.cls)] || []).push({ id: S(r.id), date: S(r.date), num: S(r.num), lesson: S(r.lesson), content: S(r.content), mat: S(r.mat), hw: S(r.hw), print: S(r.print), note: S(r.note) }));
   T.GhiChuTuan.filter(r => r.mon).forEach(r => ST.weekNotes[S(r.mon)] = { gc: S(r.gc), todo: S(r.todo) });
-  T.DiemDanh.filter(r => r.date && r.cls && r.name).forEach(r => { const k = S(r.date) + '|' + S(r.cls); (ST.att[k] = ST.att[k] || { rows: {} }).rows[S(r.name)] = { status: ST_IN[S(r.status).toLowerCase()] || 'co', hw: HW_IN[S(r.hw).toLowerCase()] || '', tpl: S(r.tpl).split(/[,\s]+/).filter(Boolean), note: S(r.note) }; });
+  T.DiemDanh.filter(r => r.date && r.cls && r.name).forEach(r => { const k = S(r.date) + '|' + S(r.cls); (ST.att[k] = ST.att[k] || { rows: {} }).rows[S(r.name)] = { status: ST_IN[S(r.status).toLowerCase()] || 'co', hw: HW_IN[S(r.hw).toLowerCase()] || '', tpl: S(r.tpl).split(/[,\s]+/).filter(Boolean), note: S(r.note), lucky: S(r.lucky).split(/\s*,\s*/).map(x => LK_IN[nrm(x)]).filter(Boolean) }; });
   T.HocPhi.filter(r => r.name && r.ym).forEach(r => { const v = PAY_IN(S(r.state)); if (v !== undefined) (ST.paid[S(r.name)] = ST.paid[S(r.name)] || {})[S(r.ym)] = v; });
   T.BaoCao.filter(r => r.name).forEach(r => { const o = {}; ['from', 'to', 'learn', 'good', 'weak', 'goal', 'sent'].forEach(k => { if (S(r[k])) o[k] = S(r[k]); }); ST.report[S(r.name)] = o; });
   MAU_LIST = T.MauNhanXet.filter(m => m.code).map(m => ({ code: S(m.code), label: S(m.label) || S(m.code), teacher: S(m.teacher), next: S(m.next), parent: S(m.parent) }));
@@ -398,19 +424,20 @@ function flat() { // ST -> các dòng theo tab, để so sánh và chỉ gửi d
   ST.sess.forEach(x => put('Lich', x.id, { id: x.id, date: x.date, time: pd(Math.floor(x.m / 60)) + ':' + pd(x.m % 60), dur: x.dur, cls: x.cls, makeup: x.makeup ? 'x' : '', startNum: x.startNum || '' }));
   Object.entries(ST.plan).forEach(([cls, L]) => L.forEach((l, i) => put('GiaoAn', l.id, { id: l.id, cls, date: l.date || '', num: l.num || '', lesson: l.lesson || '', content: l.content || '', mat: l.mat || '', hw: l.hw || '', print: l.print || '', note: l.note || '', ord: i + 1 })));
   Object.entries(ST.weekNotes).forEach(([mon, w]) => { if (w.gc || w.todo) put('GhiChuTuan', mon, { mon, gc: w.gc || '', todo: w.todo || '' }); });
-  Object.entries(ST.att).forEach(([k, a]) => { const [date, cls] = k.split('|'); Object.entries(a.rows || {}).forEach(([name, r]) => put('DiemDanh', [date, cls, name].join('|'), { date, cls, name, status: ST_LABEL[r.status] || '', hw: HW_LABEL[r.hw] || '', tpl: (r.tpl || []).join(', '), note: r.note || '' })); });
+  Object.entries(ST.att).forEach(([k, a]) => { const [date, cls] = k.split('|'); Object.entries(a.rows || {}).forEach(([name, r]) => put('DiemDanh', [date, cls, name].join('|'), { date, cls, name, status: ST_LABEL[r.status] || '', hw: HW_LABEL[r.hw] || '', tpl: (r.tpl || []).join(', '), note: r.note || '', lucky: lkOut(r.lucky) })); });
+  (ST.lucky || []).forEach(x => put('LuckyDraw', x.id, { id: x.id, date: x.date, name: x.name, kind: x.kind, pts: x.pts, gift: x.gift || '' }));
   Object.entries(ST.paid).forEach(([name, m]) => Object.entries(m).forEach(([ym, v]) => { if (v !== undefined) put('HocPhi', name + '|' + ym, { name, ym, state: PAY_OUT(v) }); }));
   Object.entries(ST.report).forEach(([name, r]) => put('BaoCao', name, { name, from: r.from || '', to: r.to || '', learn: r.learn ?? '', good: r.good ?? '', weak: r.weak ?? '', goal: r.goal ?? '', sent: r.sent || '' }));
   return o;
 }
 let SNAP = {}; const QUEUE = []; let BUSY = false, LOADED_AT = 0, READONLY = false, SUBQ = [];
 // Gọi 1 hàm phía Google rồi nạp lại toàn bộ dữ liệu nó trả về (lấy bài nộp, ghép tên...)
-function serverCall(fn, args, okMsg, btn) {
+function serverCall(fn, args, okMsg, btn, after) {
   if (SAVE_T) commit();
   if (QUEUE.length || BUSY) { toast('Đang lưu, đợi chút rồi bấm lại'); return; }
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Đang lấy…'; }
   syncState('saving');
-  google.script.run.withSuccessHandler(D => { fromServer(D); LOADED_AT = Date.now(); route(true); syncState('ok'); writeCache(); toast(D.importText || okMsg); })
+  google.script.run.withSuccessHandler(D => { fromServer(D); LOADED_AT = Date.now(); if (after) after(D); route(true); syncState('ok'); writeCache(); toast(D.importText || okMsg); })
     .withFailureHandler(e => { syncState('ok'); if (btn) { btn.disabled = false; btn.textContent = 'Lấy bài nộp ngay'; } toast('Không thực hiện được: ' + (e && e.message || e)); })[fn](...args);
 }
 // Bài nộp online (BTVN, Speaking) của 1 em trong khoảng ngày
@@ -439,7 +466,7 @@ function bindSubs() {
 // Xóa có hoàn tác: chụp lại lịch, giáo án, lớp, học sinh trước khi xóa; ô "↶ Hoàn tác" hiện 10 giây
 let UNDO_T = null;
 function withUndo(msg, act) {
-  const snap = JSON.stringify({ sess: ST.sess, plan: ST.plan, classes: ST.classes, students: ST.students, cinfo: ST.cinfo, full: ST.full });
+  const snap = JSON.stringify({ sess: ST.sess, plan: ST.plan, classes: ST.classes, students: ST.students, cinfo: ST.cinfo, full: ST.full, lucky: ST.lucky });
   act(); save(); if (READONLY) return;
   const box = $('#undoBox'); $('#toast').classList.remove('show');
   box.innerHTML = `<span>🗑️ ${esc(msg)}</span><button type="button">↶ Hoàn tác</button><i></i>`; box.hidden = false;
@@ -476,7 +503,7 @@ function writeCache() { // bảng = dữ liệu Google lần cuối + các dòng
   try {
     const tables = {}; Object.keys(DB.tables).forEach(t => { tables[t] = DB.tables[t]; });
     const mine = {}; Object.keys(SNAP).forEach(k => { const t = k.slice(0, k.indexOf('\u0001')); (mine[t] = mine[t] || []).push(JSON.parse(SNAP[k])); });
-    ['Lop', 'HocSinh', 'Lich', 'GiaoAn', 'GhiChuTuan', 'DiemDanh', 'HocPhi', 'BaoCao'].forEach(t => { tables[t] = mine[t] || []; });
+    ['Lop', 'HocSinh', 'Lich', 'GiaoAn', 'GhiChuTuan', 'DiemDanh', 'HocPhi', 'LuckyDraw', 'BaoCao'].forEach(t => { tables[t] = mine[t] || []; });
     localStorage.setItem(CACHEKEY, JSON.stringify({ at: Date.now(), canEdit: DB.canEdit, tables }));
   } catch (e) { try { localStorage.removeItem(CACHEKEY); } catch (_) {} }
 }
@@ -643,6 +670,8 @@ function viewHome() {
   const today = sessOn(TODAY);
   let h = `<h2><span class="stk">🧸</span>Hôm nay dạy ${today.length} buổi</h2>`;
   h += today.map(homeCard).join('') || `<div class="card empty"><span class="big stk">🌈</span>Hôm nay cô được nghỉ!</div>`;
+  { const E = luckyEarned(); const rd = luckyStudents(E).filter(s => luckyOf(s.name, E).can > 0);
+    if (rd.length) h += `<a class="card" href="#lucky" style="display:block;text-decoration:none;color:inherit">🎁 <b>${rd.length} em đủ ${LUCKY_GOAL} điểm Lucky Draw:</b> ${rd.map(s => esc(s.display)).join(', ')} <span class="muted">›</span></a>`; }
   if (SUBQ.length && !READONLY) h += `<a class="card" href="#hs" style="display:block;text-decoration:none;color:inherit">📥 <b>${SUBQ.length} bài nộp online</b> chưa khớp tên học sinh – bấm để ghép <span class="muted">›</span></a>`;
 
   const wk = SESS.filter(s => s.date >= TODAY && s.date <= addDays(TODAY, 6));
@@ -823,11 +852,14 @@ function viewBuoi(iso, cls) {
   const s = list.find(x => x.cls === cls); const l = lessonFor(cls, iso); const ph = prevHw(cls, iso);
   const key = iso + '|' + cls; const saved = ST.att[key];
   W = JSON.parse(JSON.stringify(saved || { rows: {} })); W.classNote = l ? l.note || '' : '';
-  studentsOf(cls).forEach(st => { if (!W.rows[st.name]) W.rows[st.name] = { status: 'co', hw: '', tpl: [], note: '' }; });
+  studentsOf(cls).forEach(st => { if (!W.rows[st.name]) W.rows[st.name] = { status: 'co', hw: '', tpl: [], note: '', lucky: [] }; W.rows[st.name].lucky = W.rows[st.name].lucky || []; });
+  // Lucky Draw: "Đúng giờ" theo điểm danh, "Làm bài đầy đủ" theo BT buổi trước = Đủ (cô bỏ tick được)
+  const LK = luckyOn(cls); const setLk = (r, k, on) => { r.lucky = r.lucky.filter(x => x !== k); if (on) r.lucky.push(k); };
+  if (LK && !saved) studentsOf(cls).forEach(st => { const r = W.rows[st.name]; setLk(r, 'dg', r.status === 'co'); });
   // em đã nộp bài online kể từ buổi trước → tự chọn "Đủ" (cô vẫn sửa được, bấm Lưu mới ghi)
   const psD = (SESS.filter(x => x.cls === cls && x.date < iso).pop() || {}).date || addDays(iso, -7);
   const subsOf = n => onlineSubs(n, psD, iso);
-  studentsOf(cls).forEach(st => { const r = W.rows[st.name]; if (!r.hw && subsOf(st.name).length) { r.hw = 'du'; r.autoHw = true; } });
+  studentsOf(cls).forEach(st => { const r = W.rows[st.name]; if (!r.hw && subsOf(st.name).length) { r.hw = 'du'; r.autoHw = true; if (LK) setLk(r, 'bt', true); } });
 
   h += `<div class="card tape mint"><div class="row between"><h3>📒 Giáo án ${cls}${s.num ? ' · buổi ' + s.num + '/' + CLASS_CFG[cls].size : ''}</h3><a class="btn sm ghost" href="#giaoan/${cls}/${iso}">✏️ Sửa</a></div>`;
   if (hasPlan(l)) h += `<dl class="kv">${l.lesson ? `<dt>Bài dạy</dt><dd><b>${esc(l.lesson)}</b>${l.guessed ? ' <span class="badge b-warn">tự xếp theo thứ tự</span>' : ''}</dd>` : ''}
@@ -842,28 +874,37 @@ function viewBuoi(iso, cls) {
         <div class="small muted" style="margin-top:6px">Tick Đủ / Thiếu / Không làm cho từng em ở phần điểm danh bên dưới.</div></div>`
       : `<div class="alert info">📚 Buổi trước${ps ? ' (' + wdS(ps.date) + ' ' + dm(ps.date) + ')' : ''} không ghi bài tập trong giáo án (cột Homework đang trống).${(n => n ? `<br>📥 <b>${n}/${studentsOf(cls).length} em</b> đã nộp bài online từ ${dm(psD)} → đã tự chọn "Đủ" ở phần điểm danh.` : '')(studentsOf(cls).filter(st => subsOf(st.name).length).length)}</div>`; }
   h += `<div class="card"><span class="corner stk">🐰</span><div class="row between"><h3>👥 Điểm danh & nhận xét</h3>${saved ? '<span class="badge b-ok">✓ đã lưu</span>' : '<span class="badge">chưa lưu</span>'}</div>`;
+  if (LK) h += `<div class="lkall"><div class="lbl" style="margin-top:4px">🎁 Lucky Draw · chọn nhanh cho cả lớp (các em có mặt)</div><div class="chips">${LUCKY.map(([k, e, l]) => `<button type="button" class="chip" data-lka="${k}">${e} ${l}</button>`).join('')}</div></div>`;
   studentsOf(cls).forEach(st => {
     const r = W.rows[st.name];
     h += `<div class="stu" data-n="${esc(st.name)}"><div class="row between wrapf"><b style="font-size:16.5px">${esc(st.display)}</b>
       <div class="seg" data-f="status">${Object.entries(ST_LABEL).map(([k, v]) => `<button type="button" data-v="${k}" class="${r.status === k ? 'on' : ''} ${k === 'muon' || k === 'phep' ? 'w' : k === 'kp' ? 'x' : ''}">${v}</button>`).join('')}</div></div>
       ${ph || subsOf(st.name).length ? `<div class="lbl">Bài tập buổi trước</div><div class="seg" data-f="hw">${Object.entries(HW_LABEL).map(([k, v]) => `<button type="button" data-v="${k}" class="${r.hw === k ? 'on' : ''} ${k === 'thieu' ? 'w' : k === 'khong' ? 'x' : ''}">${v}</button>`).join('')}</div>
         ${subsOf(st.name).map(x => `<div class="small" style="margin-top:4px;color:var(--mint-ink)">📥 Đã nộp online ${dm(x.iso)}: ${esc(x.test)}${x.score ? ' · <b>' + esc(x.score) + '/' + esc(x.mx || x.max) + '</b>' : ' · chờ chấm'}</div>`).join('')}` : ''}
+      ${LK ? `<div class="lbl">🎁 Lucky Draw <span class="lkn badge b-lav">+${r.lucky.length}</span></div><div class="chips lk">${LUCKY.map(([k, e, l]) => `<button type="button" class="chip ${r.lucky.includes(k) ? 'on' : ''}" data-lk="${k}">${e} ${l}</button>`).join('')}</div>` : ''}
       <div class="lbl">Nhận xét nhanh</div>
-      <div class="chips">${MAU_LIST.map(m => `<button type="button" class="chip ${NEG.includes(m.code) ? 'neg' : ''} ${r.tpl.includes(m.code) ? 'on' : ''}" data-tpl="${m.code}" title="${esc(m.teacher)}">${esc(m.label)}</button>`).join('')}</div>
+      <div class="chips tplc">${MAU_LIST.map(m => `<button type="button" class="chip ${NEG.includes(m.code) ? 'neg' : ''} ${r.tpl.includes(m.code) ? 'on' : ''}" data-tpl="${m.code}" title="${esc(m.teacher)}">${esc(m.label)}</button>`).join('')}</div>
       <input type="text" data-f="note" placeholder="Ghi chú thêm về ${esc(st.name)}…" value="${esc(r.note)}" style="margin-top:8px"></div>`;
   });
   h += `<div class="lbl" style="margin-top:12px">📝 Note sau buổi học (lưu vào giáo án của buổi này)</div>
     <textarea id="classNote" placeholder="VD: Các bạn chưa làm bài tập (Grammar + WB)">${esc(W.classNote)}</textarea>
     <div style="margin-top:12px"><button class="btn" id="saveAtt" type="button">💾 Lưu buổi học</button></div></div>`;
   V.innerHTML = h; bindDay();
+  const updLk = (el, r) => { el.querySelectorAll('[data-lk]').forEach(b => b.classList.toggle('on', r.lucky.includes(b.dataset.lk))); const n = el.querySelector('.lkn'); if (n) n.textContent = '+' + r.lucky.length; };
+  const present = () => [...V.querySelectorAll('.stu')].filter(el => /co|muon/.test(W.rows[el.dataset.n].status));
+  V.querySelectorAll('[data-lka]').forEach(b => b.addEventListener('click', () => { const k = b.dataset.lka; const els = present(); if (!els.length) return;
+    const all = els.every(el => W.rows[el.dataset.n].lucky.includes(k)); els.forEach(el => { const r = W.rows[el.dataset.n]; setLk(r, k, !all); updLk(el, r); });
+    toast((all ? 'Đã bỏ ' : 'Đã cộng ') + LUCKY.find(x => x[0] === k)[2] + ' cho ' + els.length + ' em'); }));
   V.querySelectorAll('.stu').forEach(el => {
     const r = W.rows[el.dataset.n];
     el.querySelectorAll('.seg').forEach(seg => seg.addEventListener('click', e => {
       const b = e.target.closest('button'); if (!b) return; const f = seg.dataset.f;
       r[f] = r[f] === b.dataset.v && f === 'hw' ? '' : b.dataset.v;
       seg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.v === r[f]));
+      if (LK) { if (f === 'status') setLk(r, 'dg', r.status === 'co'); if (f === 'hw') setLk(r, 'bt', r.hw === 'du'); updLk(el, r); }
     }));
-    el.querySelector('.chips').addEventListener('click', e => { const b = e.target.closest('[data-tpl]'); if (!b) return; const c = b.dataset.tpl;
+    const lk = el.querySelector('.chips.lk'); if (lk) lk.addEventListener('click', e => { const b = e.target.closest('[data-lk]'); if (!b) return; setLk(r, b.dataset.lk, !r.lucky.includes(b.dataset.lk)); updLk(el, r); });
+    el.querySelector('.chips.tplc').addEventListener('click', e => { const b = e.target.closest('[data-tpl]'); if (!b) return; const c = b.dataset.tpl;
       r.tpl = r.tpl.includes(c) ? r.tpl.filter(x => x !== c) : [...r.tpl, c]; b.classList.toggle('on'); });
     el.querySelector('[data-f=note]').addEventListener('input', e => r.note = e.target.value);
   });
@@ -946,7 +987,8 @@ function viewHS(name) {
   const avgT = t => { const v = avg(sc.filter(s => s.type === t && s.p != null).map(s => s.p)); return v == null ? '—' : Math.round(v) + '%'; };
   let h = `<p><a href="#hs">← Danh sách</a></p><div class="card tape"><span class="corner stk">${EMO[st.cls]}</span><div class="row between wrapf"><h3 style="font-size:22px">${esc(st.display)}</h3><span class="row" style="gap:6px">${cp(st.cls)}${st.added ? '<button class="iconb" id="edSt">✏️ Sửa</button>' : ''}</span></div>
     <dl class="kv" style="margin-top:8px"><dt>Họ tên đầy đủ</dt><dd><input type="text" id="fullName" value="${esc(fullName(name))}" placeholder="Dùng trong báo cáo gửi phụ huynh"></dd>
-    <dt>Giáo trình</dt><dd>${esc(CLASS_CFG[st.cls].book)}</dd><dt>Học phí</dt><dd>${money(st.fee)} / ${CLASS_CFG[st.cls].type === 'thang' ? 'tháng' : 'gói ' + CLASS_CFG[st.cls].size + ' buổi'}</dd></dl></div>
+    <dt>Giáo trình</dt><dd>${esc(CLASS_CFG[st.cls].book)}</dd><dt>Học phí</dt><dd>${money(st.fee)} / ${CLASS_CFG[st.cls].type === 'thang' ? 'tháng' : 'gói ' + CLASS_CFG[st.cls].size + ' buổi'}</dd>
+    ${(L => L.bal || L.rows.length || luckyOn(st.cls) ? `<dt>Lucky Draw</dt><dd><a href="#lucky" id="lkHs">🎁 ${L.bal} điểm</a>${L.draws ? ' · đã bốc ' + L.draws + ' lần' : ''}</dd>` : '')(luckyOf(name))}</dl></div>
     <div class="tiles"><div class="tile"><div class="k">Đi học</div><div class="v">${a.total ? Math.round((a.co + a.muon) / a.total * 100) + '%' : '—'}</div><div class="small muted">${a.co + a.muon}/${a.total} buổi</div></div>
     <div class="tile"><div class="k">Bài tập về nhà</div><div class="v">${a.hwTotal ? a.du + '/' + a.hwTotal : '—'}</div><div class="small muted">lần làm đủ</div></div>
     <div class="tile"><div class="k">Điểm HW / XT / CT</div><div class="v" style="font-size:18px">${avgT('HW')} · ${avgT('XT')} · ${avgT('CT')}</div></div></div>`;
@@ -959,6 +1001,7 @@ function viewHS(name) {
   V.innerHTML = h;
   $('#fullName').addEventListener('change', e => { ST.full[name] = e.target.value.trim(); save(); toast('Đã lưu họ tên'); });
   const es = $('#edSt'); if (es) es.addEventListener('click', () => stModal(name));
+  const lh = $('#lkHs'); if (lh) lh.addEventListener('click', e => { e.preventDefault(); luckyModal(name); });
 }
 
 // ================= THÊM / SỬA LỚP & HỌC SINH =================
@@ -1007,13 +1050,13 @@ function stModal(name) {
   const typFee = c => { const o = STUDENTS.find(x => x.cls === c && x.fee); return o ? o.fee / 1000 : ''; };
   const c1 = old ? old.cls : CLASSES[0];
   M.innerHTML = `<div class="sheet"><span class="corner stk" style="right:18px;top:10px">🐰</span><h3 style="font-size:20px">${old ? 'Sửa ' + esc(name) : 'Thêm học sinh'}</h3>
-    <div class="row" style="gap:10px"><label class="grow"><div class="lbl">Tên gọi (dùng hằng ngày)</div><input type="text" id="sN" value="${esc(name || '')}" placeholder="VD: Minh 11" ${old ? 'disabled' : ''}></label>
+    <div class="row" style="gap:10px"><label class="grow"><div class="lbl">Tên gọi (dùng hằng ngày)</div><input type="text" id="sN" value="${esc(name || '')}" placeholder="VD: Minh 11"></label>
       <label class="grow"><div class="lbl">Họ tên đầy đủ (báo cáo)</div><input type="text" id="sF" value="${esc(name ? ST.full[name] || '' : '')}" placeholder="VD: Nguyễn Minh An"></label></div>
     <div class="row" style="gap:10px"><label class="grow"><div class="lbl">Lớp</div><select id="sC">${CLASSES.map(c => `<option value="${c}" ${c === c1 ? 'selected' : ''}>${EMO[c] || ''} ${c}</option>`).join('')}</select></label>
       <label style="width:120px"><div class="lbl" id="sFl">Học phí (nghìn)</div><input type="number" id="sP" min="0" step="10" value="${old ? (+String(old.fee).replace(/[^\d.]/g, '') || 0) / 1000 : typFee(c1)}"></label></div>
     <label><div class="lbl">Bắt đầu học từ (tính học phí từ tháng này)</div><input type="date" id="sD" value="${old ? old.from : TODAY}"></label>
     <div class="row wrapf" style="margin-top:16px;gap:8px"><button class="btn" id="sSave">💾 Lưu</button>${old ? '<button class="btn ghost" id="sDel">🌙 Cho nghỉ học</button>' : ''}<button class="btn ghost" id="stCancel">Hủy</button></div>
-    <div class="small muted" style="margin-top:8px">Lớp chưa có? Bấm "➕ Thêm lớp" trước. Tên trùng với em khác thì thêm số/ký hiệu (VD "Minh 11").</div></div>`;
+    <div class="small muted" style="margin-top:8px">Lớp chưa có? Bấm "➕ Thêm lớp" trước. Tên trùng với em khác thì thêm số/ký hiệu (VD "Minh 11").${old ? '<br>✏️ Đổi <b>tên gọi</b> → điểm danh, học phí, điểm, Lucky Draw, báo cáo tự chuyển sang tên mới; tên cũ được nhớ ở cột "Tên khác" để bài nộp online vẫn khớp.' : ''}</div></div>`;
   M.hidden = false;
   const close = () => { M.hidden = true; M.innerHTML = ''; };
   const fl = () => { $('#sFl').textContent = CLASS_CFG[$('#sC').value].type === 'goi' ? 'Giá gói (nghìn)' : 'Học phí/tháng (nghìn)'; }; fl();
@@ -1021,14 +1064,30 @@ function stModal(name) {
   M.onclick = e => { if (e.target === M) close(); }; $('#stCancel').addEventListener('click', close);
   const del = $('#sDel'); if (del) del.addEventListener('click', () => { if (!confirm('Chuyển ' + name + ' sang Nghỉ học? (dữ liệu cũ vẫn giữ trong tab HocSinh)')) return; close(); withUndo(name + ' đã chuyển sang Nghỉ học', () => { old.status = 'Nghỉ học'; }); location.hash = '#hs'; });
   $('#sSave').addEventListener('click', () => {
-    const n = old ? name : $('#sN').value.trim().replace(/\s+/g, ' ');
+    const n = $('#sN').value.trim().replace(/\s+/g, ' '); const ren = !!old && n !== name;
     if (!n) { toast('Nhập tên gọi'); return; }
-    if (!old && ST.students.some(x => x.name === n)) { toast('Đã có em tên "' + n + '", thêm số/ký hiệu để phân biệt'); return; }
-    const v = { name: n, cls: $('#sC').value, fee: Math.round((+$('#sP').value || 0) * 1000), from: $('#sD').value || TODAY };
+    if ((!old || ren) && ST.students.some(x => x.name === n)) { toast('Đã có em tên "' + n + '", thêm số/ký hiệu để phân biệt'); return; }
+    if (ren && !confirm(`Đổi tên "${name}" thành "${n}"?\nĐiểm danh, học phí, điểm, Lucky Draw, báo cáo của em sẽ chuyển sang tên mới.`)) return;
+    const v = { name: old ? name : n, cls: $('#sC').value, fee: Math.round((+$('#sP').value || 0) * 1000), from: $('#sD').value || TODAY };
     if (old) Object.assign(old, v); else ST.students.push({ ...v, status: 'Đang học' });
-    const full = $('#sF').value.trim(); if (full) ST.full[n] = full;
-    save(); close(); toast(old ? 'Đã lưu' : 'Đã thêm ' + n + ' vào ' + v.cls + ' 🎉'); route(true);
+    const full = $('#sF').value.trim(); if (full) ST.full[v.name] = full;
+    save(); close();
+    if (!ren) { toast(old ? 'Đã lưu' : 'Đã thêm ' + n + ' vào ' + v.cls + ' 🎉'); route(true); return; }
+    renameStu(name, n);
   });
+}
+
+// Đổi tên gọi: gửi xong các thay đổi đang chờ, rồi nhờ Google đổi tên ở mọi tab cùng lúc (QuanLy.gs → renameStudent)
+function renameStu(from, to) {
+  if (READONLY) return;
+  if (SAVE_T) commit(); syncState('saving'); toast('⏳ Đang đổi tên ' + from + ' → ' + to + '…');
+  const t0 = Date.now();
+  const go = setInterval(() => {
+    if (QUEUE.length || BUSY) { if (Date.now() - t0 > 60000) { clearInterval(go); toast('Chưa lưu được, thử đổi tên lại sau'); } return; }
+    clearInterval(go);
+    serverCall('renameStudent', [from, to], 'Đã đổi tên ' + from + ' → ' + to + ' ✓', null, () => {
+      if (location.hash.startsWith('#hs/')) location.hash = '#hs/' + encodeURIComponent(to); });
+  }, 150);
 }
 
 // ================= HỌC PHÍ (tháng trước nếu còn nợ + tháng này + tháng sau) =================
@@ -1092,6 +1151,107 @@ function feeMenu(name) {
   draw(); M.hidden = false;
 }
 
+// ================= LUCKY DRAW =================
+const luckyOn = cls => studentsOf(cls).length >= 2;
+function luckyEarned() { // điểm cộng từng buổi (tab DiemDanh) → { tên: { 'yyyy-mm': điểm } }
+  const E = {}; Object.entries(ST.att).forEach(([k, a]) => { const ym = k.slice(0, 7);
+    Object.entries(a.rows || {}).forEach(([n, r]) => { const p = (r.lucky || []).length; if (p) { const o = E[n] = E[n] || {}; o[ym] = (o[ym] || 0) + p; } }); });
+  return E;
+}
+function luckyOf(name, E) {
+  const months = (E || luckyEarned())[name] || {}; const rows = ST.lucky.filter(x => x.name === name);
+  const earned = Object.values(months).reduce((a, b) => a + b, 0); const draws = rows.filter(x => x.kind === 'Bốc thăm').length;
+  const bal = earned + rows.reduce((a, x) => a + (+x.pts || 0), 0);
+  return { months, rows, draws, bal, can: Math.max(0, Math.floor(bal / LUCKY_GOAL)) };
+}
+function luckyStudents(E) { // lớp từ 2 bạn trở lên + em lớp 1 bạn nhưng đã có điểm
+  return STUDENTS.filter(s => luckyOn(s.cls) || E[s.name] || ST.lucky.some(x => x.name === s.name));
+}
+function viewLucky() {
+  setTab('lucky', 'Lucky Draw 🎁'); const E = luckyEarned(); const MS = [ymAdd(CUR_M, -1), CUR_M];
+  const list = luckyStudents(E).map(s => { const L = luckyOf(s.name, E); const shown = MS.reduce((a, ym) => a + (L.months[ym] || 0), 0);
+    return { s, L, prior: L.bal - shown + L.draws * LUCKY_GOAL }; });
+  const ready = list.filter(x => x.L.can > 0); const drawsM = ST.lucky.filter(x => x.kind === 'Bốc thăm' && ymOf(x.date || '') === CUR_M);
+  let h = `<div class="tiles t3" style="margin-top:16px"><div class="tile"><div class="k">🎁 Đủ ${LUCKY_GOAL} điểm</div><div class="v">${ready.length} em</div><div class="small muted">được bốc thăm</div></div>
+    <div class="tile"><div class="k">⭐ Điểm ${mLabel(CUR_M)}</div><div class="v">${list.reduce((a, x) => a + (x.L.months[CUR_M] || 0), 0)}</div><div class="small muted">cả các lớp</div></div>
+    <div class="tile"><div class="k">🎉 Đã bốc ${mLabel(CUR_M)}</div><div class="v">${drawsM.length} lượt</div></div></div>`;
+  h += `<div class="card" style="padding:6px 10px 10px;margin-top:14px"><table class="lkt"><tr><th>Học sinh</th><th class="num">Trước<small>còn dư</small></th>${MS.map(ym => `<th class="num">${mLabel(ym)}</th>`).join('')}<th class="num">Còn</th></tr>`;
+  CLASSES.forEach(c => { const rs = list.filter(x => x.s.cls === c); if (!rs.length) return;
+    h += `<tr class="grp"><td colspan="${MS.length + 3}">${cp(c)}${luckyOn(c) ? '' : ' <span class="small muted">lớp 1 bạn – chỉ giữ điểm cũ</span>'}</td></tr>`;
+    h += rs.map(({ s, L, prior }) => `<tr data-lkn="${esc(s.name)}"><td><b class="nm">${esc(s.display)}</b>${L.draws ? `<small class="muted"> 🎁×${L.draws}</small>` : ''}</td><td class="num">${prior || '–'}</td>
+      ${MS.map(ym => `<td class="num">${L.months[ym] ? '+' + L.months[ym] : '–'}</td>`).join('')}
+      <td class="num">${L.can ? `<button class="lkgo" type="button">🎁 ${L.bal}</button>` : `<b>${L.bal}</b><span class="prog" style="width:34px"><i style="width:${Math.max(0, Math.min(100, L.bal / LUCKY_GOAL * 100))}%"></i></span>`}</td></tr>`).join(''); });
+  h += `</table>${list.length ? '' : '<div class="muted small" style="padding:10px">Chưa có lớp nào từ 2 bạn trở lên.</div>'}</div>
+    <div class="small muted" style="margin:0 4px 10px">Bấm tên em để xem chi tiết · ô <b>🎁</b> = đủ ${LUCKY_GOAL} điểm, bấm để ghi đã bốc thăm (tự trừ ${LUCKY_GOAL} điểm).</div>`;
+  const hist = ST.lucky.filter(x => x.kind === 'Bốc thăm').sort((a, b) => b.date.localeCompare(a.date));
+  h += `<h2><span class="stk">🎉</span>Đã bốc thăm</h2><div class="card">${hist.length ? '<ul class="list">' + hist.slice(0, 30).map(x => `<li><b>${esc((byName(x.name) || {}).display || x.name)}</b> <span class="muted small">${x.date ? dm(x.date) : ''}</span> · ${x.gift ? esc(x.gift) : '<span class="muted">chưa ghi quà</span>'}</li>`).join('') + '</ul>' : '<span class="muted">Chưa có lượt bốc nào.</span>'}</div>`;
+  h += `<div class="card lkact"><h3>📥 Nhập điểm còn dư (mang sang)</h3><div class="small muted">Dán danh sách dạng <i>Tên Số điểm</i>, cách nhau bằng dấu phẩy hoặc xuống dòng. App tự ghép tên (bỏ dấu, tên trong ngoặc, tên khác).</div>
+    <textarea id="lkTxt" rows="3" placeholder="VD: An 12, Bình 30, Tom 8" style="margin-top:8px"></textarea><div style="margin-top:8px"><button class="btn sm" id="lkImp" type="button">Xem trước & ghép tên</button></div></div>
+    <details class="small muted" style="margin:4px 4px 0"><summary>Cách tính điểm</summary>Mỗi buổi, ở màn <b>Buổi học</b>, mỗi tiêu chí +1: ${LUCKY.map(x => x[1] + ' ' + x[2]).join(' · ')}.
+    "Đúng giờ" tự tick khi em <b>Có mặt</b>, "Làm bài đầy đủ" tự tick khi BT buổi trước <b>Đủ</b> (cô bỏ tick được). Điểm cộng dồn qua các tháng; đủ ${LUCKY_GOAL} điểm được bốc 1 lần, ghi đã bốc thì trừ ${LUCKY_GOAL}.
+    Chỉ chấm cho lớp từ 2 bạn trở lên. Dữ liệu: cột "Lucky Draw" ở tab DiemDanh + tab LuckyDraw.</details>`;
+  V.innerHTML = h;
+  V.querySelectorAll('[data-lkn]').forEach(tr => tr.addEventListener('click', () => luckyModal(tr.dataset.lkn)));
+  $('#lkImp').addEventListener('click', () => luckyImport($('#lkTxt').value));
+}
+function luckyModal(name) {
+  const st = byName(name) || { name, display: name, cls: '' }; const M = $('#modal');
+  const close = () => { M.hidden = true; M.innerHTML = ''; route(true); };
+  const draw = () => {
+    const L = luckyOf(name); const need = LUCKY_GOAL - (L.bal % LUCKY_GOAL);
+    const ms = Object.keys(L.months).sort().reverse();
+    M.innerHTML = `<div class="sheet"><span class="corner stk" style="right:18px;top:10px">🎁</span>
+      <div class="row wrapf" style="gap:8px"><h3 style="font-size:20px">${esc(st.display)}</h3>${st.cls ? cp(st.cls) : ''}</div>
+      <div class="lkbig">${L.bal} <small>điểm</small></div>
+      ${L.can ? `<div class="alert info" style="margin:8px 0">🎉 Đủ điểm bốc thăm <b>${L.can} lượt</b>.</div>
+        <div class="lkact"><div class="row" style="gap:10px"><label style="width:150px"><div class="lbl">Ngày bốc</div><input type="date" id="lkD" value="${TODAY}"></label>
+        <label class="grow"><div class="lbl">Quà đã nhận</div><input type="text" id="lkG" placeholder="VD: bút màu, sticker…"></label></div>
+        <button class="btn" id="lkDraw" type="button" style="margin-top:10px">🎁 Đã bốc thăm – trừ ${LUCKY_GOAL} điểm</button></div>`
+      : `<div class="small muted" style="margin:4px 0 8px">Cần thêm <b>${need}</b> điểm nữa để được bốc thăm.</div>`}
+      <div class="lbl">Điểm cộng theo tháng</div><div>${ms.length ? ms.map(ym => `<span class="badge b-lav" style="margin:2px">${mLabel(ym)}/${ym.slice(2, 4)}: +${L.months[ym]}</span>`).join('') : '<span class="muted small">Chưa có</span>'}</div>
+      <div class="lbl">Mang sang · bốc thăm · điều chỉnh</div>
+      ${L.rows.length ? L.rows.slice().sort((a, b) => b.date.localeCompare(a.date)).map(x => `<div class="lkrow" data-id="${x.id}"><span class="small" style="min-width:86px"><b>${esc(x.kind)}</b><br><span class="muted">${x.date ? dm(x.date) : ''}</span></span>
+        ${x.kind === 'Bốc thăm' ? `<b class="lkp neg">−${LUCKY_GOAL}</b>` : `<input type="number" class="lkpts" value="${x.pts}" style="width:74px">`}
+        <input type="text" class="lkgift grow" value="${esc(x.gift)}" placeholder="${x.kind === 'Bốc thăm' ? 'Quà đã nhận' : 'Ghi chú'}"><button class="iconb lkdel" type="button" title="Xóa">🗑</button></div>`).join('') : '<div class="muted small">Chưa có</div>'}
+      <div class="lkact row wrapf" style="gap:8px;margin-top:10px"><input type="number" id="lkAdj" placeholder="+/− điểm" style="width:100px"><input type="text" id="lkAdjN" class="grow" placeholder="Lý do (VD: thưởng thêm)" style="min-width:140px"><button class="btn sm ghost" id="lkAdjB" type="button">Điều chỉnh</button></div>
+      <div class="row" style="margin-top:14px"><button class="btn ghost" id="lkX" type="button">Đóng</button></div></div>`;
+    const b = $('#lkDraw'); if (b) b.addEventListener('click', () => { ST.lucky.push({ id: uid('k'), date: $('#lkD').value || TODAY, name, kind: 'Bốc thăm', pts: -LUCKY_GOAL, gift: $('#lkG').value.trim() }); save(); toast('🎉 Đã ghi bốc thăm, trừ ' + LUCKY_GOAL + ' điểm'); draw(); });
+    M.querySelectorAll('.lkrow').forEach(row => { const x = ST.lucky.find(y => y.id === row.dataset.id);
+      const p = row.querySelector('.lkpts'); if (p) p.addEventListener('change', () => { x.pts = Math.round(+p.value || 0); save(); toast('Đã lưu'); draw(); });
+      row.querySelector('.lkgift').addEventListener('change', e => { x.gift = e.target.value.trim(); save(); toast('Đã lưu'); });
+      row.querySelector('.lkdel').addEventListener('click', () => { withUndo('Đã xóa 1 dòng Lucky Draw của ' + name, () => { ST.lucky = ST.lucky.filter(y => y.id !== x.id); }); draw(); }); });
+    $('#lkAdjB').addEventListener('click', () => { const v = Math.round(+$('#lkAdj').value || 0); if (!v) { toast('Nhập số điểm (+ hoặc −)'); return; }
+      ST.lucky.push({ id: uid('k'), date: TODAY, name, kind: 'Điều chỉnh', pts: v, gift: $('#lkAdjN').value.trim() }); save(); toast('Đã điều chỉnh ' + (v > 0 ? '+' : '') + v); draw(); });
+    $('#lkX').addEventListener('click', close);
+  };
+  M.onclick = e => { if (e.target === M) close(); };
+  draw(); M.hidden = false;
+}
+function nameKeys(x) { // các cách gọi 1 em: tên gọi, bỏ số ("An 5" → "an"), tên trong ngoặc, tên khác
+  const n = x.name; const out = [n, n.replace(/\s*\d+$/, ''), baseName(n), baseName(n).replace(/\s*\d+$/, ''), ...((n.match(/\(([^)]+)\)/) || [])[1] ? [n.match(/\(([^)]+)\)/)[1]] : []),
+    ...String(x.alias || '').split(/[,;]/)];
+  return [...new Set(out.map(nrm).filter(Boolean))];
+}
+function luckyImport(txt) {
+  const items = String(txt || '').split(/[,;\n]+/).map(p => p.trim()).filter(Boolean).map(p => { const m = p.match(/^(.+?)[\s:=–-]+(-?\d+)\s*(điểm|đ)?\.?$/i); return m ? { typed: m[1].trim(), pts: +m[2] } : { typed: p, pts: null }; });
+  if (!items.length) { toast('Dán danh sách tên + điểm trước'); return; }
+  const pool = ST.students.filter(x => x.name && !isOff(x.status));
+  items.forEach(it => { const k = nrm(it.typed); const hit = pool.filter(x => nameKeys(x).includes(k)); it.name = hit.length === 1 ? hit[0].name : ''; it.many = hit.length > 1; });
+  const M = $('#modal'); const close = () => { M.hidden = true; M.innerHTML = ''; };
+  const opts = sel => CLASSES.map(c => `<optgroup label="${c}">${studentsOf(c).map(s => `<option value="${esc(s.name)}" ${s.name === sel ? 'selected' : ''}>${esc(s.display)}</option>`).join('')}</optgroup>`).join('');
+  const day = lastDay(ymAdd(CUR_M, -1));
+  M.innerHTML = `<div class="sheet"><h3 style="font-size:20px">📥 Điểm còn dư mang sang</h3><div class="small muted">Ghi vào ngày ${dm(day)} (cuối tháng trước). Em đã có điểm mang sang thì thay bằng số mới.</div>
+    ${items.map((it, i) => `<div class="lkrow" data-i="${i}"><span style="min-width:80px"><b>${esc(it.typed)}</b>${it.name ? '' : `<br><small style="color:var(--pink-ink)">${it.many ? 'trùng tên – chọn' : 'chưa khớp – chọn'}</small>`}</span>
+      <select class="grow lki"><option value="">— bỏ qua —</option>${opts(it.name)}</select><input type="number" class="lkv" value="${it.pts == null ? '' : it.pts}" style="width:74px"></div>`).join('')}
+    <div class="row wrapf" style="gap:8px;margin-top:14px"><button class="btn" id="lkOk" type="button">💾 Lưu điểm mang sang</button><button class="btn ghost" id="lkNo" type="button">Hủy</button></div></div>`;
+  M.hidden = false; M.onclick = e => { if (e.target === M) close(); }; $('#lkNo').addEventListener('click', close);
+  $('#lkOk').addEventListener('click', () => { let n = 0;
+    M.querySelectorAll('.lkrow').forEach(row => { const nm = row.querySelector('.lki').value; const v = Math.round(+row.querySelector('.lkv').value || 0); if (!nm || !v) return;
+      const ex = ST.lucky.find(x => x.name === nm && x.kind === 'Mang sang');
+      if (ex) Object.assign(ex, { pts: v, date: day }); else ST.lucky.push({ id: uid('k'), date: day, name: nm, kind: 'Mang sang', pts: v, gift: 'Còn dư từ file Lucky Draw cũ' }); n++; });
+    close(); save(); toast('Đã nhập điểm mang sang cho ' + n + ' em 🎁'); route(true); });
+}
+
 // ================= BÁO CÁO =================
 function viewBaoCao(name) {
   setTab('baocao', 'Báo cáo phụ huynh');
@@ -1147,6 +1307,7 @@ function route(keep) {
   else if (p[0] === 'giaoan') viewGiaoAn(p[1], p[2]);
   else if (p[0] === 'hs') viewHS(p[1]);
   else if (p[0] === 'hocphi') viewHocPhi();
+  else if (p[0] === 'lucky') viewLucky();
   else if (p[0] === 'baocao') viewBaoCao(p[1]);
   else viewHome();
 }

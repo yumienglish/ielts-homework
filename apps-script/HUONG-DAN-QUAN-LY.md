@@ -100,6 +100,36 @@ Nếu hộp thoại báo *không tìm thấy file* (ví dụ cô đã đổi tê
 - Lỡ dời nhầm: bấm **↶ Hoàn tác** ngay trên đầu lịch.
 - **Thu phóng:** các nút **− / +** trên đầu lịch phóng to, thu nhỏ lưới; nút **🗓 Cả tuần** thu vừa màn hình để thấy đủ 7 ngày (chữ nhỏ nhưng đủ nhận màu lớp), bấm lại (**🔍 100%**) để về cỡ bình thường. Mức thu phóng được nhớ cho lần sau trên cùng máy.
 
+## Lucky Draw 🎁
+
+Chỉ áp dụng cho **lớp từ 2 bạn trở lên**.
+
+- **Chấm điểm mỗi buổi:** ở màn **Buổi học**, mỗi em có hàng nút 🎁. Mỗi nút được bấm là **+1 điểm**:
+  - ⏰ Đúng giờ
+  - 📚 Làm bài đầy đủ
+  - 🎮 Game
+  - 📈 Tiến bộ
+  - 🏆 Đúng hết / cao nhất lớp
+  - 🔤 Học từ vựng
+  - 🙋 Tích cực tập trung
+  - ✍️ Làm bài nghiêm túc
+- **Tự tick:** "Đúng giờ" tự tick khi em **Có mặt**. "Làm bài đầy đủ" tự tick khi bài tập buổi trước là **Đủ**. Bấm lại để bỏ tick.
+- **Chọn nhanh cả lớp:** khung vàng phía trên cho 1 tiêu chí vào mọi em có mặt (ví dụ cả lớp chơi game). Bấm lần nữa để bỏ.
+- Bấm **💾 Lưu buổi học** là lưu luôn điểm Lucky.
+- **Tab 🎁 Lucky** có các cột:
+  - **Trước**: điểm còn dư mang sang;
+  - **tháng trước** và **tháng này**: điểm cộng từng tháng;
+  - **Còn**: số điểm hiện có.
+
+  Điểm cộng dồn qua các tháng. Em đủ **50 điểm** hiện ô vàng **🎁**.
+- **Bốc thăm:** bấm ô 🎁 (hoặc bấm tên em) → ghi **Quà đã nhận** → **🎁 Đã bốc thăm – trừ 50 điểm**.
+  - Lịch sử bốc thăm hiện ở cuối tab.
+  - Bấm nhầm thì xóa dòng đó (🗑) rồi bấm **↶ Hoàn tác** nếu cần.
+- **Điểm mang sang** (điểm còn dư từ file Lucky Draw cũ): dán vào ô **📥 Nhập điểm còn dư**, dạng `Tên Điểm, Tên Điểm…`.
+  - App tự ghép tên: bỏ dấu, nhận cả tên trong ngoặc như "Tom" của "An (Tom)".
+  - Nhập lại cho một em thì thay số cũ, không cộng thêm.
+- **Điều chỉnh tay:** trong chi tiết từng em, ô **Điều chỉnh** cộng hoặc trừ điểm, kèm lý do.
+
 ## Cho người nhà xem (chỉ xem)
 
 1. Trong file **Quản lý lớp học**, bấm **Chia sẻ**, nhập Gmail của người nhà và chọn quyền **Người xem**.
@@ -119,11 +149,12 @@ Cô vẫn sửa trực tiếp trong các tab được. Sửa xong, mở lại we
 | Tab | Nội dung | Lưu ý khi sửa tay |
 |---|---|---|
 | **Lop** | Mã lớp, kiểu học phí (`Tháng` / `Gói`), số buổi, giáo trình, sticker, màu | Màu ghi dạng `#FF595E`. Lớp không dạy nữa: ghi `Ngừng` ở cột *Trạng thái*. |
-| **HocSinh** | Tên gọi, họ tên đầy đủ, lớp, học phí, ngày bắt đầu | **Không đổi Tên gọi** của em đã có điểm danh hoặc học phí (tên gọi dùng để nối dữ liệu). Em nghỉ: ghi `Nghỉ học` ở *Trạng thái*. |
+| **HocSinh** | Tên gọi, họ tên đầy đủ, lớp, học phí, ngày bắt đầu | **Không đổi Tên gọi ở đây** (tên gọi dùng để nối dữ liệu). Muốn đổi tên: web app → **Học sinh** → bấm tên em → **✏️ Sửa** → sửa *Tên gọi* → **Lưu**. Điểm danh, học phí, điểm, Lucky Draw, báo cáo tự chuyển sang tên mới, tên cũ được thêm vào *Tên khác*. Em nghỉ: ghi `Nghỉ học` ở *Trạng thái*. |
 | **Lich** | Mỗi dòng một buổi | Ngày ghi `2026-11-20`, giờ ghi `17:00`. Không sửa cột `id`. Buổi học bù ghi `x`. |
 | **GiaoAn** | Mỗi dòng một buổi của một lớp | Để trống *Ngày dạy* thì bài tự xếp vào các buổi tiếp theo. |
 | **GhiChuTuan** | Ghi chú và việc cần làm theo tuần | |
-| **DiemDanh** | Mỗi dòng một em trong một buổi | Web app tự ghi. |
+| **DiemDanh** | Mỗi dòng một em trong một buổi | Web app tự ghi. Cột *Lucky Draw* liệt kê các tiêu chí được +1 của buổi đó, cách nhau bằng dấu phẩy. |
+| **LuckyDraw** | Điểm mang sang, lần bốc thăm (−50) + quà, điều chỉnh tay | Loại là `Mang sang`, `Bốc thăm` hoặc `Điều chỉnh`. Không sửa cột `id`. |
 | **HocPhi** | Mỗi dòng: học sinh, tháng (`2026-11`), trạng thái | Trạng thái là `Đã đóng`, `Chưa đóng` hoặc `Nghỉ`. Xóa dòng = trả về *Tự động*. |
 | **Diem** | Điểm HW / XT / CT: tab SCORES cũ + bài nộp online | Nhập tay được. Không sửa cột *Mã bài nộp*. Bài Speaking: điền điểm vào cột *Điểm* / *Max* sau khi chấm. |
 | **ChoGhepTen** | Bài nộp online chưa khớp tên | Xử lý trong web app (Học sinh → Bài nộp online). |
