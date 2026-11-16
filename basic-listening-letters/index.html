@@ -331,7 +331,7 @@ function snap(R){
 }
 
 /* ============ DỰNG GIAO DIỆN ============ */
-const ia = 'autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"';
+const ia = 'autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="next"';
 const cell = (k, n, cls = '') => `<label class="cell"><span class="cn">${n}.</span><input class="txt ${cls}" data-k="${k}" ${cls === 'one' ? 'maxlength="1"' : ''} ${ia} aria-label="Câu ${n}"><span class="fix" id="fix-${k}"></span></label>`;
 function build(){
   $('#list1B').innerHTML = KEY['1B'].map((_, i) => cell('1B-' + (i + 1), i + 1, 'one')).join('');
@@ -356,6 +356,15 @@ function build(){
         const all = [...document.querySelectorAll('#list1B input')], nx = all.slice(all.indexOf(inp) + 1).find(x => !x.disabled);
         if (nx) nx.focus();
       }
+    });
+    // Enter: sang ô kế tiếp (bỏ qua ô đã khoá / đang ẩn); ô cuối thì đóng bàn phím
+    inp.addEventListener('keydown', e => {
+      if (e.key !== 'Enter' || e.isComposing) return;
+      e.preventDefault();
+      const all = [...document.querySelectorAll('input.txt')];
+      const nx = all.slice(all.indexOf(inp) + 1).find(x => !x.disabled && x.offsetParent !== null);
+      if (nx){ nx.focus({preventScroll:true}); nx.scrollIntoView({block:'center', behavior:'smooth'}); }
+      else inp.blur();
     });
   });
   renderGrid();

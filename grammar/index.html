@@ -482,6 +482,16 @@ function build(){
       S.t[inp.dataset.k] = inp.value; save(); progress();
       if (fixing()) document.querySelectorAll(`input.txt[data-k^="${inKey(inp.dataset.k)}"]`).forEach(paintFixInput);
     });
+    // Enter: sang ô kế tiếp (bỏ qua ô đã khoá / đang ẩn); ô cuối thì đóng bàn phím
+    inp.setAttribute('enterkeyhint', 'next');
+    inp.addEventListener('keydown', e => {
+      if (e.key !== 'Enter' || e.isComposing) return;
+      e.preventDefault();
+      const all = [...document.querySelectorAll('input.txt')];
+      const nx = all.slice(all.indexOf(inp) + 1).find(x => !x.disabled && x.offsetParent !== null);
+      if (nx){ nx.focus({preventScroll:true}); nx.scrollIntoView({block:'center', behavior:'smooth'}); }
+      else inp.blur();
+    });
   });
   [1, 3, 5].forEach(renderDrag);
 }
