@@ -416,8 +416,10 @@ const CFG = {1:EX1, 2:EX2, 3:EX3, 4:EX4};
 const DRAG = [1, 2, 3, 4];
 
 /* ============ TRẠNG THÁI ============ */
+// Nộp 2 lần: lần 1 chấm + gửi cô (kèm ghi âm) → câu sai tô đỏ kèm gợi ý, em sửa lại → nộp lần 2 → hiện đáp án.
 const blankState = () => ({name:'', cls:'', d:{1:{}, 2:{}, 3:{}, 4:{}}, mc:{}, wo:{}, rec:null,
-  submitted:false, sent:false, submittedAt:null, startedAt:null, leaves:0});
+  submitted:false, sent:false, submittedAt:null, startedAt:null, leaves:0,
+  sid:null, r1:null, done:false, sent2:false, submittedAt2:null, leaves2:0});
 let S = (() => {
   try {
     const o = Object.assign(blankState(), JSON.parse(localStorage.getItem(STORE_KEY)) || {});
@@ -425,9 +427,36 @@ let S = (() => {
     return o;
   } catch (e) { return blankState(); }
 })();
+if (S.submitted && !S.r1) S.done = true; // bài đã nộp theo kiểu cũ (1 lần)
 function save(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch (e) {} }
-let RES = null;  // kết quả chấm (sau khi nộp)
+let RES = null;  // kết quả chấm cuối cùng (sau khi xong hẳn)
 let sel = null;  // chip đang được chọn (chế độ chạm)
+
+/* ============ NỘP 2 LẦN ============ */
+const fixing = () => S.submitted && !S.done;
+const r1ok = k => S.r1 ? S.r1.ok[k] : undefined;
+const editable = k => !S.submitted || (fixing() && r1ok(k) === false);
+const curAns = k => { const r = grade().map[k]; return r ? r.ans : ''; };
+const makeSid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const durSec = (a, b) => a && b ? Math.max(0, Math.round((new Date(b) - new Date(a)) / 1000)) : null;
+// Che những chỗ in đậm / in nghiêng (đáp án, cụm từ chứa đáp án) trong lời giải → thành gợi ý
+const maskAll = html => String(html || '').replace(/<(b|i)>[\s\S]*?<\/\1>/g, '<$1>…</$1>');
+function hintOf(ex, it, msgs){
+  let h;
+  if (ex === 2) h = 'Nghe lại câu này, chú ý từ chỉ tần suất (always / usually / often / sometimes / never).';
+  else if (ex === 4) h = `Nghe lại đoạn Sanjay nói về <b>${esc(it.who)}</b>.`;
+  else if (ex === 5){ const q = (it.why.match(/“[^”]*”/) || [''])[0]; h = q ? 'Nghe lại đoạn này: ' + maskAll(q) : 'Nghe lại đoạn nói về câu này.'; }
+  else if (ex === 7) h = it.id === '2' ? 'Câu hỏi: trợ động từ <b>do</b> đứng đầu, trạng từ tần suất đứng trước động từ chính.' : it.why.split(':')[0] + '.';
+  else h = maskAll(it.tip);
+  return (msgs.length ? `<ul>${msgs.map(m => `<li>${m}</li>`).join('')}</ul>` : '') + `<div class="why">💡 ${h}</div>`;
+}
+function snap(R){
+  const ok = {}, ans = {}, hint = {};
+  R.items.forEach(i => { ok[i.key] = i.ok; ans[i.key] = i.ans; if (i.ok === false) hint[i.key] = i.hint; });
+  return {score:R.score, total:R.total, ok, ans, hint,
+    sections:R.sections.map(s => ({id:s.id, title:s.title, score:s.score, total:s.total, pending:s.pending && !s.total})),
+    items:R.items.map(i => ({sec:i.sec, n:i.n, q:i.q, ans:i.ans, correct:i.correct, ok:i.ok}))};
+}
 
 /* ============ DỰNG GIAO DIỆN ============ */
 function sentence(t, slotHtml){ const [a, b] = t.split('___'); return `${esc(a)}${slotHtml}${esc(b ?? '')}`; }
@@ -448,8 +477,8 @@ function build(){
   $('#list5').innerHTML = EX5.items.map(it => `<li class="item"><span class="num">${it.id}</span><div class="ibody"><div class="mcq">${esc(it.q)}</div><div class="opts" data-id="${it.id}">${it.opts.map((o, i) => `<button type="button" class="opt" data-i="${i}"><span class="l">${'ABC'[i]}</span><span>${esc(o)}</span></button>`).join('')}</div><div class="fb" id="fb-5-${it.id}"></div></div></li>`).join('');
   $('#scriptBody5').innerHTML = EX5.script.map(t => `<p>${esc(t)}</p>`).join('');
   $('#list5').addEventListener('click', e => {
-    const b = e.target.closest('.opt'); if (!b || S.submitted) return;
-    const id = b.parentElement.dataset.id;
+    const b = e.target.closest('.opt'); if (!b) return;
+    const id = b.parentElement.dataset.id; if (!editable('5-' + id)) return;
     S.mc[id] = S.mc[id] === +b.dataset.i ? undefined : +b.dataset.i;
     if (S.mc[id] === undefined) delete S.mc[id];
     save(); renderMC(); progress();
@@ -457,9 +486,9 @@ function build(){
   // Ex 7
   $('#list7').innerHTML = EX7.items.map(it => `<li class="item"><span class="num">${it.id}</span><div class="ibody" id="wo-${it.id}"></div></li>`).join('');
   $('#list7').addEventListener('click', e => {
-    if (S.submitted) return;
     const host = e.target.closest('.ibody'); if (!host) return;
-    const id = host.id.slice(3), cur = S.wo[id] = S.wo[id] || [];
+    const id = host.id.slice(3); if (!editable('7-' + id)) return;
+    const cur = S.wo[id] = S.wo[id] || [];
     const c = e.target.closest('.chip');
     if (e.target.closest('.wo-reset')) S.wo[id] = [];
     else if (c && c.closest('.wo-bank')) cur.push(+c.dataset.i);
@@ -477,51 +506,59 @@ function build(){
 
 function renderMC(){
   document.querySelectorAll('#list5 .opts').forEach(box => {
-    const id = box.dataset.id, it = EX5.items.find(x => x.id === id), pick = S.mc[id];
+    const id = box.dataset.id, it = EX5.items.find(x => x.id === id), pick = S.mc[id], k = '5-' + id;
     box.querySelectorAll('.opt').forEach(b => {
       const i = +b.dataset.i;
-      b.className = 'opt' + (S.submitted ? (i === it.a ? ' right' : i === pick ? ' wrong' : '') : (i === pick ? ' on' : ''));
-      b.disabled = S.submitted;
+      let cls = 'opt';
+      if (S.done) cls += i === it.a ? ' right' : i === pick ? ' wrong' : '';
+      else if (fixing() && r1ok(k)) cls += i === pick ? ' right' : '';
+      else if (i === pick) cls += fixing() && S.r1.ans[k] === it.opts[i] ? ' wrong' : ' on';
+      b.className = cls;
+      b.disabled = !editable(k);
     });
   });
 }
 
 function renderWO(id){
-  const it = EX7.items.find(x => x.id === id), picked = S.wo[id] || [];
-  const r = RES && RES.map['7-' + id];
+  const it = EX7.items.find(x => x.id === id), picked = S.wo[id] || [], k = '7-' + id, ed = editable(k);
+  const r = S.done && RES ? RES.map[k] : null;
+  const st = r ? (r.ok ? ' ok' : ' bad') : fixing() ? (r1ok(k) ? ' ok' : curAns(k) === S.r1.ans[k] ? ' bad' : '') : '';
   const chip = i => `<span class="chip" data-i="${i}">${esc(it.words[i])}</span>`;
   const rest = it.words.map((_, i) => i).filter(i => !picked.includes(i));
   $('#wo-' + id).innerHTML =
-    `<div class="wo-ans${r ? (r.ok ? ' ok' : ' bad') : ''}">${picked.length ? picked.map(chip).join('') : '<span class="ph">Chạm vào từ bên dưới để xếp câu…</span>'}<span class="end">${it.end}</span></div>` +
-    (S.submitted ? '' : `<div class="wo-bank">${rest.map(chip).join('')}${picked.length ? '<button type="button" class="wo-reset" aria-label="Xếp lại từ đầu">↺ xếp lại</button>' : ''}</div>`) +
+    `<div class="wo-ans${st}">${picked.length ? picked.map(chip).join('') : '<span class="ph">Chạm vào từ bên dưới để xếp câu…</span>'}<span class="end">${it.end}</span></div>` +
+    (ed ? `<div class="wo-bank">${rest.map(chip).join('')}${picked.length ? '<button type="button" class="wo-reset" aria-label="Xếp lại từ đầu">↺ xếp lại</button>' : ''}</div>` : '') +
     `<div class="fb" id="fb-7-${id}"></div>`;
   if (r) paintFb('fb-7-' + id, [r]);
+  else if (fixing()) paintFb('fb-7-' + id, [{key:k, ok:r1ok(k)}], fixFbHtml);
 }
 
 function renderDrag(ex){
   const cfg = CFG[ex], D = S.d[ex], used = new Set(Object.values(D));
   const free = cfg.bank.filter(w => !used.has(w));
   const bank = $('#bank' + ex);
-  bank.hidden = S.submitted;
+  bank.hidden = S.done || (fixing() && !cfg.items.some(it => editable(`${ex}-${it.id}`)));
   bank.innerHTML = free.length
     ? free.map(w => `<span class="chip${sel && sel.ex === ex && sel.w === w ? ' sel' : ''}" data-w="${esc(w)}">${esc(w)}</span>`).join('')
     : `<span class="empty">Hết từ rồi 👍</span>`;
   bank.querySelectorAll('.chip').forEach(c => bindChip(c, ex, c.dataset.w, null));
   $('#ex' + ex).classList.toggle('pickmode', !!(sel && sel.ex === ex));
-  $('#ex' + ex).classList.toggle('locked', S.submitted);
+  $('#ex' + ex).classList.toggle('locked', S.done);
   cfg.items.forEach(it => renderSlot(ex, it.id));
 }
 
 function renderSlot(ex, id){
   const host = $(`#slot-${ex}-${id}`);
+  const k = `${ex}-${id}`, ed = editable(k);
   const w = S.d[ex][id];
-  const r = RES && RES.map[`${ex}-${id}`];
-  const st = r ? (r.ok == null ? ' wait' : r.ok ? ' ok' : ' bad') : '';
+  let st = '';
+  if (S.done && RES){ const r = RES.map[k]; st = r ? (r.ok == null ? ' wait' : r.ok ? ' ok' : ' bad') : ''; }
+  else if (fixing()){ const o = r1ok(k); st = o == null ? ' wait' : o ? ' ok' : w === S.r1.ans[k] ? ' bad' : ''; }
   const chip = w ? `<span class="chip in" data-w="${esc(w)}">${esc(w)}</span>` : '';
   host.innerHTML = `<span class="drop${w ? ' filled' : ''}${st}" data-ex="${ex}" data-id="${id}">${chip}</span>`;
   host.querySelectorAll('.chip').forEach(c => bindChip(c, ex, c.dataset.w, id));
   host.querySelector('.drop').addEventListener('click', () => {
-    if (!S.submitted && sel && sel.ex === ex && !S.d[ex][id]) place(ex, id, sel.w, null);
+    if (ed && sel && sel.ex === ex && !S.d[ex][id]) place(ex, id, sel.w, null);
   });
 }
 
@@ -540,7 +577,7 @@ let drag = null, hoverEl = null, scrollV = 0, rafId = 0;
 const ghost = $('#ghost');
 function bindChip(el, ex, w, from){
   el.addEventListener('pointerdown', e => {
-    if (S.submitted || (e.button !== undefined && e.button !== 0)) return;
+    if (S.done || (from != null && !editable(`${ex}-${from}`)) || (e.button !== undefined && e.button !== 0)) return;
     e.preventDefault();
     drag = {ex, w, from, el, x0:e.clientX, y0:e.clientY, moved:false};
     try { el.setPointerCapture(e.pointerId); } catch (_) {}
@@ -549,7 +586,7 @@ function bindChip(el, ex, w, from){
 function dropTarget(x, y, ex){
   const el = document.elementFromPoint(x, y);
   const d = el && el.closest('.drop');
-  return d && +d.dataset.ex === ex ? d : null;
+  return d && +d.dataset.ex === ex && editable(`${ex}-${d.dataset.id}`) ? d : null;
 }
 function autoScroll(){
   if (!drag || !drag.moved || !scrollV){ rafId = 0; return; }
@@ -751,11 +788,16 @@ function answeredList(){
   return a;
 }
 function progress(){
-  const a = answeredList(), done = a.filter(Boolean).length;
-  if (S.submitted && RES){
-    $('#progT').textContent = `Đã nộp · ${RES.score}/${RES.total} câu đúng`;
+  if (S.done && RES){
+    $('#progT').textContent = `Đã nộp${S.submittedAt2 ? ' lần 2' : ''} · ${RES.score}/${RES.total} câu đúng`;
     $('#progF').style.width = (RES.total ? RES.score / RES.total * 100 : 0) + '%';
+  } else if (fixing()){
+    const wrong = S.r1.items.filter(i => i.ok === false).length;
+    const R = grade(), changed = R.items.filter(i => S.r1.ok[i.key] === false && i.ans !== S.r1.ans[i.key]).length;
+    $('#progT').textContent = `Lần 2 · đã sửa ${changed}/${wrong} câu sai`;
+    $('#progF').style.width = (wrong ? changed / wrong * 100 : 100) + '%';
   } else {
+    const a = answeredList(), done = a.filter(Boolean).length;
     $('#progT').textContent = `Đã làm ${done}/${a.length} câu`;
     $('#progF').style.width = done / a.length * 100 + '%';
   }
@@ -779,13 +821,14 @@ function grade(){
       }
     } else ok = w === it.a;
     if (w && ok === false && meanOf[ex] && meanOf[ex][w]) msgs.push(`<b>${esc(w)}</b> nghĩa là “${meanOf[ex][w]}”, chưa hợp với ${ex === 1 ? 'tranh' : 'câu'} này.`);
-    items.push({sec:String(ex), key:`${ex}-${it.id}`, fb:`fb-${ex}-${it.id}`, n:it.id, q, ans:w, correct, ok, msgs, why});
+    const hm = !w && ok === false ? msgs.concat('Em chưa làm câu này.') : msgs;
+    items.push({sec:String(ex), key:`${ex}-${it.id}`, fb:`fb-${ex}-${it.id}`, n:it.id, q, ans:w, correct, ok, msgs, why, hint:hintOf(ex, it, hm)});
   }));
 
   EX5.items.forEach(it => {
     const p = S.mc[it.id];
     items.push({sec:'5', key:'5-' + it.id, fb:'fb-5-' + it.id, n:it.id, q:it.q,
-      ans:p != null ? it.opts[p] : '', correct:it.opts[it.a], ok:p === it.a, msgs:[], why:it.why});
+      ans:p != null ? it.opts[p] : '', correct:it.opts[it.a], ok:p === it.a, msgs:[], why:it.why, hint:hintOf(5, it, p == null ? ['Em chưa làm câu này.'] : [])});
   });
 
   EX7.items.forEach(it => {
@@ -793,9 +836,9 @@ function grade(){
     const raw = picked.map(i => it.words[i]).join(' ');
     const full = picked.length === it.words.length;
     const ok = full && it.ans.map(normWords).includes(normWords(raw));
-    const msgs = picked.length && !full ? ['Em chưa xếp hết các từ.'] : [];
+    const msgs = picked.length && !full ? ['Em chưa xếp hết các từ.'] : !picked.length ? ['Em chưa làm câu này.'] : [];
     items.push({sec:'7', key:'7-' + it.id, fb:'fb-7-' + it.id, n:it.id, q:it.words.join(' / '),
-      ans:raw ? raw + it.end : '', correct:it.show, ok, msgs, why:it.why});
+      ans:raw ? raw + it.end : '', correct:it.show, ok, msgs:msgs.filter(m => m !== 'Em chưa làm câu này.'), why:it.why, hint:hintOf(7, it, msgs)});
   });
 
   const sections = SECTIONS.map(s => {
@@ -817,13 +860,28 @@ function fbHtml(i){
   const errs = i.ok === false && i.msgs.length ? `<ul>${i.msgs.map(m => `<li>${m}</li>`).join('')}</ul>` : '';
   return `${head}${errs}<div class="why">💡 ${i.why}</div>`;
 }
-function paintFb(id, arr){
+// Lúc sửa bài: chỉ báo đúng/sai + gợi ý, chưa hiện đáp án
+function fixFbHtml(i){
+  return i.ok == null ? '<div class="h">⏳ Cô sẽ chấm câu này sau.</div>'
+    : i.ok ? '<div class="h">✅ Đúng rồi!</div>'
+    : `<div class="h">❌ Chưa đúng, em sửa lại nhé.</div>${S.r1.hint[i.key] || ''}`;
+}
+function paintFb(id, arr, fn = fbHtml){
   const el = document.getElementById(id); if (!el) return;
   const cls = arr.some(i => i.ok === false) ? 'bad' : arr.some(i => i.ok == null) ? 'wait' : 'ok';
   el.className = 'fb show ' + cls;
-  el.innerHTML = arr.map(fbHtml).join('');
+  el.innerHTML = arr.map(fn).join('');
 }
-function showResults(){
+function showFix(){
+  Object.keys(S.r1.ok).forEach(k => { if (!k.startsWith('7-')) paintFb('fb-' + k, [{key:k, ok:S.r1.ok[k]}], fixFbHtml); });
+  DRAG.forEach(renderDrag);
+  renderMC();
+  EX7.items.forEach(it => renderWO(it.id));
+  $('#script4').hidden = true; $('#script5').hidden = true;
+  const sb = $('#submitBtn'); sb.hidden = false; sb.textContent = 'Nộp lần 2 ✔';
+  renderRec(); renderWho(); renderSummary(); progress();
+}
+function showFinal(){
   RES = grade();
   RES.items.forEach(i => { if (i.sec !== '7') paintFb(i.fb, [i]); });
   DRAG.forEach(renderDrag);
@@ -836,33 +894,53 @@ function showResults(){
   renderSummary();
   progress();
 }
+function render(){ if (S.done) showFinal(); else if (fixing()) showFix(); }
+
 function renderSummary(){
-  const pct = RES.total ? RES.score / RES.total : 0;
-  $('#summaryBox').innerHTML = `<div class="card summary">
-    <div class="score">${RES.score}<span>/${RES.total}</span></div>
-    <div style="flex:1;min-width:220px">
-      <div style="font-weight:800;font-size:18px">${RES.score === RES.total ? '🎉 Đúng hết luôn, giỏi quá!' : pct >= .8 ? '👏 Giỏi lắm!' : pct >= .5 ? '💪 Khá rồi, cố thêm chút nữa nhé!' : '📚 Xem lại giải thích bên dưới nha!'}</div>
-      <div class="secs">${RES.sections.map(s => s.pending && !s.total
-          ? `<span class="sec wait">Ex ${s.id}: cô chấm</span>`
-          : `<span class="sec${s.score === s.total && !s.pending ? ' full' : ''}">Ex ${s.id}: ${s.score}/${s.total}${s.pending ? ' +⏳' : ''}</span>`).join('')}
-        <span class="sec${S.rec ? ' full' : ''}">Ex 8: ${S.rec ? '🎙 ' + clock(S.rec.dur) : 'chưa ghi âm'}</span></div>
-      <div style="font-size:14.5px;color:var(--muted)">Kéo xuống xem đáp án nhé, câu sai tô đỏ. Lời thoại bài nghe hiện ở cuối Ex 4 và Ex 5.</div>
-      <div class="status" id="sendStatus"></div>
-    </div></div>`;
+  const secTags = R => R.sections.map(s => s.pending && !s.total
+      ? `<span class="sec wait">Ex ${s.id}: cô chấm</span>`
+      : `<span class="sec${s.score === s.total && !s.pending ? ' full' : ''}">Ex ${s.id}: ${s.score}/${s.total}${s.pending ? ' +⏳' : ''}</span>`).join('') +
+    `<span class="sec${S.rec ? ' full' : ''}">Ex 8: ${S.rec ? '🎙 ' + clock(S.rec.dur) : 'chưa ghi âm'}</span>`;
+  let html;
+  if (fixing()){
+    const r = S.r1, wrong = r.items.filter(i => i.ok === false).length;
+    html = `<div class="card summary">
+      <div class="score">${r.score}<span>/${r.total}</span></div>
+      <div style="flex:1;min-width:220px">
+        <div style="font-weight:800;font-size:18px">🔁 Lần 1: em sai ${wrong} câu. Sửa lại nha!</div>
+        <div class="secs">${secTags(r)}</div>
+        <div style="font-size:14.5px;color:var(--muted)">Câu sai tô <b style="color:var(--bad)">đỏ</b>, có 💡 gợi ý. Câu đúng đã khoá. Sửa xong bấm <b>Nộp lần 2</b> (chỉ được sửa 1 lần). Đáp án và lời thoại bài nghe sẽ hiện sau lần 2.</div>
+        <div class="status" id="sendStatus"></div>
+      </div></div>`;
+  } else {
+    const pct = RES.total ? RES.score / RES.total : 0, two = S.r1 && S.submittedAt2;
+    html = `<div class="card summary">
+      <div class="score">${RES.score}<span>/${RES.total}</span></div>
+      <div style="flex:1;min-width:220px">
+        <div style="font-weight:800;font-size:18px">${RES.score === RES.total ? '🎉 Đúng hết luôn, giỏi quá!' : pct >= .8 ? '👏 Giỏi lắm!' : pct >= .5 ? '💪 Khá rồi, cố thêm chút nữa nhé!' : '📚 Xem lại giải thích bên dưới nha!'}</div>
+        ${two ? `<div style="font-weight:700">Lần 1: ${S.r1.score}/${S.r1.total} → Lần 2: ${RES.score}/${RES.total}</div>` : ''}
+        <div class="secs">${secTags(RES)}</div>
+        <div style="font-size:14.5px;color:var(--muted)">Kéo xuống xem đáp án nhé, câu sai tô đỏ. Lời thoại bài nghe hiện ở cuối Ex 4 và Ex 5.</div>
+        <div class="status" id="sendStatus"></div>
+      </div></div>`;
+  }
+  $('#summaryBox').innerHTML = html;
   updateStatus();
 }
 
 /* ============ GỬI BÀI ============ */
 let sendState = null; // null | 'sending' | 'ok' | 'err' | 'warn'
-let sendErr = '';
+let sendErr = '', sending = false;
 function updateStatus(){
   const el = $('#sendStatus'); if (!el) return;
-  const st = S.sent ? 'ok' : sendState;
+  const allSent = S.sent && (!S.submittedAt2 || S.sent2);
+  const st = allSent ? 'ok' : sendState;
   el.className = 'status ' + (st || '');
-  if (st === 'ok') el.innerHTML = '✅ Cô đã nhận được bài!';
-  else if (st === 'sending') el.innerHTML = S.rec ? '⏳ Đang gửi bài và file ghi âm cho cô… (có thể mất vài chục giây)' : '⏳ Đang gửi bài cho cô…';
+  if (st === 'ok') el.innerHTML = fixing() ? '✅ Cô đã nhận bài lần 1.' : S.submittedAt2 ? '✅ Cô đã nhận được bài lần 2!' : '✅ Cô đã nhận được bài!';
+  else if (st === 'sending') el.innerHTML = S.rec && !S.sent ? '⏳ Đang gửi bài và file ghi âm cho cô… (có thể mất vài chục giây)' : '⏳ Đang gửi bài cho cô…';
   else if (st === 'warn') el.innerHTML = '⚠️ Trang chưa được cài địa chỉ gửi bài (SCRIPT_URL), nên bài chưa được gửi cho cô.';
-  else el.innerHTML = `⚠️ Chưa gửi được bài${sendErr ? ` (${esc(sendErr)})` : ''}. Em kiểm tra mạng rồi bấm: <button class="btn" type="button" id="resendBtn" style="padding:6px 14px;font-size:14px;margin-left:4px">Gửi lại</button>`;
+  else if (st === 'err') el.innerHTML = `⚠️ Chưa gửi được bài${sendErr ? ` (${esc(sendErr)})` : ''}. Em kiểm tra mạng rồi bấm: <button class="btn" type="button" id="resendBtn" style="padding:6px 14px;font-size:14px;margin-left:4px">Gửi lại</button>`;
+  else el.innerHTML = '';
   const rb = $('#resendBtn'); if (rb) rb.onclick = send;
 }
 function blobToB64(b){
@@ -873,60 +951,85 @@ function blobToB64(b){
     fr.readAsDataURL(b);
   });
 }
-async function payload(){
-  const p = {
-    app:'btvn', unit:UNIT, title:TITLE, name:S.name, cls:S.cls, submittedAt:S.submittedAt,
-    startedAt:S.startedAt || null, leaves:S.leaves || 0,
-    timeTakenSec:S.startedAt ? Math.max(0, Math.round((new Date(S.submittedAt) - new Date(S.startedAt)) / 1000)) : null,
-    score:RES.score, total:RES.total,
-    sections:RES.sections.map(s => ({id:s.id, title:s.title, score:s.score, total:s.total, pending:s.pending && !s.total})),
-    items:RES.items.map(i => ({sec:i.sec, n:i.n, q:i.q, ans:i.ans, correct:i.correct, ok:i.ok})),
-    wantsAudio:true, audio:null,
-  };
+function base(){ return {app:'btvn', unit:UNIT, title:TITLE, name:S.name, cls:S.cls, sid:S.sid || ''}; }
+async function payload1(){
+  const r = S.r1 || snap(grade());
+  const p = Object.assign(base(), {attempt:1, canRetry:!!S.r1 && r.items.some(i => i.ok === false),
+    submittedAt:S.submittedAt, startedAt:S.startedAt || null, leaves:S.leaves || 0, timeTakenSec:durSec(S.startedAt, S.submittedAt),
+    score:r.score, total:r.total, sections:r.sections, items:r.items, wantsAudio:true, audio:null});
   if (S.rec && recBlob){
     p.audio = {b64:await blobToB64(recBlob), mime:S.rec.mime, ext:S.rec.ext, dur:S.rec.dur, label:'Exercise 8 – Speaking: my family’s daily routines'};
   }
   return p;
 }
+function payload2(){
+  const R = grade(), r = S.r1;
+  return Object.assign(base(), {attempt:2,
+    submittedAt:S.submittedAt2, startedAt:S.submittedAt, leaves:S.leaves2 || 0, timeTakenSec:durSec(S.submittedAt, S.submittedAt2),
+    score:R.score, total:R.total,
+    sections:R.sections.map(s => ({id:s.id, title:s.title, score:s.score, total:s.total, pending:s.pending && !s.total})),
+    items:R.items.map(i => ({sec:i.sec, n:i.n, q:i.q, ans:i.ans, correct:i.correct, ok:i.ok})),
+    first:{score:r.score, total:r.total, sections:r.sections, items:r.items,
+      startedAt:S.startedAt || null, submittedAt:S.submittedAt, timeTakenSec:durSec(S.startedAt, S.submittedAt), leaves:S.leaves || 0}});
+}
+async function post(p){
+  const r = await fetch(SCRIPT_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(p)});
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error || 'máy chủ báo lỗi');
+}
 async function send(){
   if (!SCRIPT_URL || SCRIPT_URL.includes('PASTE_')){ sendState = 'warn'; updateStatus(); return; }
-  sendState = 'sending'; updateStatus();
+  if (sending) return; // đang gửi: vòng lặp bên dưới sẽ tự gửi tiếp lần 2
+  sending = true; sendState = 'sending'; updateStatus();
   try {
-    const body = JSON.stringify(await payload());
-    const r = await fetch(SCRIPT_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body});
-    const j = await r.json();
-    if (!j.ok) throw new Error(j.error || 'máy chủ báo lỗi');
-    S.sent = true; save(); sendState = 'ok';
+    for (;;){
+      if (!S.sent){ await post(await payload1()); S.sent = true; save(); continue; }
+      if (S.submittedAt2 && !S.sent2){ await post(payload2()); S.sent2 = true; save(); continue; }
+      break;
+    }
+    sendState = 'ok';
   } catch (err){
     sendState = 'err'; sendErr = err && err.message ? err.message : String(err);
   }
-  updateStatus();
+  sending = false; updateStatus();
 }
 
 /* ============ NỘP BÀI ============ */
 $('#submitBtn').addEventListener('click', () => {
-  if (S.submitted) return;
+  if (S.done) return;
   if (mr){ alert('Em đang ghi âm. Bấm ⏹ Dừng ghi âm trước rồi mới nộp bài nhé.'); return; }
-  const a = answeredList(), left = a.slice(0, -1).filter(x => !x).length;
-  const notes = [];
-  if (left) notes.push(`Còn ${left} câu chưa làm.`);
-  if (!S.rec) notes.push('Em chưa ghi âm Exercise 8.');
   muteAway = true; // hộp xác nhận làm trang mất focus – không tính là rời trang
-  const go = confirm(notes.length ? `${notes.join('\n')}\nEm vẫn nộp luôn hả?\n(Nộp rồi là không sửa được nữa đâu.)` : 'Nộp bài nhé? Nộp rồi là không sửa được nữa đâu.');
+  let go;
+  if (fixing()) go = confirm('Nộp lần 2 nhé? Nộp xong trang sẽ hiện đáp án và không sửa được nữa.');
+  else {
+    const a = answeredList(), left = a.slice(0, -1).filter(x => !x).length;
+    const notes = [];
+    if (left) notes.push(`Còn ${left} câu chưa làm.`);
+    if (!S.rec) notes.push('Em chưa ghi âm Exercise 8 (ghi âm chỉ nộp được ở lần 1).');
+    go = confirm((notes.length ? `${notes.join('\n')}\nEm vẫn nộp luôn hả?\n` : 'Nộp bài nhé?\n') + '(Nộp xong, câu nào sai em được sửa lại 1 lần.)');
+  }
   releaseAway();
   if (!go) return;
   sel = null;
   document.querySelectorAll('audio').forEach(x => x.pause());
-  S.submitted = true; S.submittedAt = new Date().toISOString(); save();
-  showResults();
+  const now = new Date().toISOString();
+  if (fixing()){ S.done = true; S.submittedAt2 = now; }
+  else {
+    S.submitted = true; S.submittedAt = now; S.sid = makeSid();
+    S.r1 = snap(grade());
+    if (!S.r1.items.some(i => i.ok === false)) S.done = true; // đúng hết thì không cần lần 2
+  }
+  save();
+  render();
   window.scrollTo({top:0, behavior:'smooth'});
   send();
 });
 
 /* ============ TÊN HỌC SINH ============ */
 function renderWho(){
+  const t = d => new Date(d).toLocaleString('vi-VN');
   $('#whoBar').innerHTML = `<span>👤 <b>${esc(S.name)}</b> · Lớp <b>${esc(S.cls)}</b></span>` +
-    (S.submitted ? `<span style="color:var(--muted);font-size:14px">Nộp lúc ${new Date(S.submittedAt).toLocaleString('vi-VN')}</span>` : `<button class="linkbtn" type="button" id="editName">Sửa tên / lớp</button>`);
+    (S.submitted ? `<span style="color:var(--muted);font-size:14px">Nộp${S.r1 ? ' lần 1' : ''} lúc ${t(S.submittedAt)}${S.submittedAt2 ? ` · lần 2 lúc ${t(S.submittedAt2)}` : ''}</span>` : `<button class="linkbtn" type="button" id="editName">Sửa tên / lớp</button>`);
   const b = $('#editName'); if (b) b.onclick = () => { $('#work').hidden = true; $('#bar').hidden = true; $('#start').hidden = false; $('#inName').focus(); };
 }
 function showWork(){
@@ -947,12 +1050,15 @@ $('#startBtn').addEventListener('click', () => {
 ['inName', 'inCls'].forEach(id => $('#' + id).addEventListener('keydown', e => { if (e.key === 'Enter') $('#startBtn').click(); }));
 
 /* ============ ĐẾM SỐ LẦN RỜI TRANG ============ */
-// Tính 1 lần khi em chuyển tab/ứng dụng, thu nhỏ cửa sổ hoặc tải lại trang (chỉ trong lúc đang làm bài)
+// Tính 1 lần khi em chuyển tab/ứng dụng, thu nhỏ cửa sổ hoặc tải lại trang (chỉ trong lúc đang làm bài).
+// Đếm riêng cho lần 1 (leaves) và lúc sửa bài lần 2 (leaves2).
 let away = false, muteAway = false;
-const tracking = () => !!S.startedAt && !S.submitted && !$('#work').hidden;
+const tracking = () => !!S.startedAt && !S.done && !$('#work').hidden;
 function goAway(){
   if (muteAway || away || !tracking()) return;
-  away = true; S.leaves = (S.leaves || 0) + 1; save();
+  away = true;
+  if (S.submitted) S.leaves2 = (S.leaves2 || 0) + 1; else S.leaves = (S.leaves || 0) + 1;
+  save();
 }
 function comeBack(){ if (!document.hidden && document.hasFocus()) away = false; }
 document.addEventListener('visibilitychange', () => document.hidden ? goAway() : comeBack());
@@ -963,8 +1069,11 @@ window.addEventListener('focus', comeBack);
 build();
 renderRec();
 if (S.name) showWork();
-if (S.submitted) showResults();
-loadRec().then(() => { if (S.submitted && RES) renderSummary(); });
+if (S.submitted) render();
+loadRec().then(() => {
+  if (S.submitted && (RES || fixing())) renderSummary();
+  if (S.submitted && (!S.sent || (S.submittedAt2 && !S.sent2))) send(); // lần trước gửi chưa xong → gửi tiếp (sau khi nạp ghi âm)
+});
 </script>
 </body>
 </html>

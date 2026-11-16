@@ -28,6 +28,8 @@ Có 2 phần: **(A) máy chủ nhận bài** bằng Google Apps Script, dùng đ
 
 > **Cập nhật cho Unit 1 (có ghi âm):** `Code.gs` đã được sửa để nhận file ghi âm và đính kèm vào email. Cô dán lại toàn bộ `Code.gs` mới vào Apps Script, bấm 💾 Save, rồi làm bước **New version → Deploy** ở trên. Không cần cấp thêm quyền. Google Sheet sẽ tự đổi tiêu đề cột thành `Phần 1…Phần 5` và thêm 2 cột cuối là `Phần 6` và `Ghi âm`. Các dòng cũ của bài Grammar giữ nguyên.
 
+> **Cập nhật "Nộp 2 lần" (11/2026):** học sinh nộp lần 1, sửa câu sai, rồi nộp lần 2. Cô dán lại toàn bộ `Code.gs` mới vào Apps Script, bấm 💾 Save, rồi làm **New version → Deploy**, và **làm bước này TRƯỚC khi đăng các trang mới**. Sheet tự thêm 6 cột cuối: `Mã lần nộp`, `Điểm lần 2`, `Câu sai lần 2`, `Nộp lần 2 lúc`, `Thời gian làm lần 2`, `Rời trang lần 2`. Lần 2 được điền vào **cùng dòng** với lần 1. Cột `Điểm` vẫn là điểm lần 1, và web app quản lý lớp vẫn lấy cột này.
+
 ## B. Đăng trang lên GitHub Pages
 
 1. Tạo repo mới trên GitHub, ví dụ `btvn`, để chế độ **Public**.
@@ -50,12 +52,16 @@ Gửi link mục lục cho học sinh là tiện nhất: các em tự chọn bà
 
 1. Nhập họ tên và lớp.
 2. Làm 5 bài. Bài làm tự lưu trên máy, lỡ tắt trình duyệt cũng không mất.
-3. Bấm **Nộp bài ✔**. Trang hiện điểm, đáp án và giải thích từng câu, đồng thời gửi bài về Gmail của cô.
-4. Nộp xong thì không sửa được nữa. Nếu mạng lỗi, trang hiện nút **Gửi lại**.
+3. Bấm **Nộp bài ✔** (lần 1). Trang hiện điểm lần 1 và gửi bài về Gmail của cô (mail 1, kèm ghi âm nếu có).
+   Câu đúng tô xanh và bị khoá. Câu sai tô đỏ, có 💡 gợi ý nhưng **chưa hiện đáp án**.
+4. Học sinh sửa các câu sai rồi bấm **Nộp lần 2 ✔**. Trang hiện đáp án, giải thích và điểm "Lần 1 → Lần 2", rồi gửi mail 2 cho cô.
+   Chỉ được sửa 1 lần. Ghi âm chỉ nộp ở lần 1. Nếu đúng hết ngay lần 1 thì không có lần 2.
+5. Nếu mạng lỗi, trang hiện nút **Gửi lại**. Mở lại trang thì bài chưa gửi xong sẽ tự gửi tiếp.
 
 ## Cô nhận được gì?
 
-- **Email** tiêu đề dạng `[BTVN Grammar] Nguyễn Minh Anh – 7A – 27/31`, có bảng từng câu: học sinh trả lời gì, đáp án, đúng/sai.
+- **Email 1** (sau lần 1), tiêu đề dạng `[BTVN Grammar] Nguyễn Minh Anh – 7A – Lần 1: 27/31`, có bảng từng câu: học sinh trả lời gì, đáp án, đúng/sai, thời gian làm bài, số lần rời trang.
+- **Email 2** (sau lần 2), tiêu đề dạng `… – Lần 1: 27/31 → Lần 2: 29/31`, có bảng so sánh lần 1 và lần 2 (điểm, giờ bắt đầu / nộp, thời gian làm, số lần rời trang). Từng câu có cột Lần 1, Lần 2, Đáp án và dấu ✅ đúng ngay / ❌→✅ sửa đúng / ❌❌ sai cả 2 lần.
   Với Unit 1, nếu học sinh có ghi âm thì tiêu đề có thêm 🎙 và **file ghi âm được đính kèm** ở cuối email (bấm vào là nghe được).
 - **Google Sheet** "BTVN – Bài nộp của học sinh": mỗi lần nộp là 1 dòng (thời gian, tên, lớp, điểm từng bài, danh sách câu sai).
 

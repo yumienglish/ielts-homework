@@ -3,6 +3,8 @@
  * - Nhận bài nộp từ trang web (POST JSON)
  * - Gửi email kết quả cho giáo viên
  * - Ghi 1 dòng vào Google Sheet "BTVN – Bài nộp của học sinh" (tự tạo lần đầu)
+ * - Nộp 2 lần: lần 1 thêm dòng mới + gửi mail; lần 2 (làm lại câu sai) điền vào CÙNG dòng
+ *   (tìm theo "Mã lần nộp") + gửi mail có cả kết quả lần 1 và lần 2. Cột "Điểm" luôn là điểm lần 1.
  *
  * Cài đặt: xem HUONG-DAN-CAI-DAT.md
  */
@@ -11,7 +13,8 @@ const SHEET_TITLE = 'BTVN – Bài nộp của học sinh';
 const TIMEZONE = 'Asia/Ho_Chi_Minh';
 // Cột mới luôn thêm ở CUỐI để các dòng cũ không bị lệch
 const HEAD = ['Thời gian nộp', 'Họ tên', 'Lớp', 'Bài', 'Điểm', 'Tổng', 'Phần 1', 'Phần 2', 'Phần 3', 'Phần 4', 'Phần 5', 'Câu sai', 'Chi tiết (JSON)',
-              'Bắt đầu lúc', 'Thời gian làm bài', 'Số lần rời trang', 'Phần 6', 'Ghi âm'];
+              'Bắt đầu lúc', 'Thời gian làm bài', 'Số lần rời trang', 'Phần 6', 'Ghi âm',
+              'Mã lần nộp', 'Điểm lần 2', 'Câu sai lần 2', 'Nộp lần 2 lúc', 'Thời gian làm lần 2', 'Rời trang lần 2'];
 const MAX_AUDIO_B64 = 20 * 1024 * 1024; // ~15MB file ghi âm (giới hạn đính kèm Gmail là 25MB)
 
 function fmtTime_(iso) {
@@ -43,7 +46,7 @@ function doPost(e) {
     const d = JSON.parse(e.postData.contents);
     validate_(d);
     const sheetUrl = logToSheet_(d);
-    sendMail_(d, sheetUrl);
+    if (d.attempt === 2) sendMail2_(d, sheetUrl); else sendMail_(d, sheetUrl);
     return json_({ ok: true });
   } catch (err) {
     return json_({ ok: false, error: String(err && err.message || err) });
@@ -65,6 +68,18 @@ function validate_(d) {
   d.leaves = Math.max(0, Number(d.leaves) || 0);
   d.timeTakenSec = d.timeTakenSec == null ? null : Number(d.timeTakenSec);
   d.wantsAudio = !!d.wantsAudio;
+  d.sid = String(d.sid || '').replace(/[^\w-]/g, '').slice(0, 40);
+  d.attempt = Number(d.attempt) === 2 ? 2 : 1;
+  d.canRetry = !!d.canRetry;
+  if (d.attempt === 2) {
+    const f = d.first || {};
+    if (!Array.isArray(f.items) || f.items.length > 200) throw new Error('Thiếu kết quả lần 1');
+    d.first = { items: f.items, score: Number(f.score) || 0, total: Number(f.total) || 0,
+      sections: Array.isArray(f.sections) ? f.sections.slice(0, 20) : [],
+      startedAt: f.startedAt || null, submittedAt: f.submittedAt || null,
+      timeTakenSec: f.timeTakenSec == null ? null : Number(f.timeTakenSec), leaves: Math.max(0, Number(f.leaves) || 0) };
+    d.audio = null;
+  }
   if (d.audio) {
     const a = d.audio;
     if (typeof a.b64 !== 'string' || !a.b64 || a.b64.length > MAX_AUDIO_B64) throw new Error('File ghi âm không hợp lệ hoặc quá lớn');
@@ -123,33 +138,63 @@ function getSheet_() {
   return { ss, sh };
 }
 
+function wrongList_(items) {
+  return items.filter(i => i.ok === false).map(i => i.sec + '.' + i.n).join(', ') || '—';
+}
 function logToSheet_(d) {
   const { ss, sh } = getSheet_();
+  if (d.attempt === 2) {
+    const sidCol = HEAD.indexOf('Mã lần nộp') + 1;
+    let row = 0;
+    if (d.sid && sh.getLastRow() > 1) {
+      const hit = sh.getRange(2, sidCol, sh.getLastRow() - 1, 1).createTextFinder(d.sid).matchEntireCell(true).findNext();
+      if (hit) row = hit.getRow();
+    }
+    if (!row) { // lần 1 chưa tới được máy chủ → ghi lần 1 trước
+      const f = d.first;
+      appendFirst_(sh, Object.assign({}, d, { attempt: 1, canRetry: true, score: f.score, total: f.total, sections: f.sections, items: f.items,
+        startedAt: f.startedAt, submittedAt: f.submittedAt, timeTakenSec: f.timeTakenSec, leaves: f.leaves, audio: null }));
+      row = sh.getLastRow();
+    }
+    sh.getRange(row, sidCol + 1, 1, 5).setValues([["'" + d.score + '/' + d.total, wrongList_(d.items),
+      d.submittedAt ? new Date(d.submittedAt) : new Date(), fmtDur_(d.timeTakenSec), d.leaves]]);
+    return ss.getUrl();
+  }
+  appendFirst_(sh, d);
+  return ss.getUrl();
+}
+function appendFirst_(sh, d) {
   // thêm dấu ' để Sheets không hiểu "6/6" là ngày tháng
   const secs = d.sections.map(secScore_);
   while (secs.length < 6) secs.push('');
-  const wrong = d.items.filter(i => i.ok === false).map(i => i.sec + '.' + i.n).join(', ');
   const when = d.submittedAt ? new Date(d.submittedAt) : new Date();
   const rec = d.audio ? 'Có (' + fmtClock_(d.audio.dur) + ') – file đính kèm trong email' : (d.wantsAudio ? 'Không ghi âm' : '');
-  sh.appendRow([when, d.name, d.cls, d.title, d.score, d.total].concat(secs.slice(0, 5), [wrong || '—', JSON.stringify(d.items),
-    d.startedAt ? new Date(d.startedAt) : '—', fmtDur_(d.timeTakenSec), d.leaves, secs[5], rec]));
-  return ss.getUrl();
+  const second = d.sid && !d.canRetry ? 'Không cần (đúng hết)' : '';
+  sh.appendRow([when, d.name, d.cls, d.title, d.score, d.total].concat(secs.slice(0, 5), [wrongList_(d.items), JSON.stringify(d.items),
+    d.startedAt ? new Date(d.startedAt) : '—', fmtDur_(d.timeTakenSec), d.leaves, secs[5], rec, d.sid || '', second]));
 }
 
 function sendMail_(d, sheetUrl) {
-  const subject = '[BTVN ' + d.unit + '] ' + d.name + ' – ' + d.cls + ' – ' + d.score + '/' + d.total;
+  const subject = '[BTVN ' + d.unit + '] ' + d.name + ' – ' + d.cls + ' – ' + (d.canRetry ? 'Lần 1: ' : '') + d.score + '/' + d.total;
   const td = 'style="border:1px solid #e3dccf;padding:6px 8px;vertical-align:top"';
   const row = (k, v) => '<tr><td style="padding:3px 14px 3px 0;color:#666">' + k + '</td><td style="padding:3px 0"><b>' + v + '</b></td></tr>';
   let html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;max-width:760px">' +
     '<h2 style="margin:0 0 8px;color:#14866d">' + esc_(d.title) + '</h2>' +
     '<table style="border-collapse:collapse;margin-bottom:12px;font-size:14px">' +
     row('Học sinh', esc_(d.name) + ' – Lớp ' + esc_(d.cls)) +
-    row('Điểm (score)', '<span style="font-size:20px;color:#14866d">' + d.score + '/' + d.total + '</span>') +
+    row(d.sid ? 'Điểm lần 1 (score)' : 'Điểm (score)', '<span style="font-size:20px;color:#14866d">' + d.score + '/' + d.total + '</span>') +
     row('Bắt đầu (started)', fmtTime_(d.startedAt)) +
     row('Nộp bài (submitted)', fmtTime_(d.submittedAt)) +
     row('Thời gian làm (time taken)', fmtDur_(d.timeTakenSec)) +
     row('Rời trang (left the page)', '<span style="color:' + (d.leaves ? '#d64045' : '#1f8a4c') + '">' + d.leaves + ' lần</span>') +
     '</table>';
+  const nWrong = d.items.filter(i => i.ok === false).length;
+  if (d.canRetry && nWrong) {
+    html += '<p style="margin:0 0 10px;padding:8px 10px;background:#fff4e0;border-radius:6px">🔁 Học sinh được <b>làm lại ' + nWrong +
+      ' câu sai</b>. Kết quả lần 2 sẽ gửi trong một email nữa (nếu học sinh làm lại).</p>';
+  } else if (d.sid && !nWrong) {
+    html += '<p style="margin:0 0 10px;padding:8px 10px;background:#eefaf3;border-radius:6px">🎉 Đúng hết ngay lần 1, không cần làm lại.</p>';
+  }
 
   d.sections.forEach(s => {
     html += '<h3 style="margin:16px 0 6px">' + esc_(s.title) + ' — ' + (s.pending ? 'cô chấm' : s.score + '/' + s.total) + '</h3>' +
@@ -177,4 +222,53 @@ function sendMail_(d, sheetUrl) {
   const blob = audioBlob_(d);
   if (blob) msg.attachments = [blob];
   MailApp.sendEmail(msg);
+}
+
+/** Email lần 2: so sánh lần 1 và lần 2 cho từng câu. */
+function sendMail2_(d, sheetUrl) {
+  const f = d.first;
+  const subject = '[BTVN ' + d.unit + '] ' + d.name + ' – ' + d.cls + ' – Lần 1: ' + f.score + '/' + f.total + ' → Lần 2: ' + d.score + '/' + d.total;
+  const td = 'style="border:1px solid #e3dccf;padding:6px 8px;vertical-align:top"';
+  const th = 'style="border:1px solid #e3dccf;padding:6px 8px;background:#f4efe6;text-align:left"';
+  const leaves = n => '<span style="color:' + (n ? '#d64045' : '#1f8a4c') + '">' + n + ' lần</span>';
+  const line = (k, a, b) => '<tr><td ' + td + '>' + k + '</td><td ' + td + '><b>' + a + '</b></td><td ' + td + '><b>' + b + '</b></td></tr>';
+  let html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;max-width:760px">' +
+    '<h2 style="margin:0 0 4px;color:#14866d">' + esc_(d.title) + '</h2>' +
+    '<p style="margin:0 0 10px">Học sinh: <b>' + esc_(d.name) + '</b> – Lớp <b>' + esc_(d.cls) + '</b></p>' +
+    '<table style="border-collapse:collapse;margin-bottom:12px;font-size:14px">' +
+    '<tr><th ' + th + '></th><th ' + th + '>Lần 1 (làm cả bài)</th><th ' + th + '>Lần 2 (làm lại câu sai)</th></tr>' +
+    line('Điểm', '<span style="font-size:18px">' + f.score + '/' + f.total + '</span>', '<span style="font-size:18px;color:#14866d">' + d.score + '/' + d.total + '</span>') +
+    line('Bắt đầu', fmtTime_(f.startedAt), fmtTime_(d.startedAt)) +
+    line('Nộp bài', fmtTime_(f.submittedAt), fmtTime_(d.submittedAt)) +
+    line('Thời gian làm', fmtDur_(f.timeTakenSec), fmtDur_(d.timeTakenSec)) +
+    line('Rời trang', leaves(f.leaves), leaves(d.leaves)) +
+    '</table>';
+
+  const firstBy = {};
+  f.items.forEach(i => { firstBy[i.sec + '|' + i.n] = i; });
+  const ansHtml = a => a ? esc_(a) : '<i style="color:#999">(bỏ trống)</i>';
+  d.sections.forEach(s => {
+    const fs = f.sections.filter(x => x.id === s.id)[0];
+    html += '<h3 style="margin:16px 0 6px">' + esc_(s.title) + ' — ' +
+      (s.pending ? 'cô chấm' : 'Lần 1: ' + (fs ? fs.score : '?') + '/' + s.total + ' → Lần 2: ' + s.score + '/' + s.total) + '</h3>' +
+      '<table style="border-collapse:collapse;width:100%;font-size:13.5px">' +
+      '<tr style="background:#f4efe6"><th ' + td + '>Câu</th><th ' + td + '>Đề</th><th ' + td + '>Lần 1</th><th ' + td + '>Lần 2</th><th ' + td + '>Đáp án</th><th ' + td + '></th></tr>';
+    d.items.filter(i => i.sec === s.id).forEach(i => {
+      const a = firstBy[i.sec + '|' + i.n] || { ok: i.ok === false ? false : i.ok, ans: i.ok === false ? '' : i.ans };
+      const redo = a.ok === false;
+      const mark = i.ok == null ? '⏳' : !redo ? '✅' : i.ok ? '❌→✅' : '❌❌';
+      const bg = i.ok == null ? '#fff8e6' : !redo ? '#eefaf3' : i.ok ? '#eef4ff' : '#fdecec';
+      html += '<tr style="background:' + bg + '">' +
+        '<td ' + td + '>' + esc_(i.n) + '</td>' +
+        '<td ' + td + '>' + esc_(i.q) + '</td>' +
+        '<td ' + td + '>' + (redo ? '<s style="color:#b33">' + ansHtml(a.ans) + '</s>' : ansHtml(a.ans)) + '</td>' +
+        '<td ' + td + '>' + (redo ? '<b>' + ansHtml(i.ans) + '</b>' : '<span style="color:#999">—</span>') + '</td>' +
+        '<td ' + td + '>' + esc_(i.correct) + '</td>' +
+        '<td ' + td + '>' + mark + '</td></tr>';
+    });
+    html += '</table>';
+  });
+  html += '<p style="margin-top:10px;color:#666;font-size:13px">✅ đúng ngay lần 1 · ❌→✅ sai lần 1, sửa đúng ở lần 2 · ❌❌ sai cả 2 lần · ⏳ cô chấm</p>' +
+    '<p style="margin-top:16px"><a href="' + sheetUrl + '">📊 Mở bảng tổng hợp bài nộp (Google Sheet)</a></p></div>';
+  MailApp.sendEmail({ to: TEACHER_EMAIL, subject: subject, htmlBody: html, name: 'Bài tập về nhà' });
 }
