@@ -99,6 +99,29 @@ Nếu hộp thoại báo *không tìm thấy file* (ví dụ cô đã đổi tê
 - **Màn Điểm danh:** em nào đã nộp bài online kể từ buổi trước được **tự chọn "Đủ"** ở mục *Bài tập buổi trước*, kèm tên bài và điểm. Cô vẫn sửa được trước khi bấm Lưu.
 - Muốn lấy ngay không chờ 4 tiếng: web app → **Học sinh** → **Lấy bài nộp ngay**.
 
+## Nhắc bài tập hàng tuần 📣
+
+Mỗi lớp được nhắc **1 lần/tuần, khoảng 20:00**, vào **ngày làm bài tập**. Đó là ngày nghỉ cách xa ngày học nhất, web app tự tính theo Lịch (VD lớp học T2 và T5 thì làm bài T7). Muốn chọn ngày khác: **Học sinh → ✏️ Sửa lớp → Ngày làm BT**.
+
+**Làm 1 lần:**
+1. **Học sinh → ✏️ Sửa lớp**: dán **Link bài tập** của lớp (link cố định, trang tự mở bài tuần mới).
+2. Em nào không tự làm mà cô nhắn qua phụ huynh: bấm tên em → **✏️ Sửa** → điền *Phụ huynh*, *SĐT/Zalo* và tick **📣 Nhắc bài tập qua phụ huynh**.
+3. Mở **Học sinh → 📣 Nhắc BT** → phần **Cài nhắc hẹn Zalo**. Với mỗi nhóm Zalo lớp:
+   - mở nhóm → **⋯ / ＋ → Nhắc hẹn**;
+   - dán tin (nút **📋 Chép tin**);
+   - chọn ngày làm BT, **20:00**, **Lặp lại: Hàng tuần**.
+
+   Từ đó Zalo tự báo cả nhóm mỗi tuần.
+4. Nhắc chính cô: trong **Cloud của tôi** tạo nhắc hẹn lặp hàng tuần lúc **19:55** vào các ngày ghi ở cuối màn 📣 Nhắc BT: "📣 Mở Mia's Classroom → nhắc em chưa làm".
+
+**Mỗi tuần, đúng ngày làm bài:** Trang chủ hiện thẻ **📣 Nhắc bài tập tối nay** cho các lớp đến ngày. Mỗi lớp có:
+- **✅ em đã nộp / ⏰ em chưa nộp**, lấy từ bài nộp online kể từ buổi học trước.
+- **📋 Chép tin nhóm lớp**: dán vào nhóm Zalo. Tin ghi bài tập (cột *Homework* của giáo án buổi gần nhất), hạn nộp (trước buổi học kế tiếp), tên em chưa nộp và link, nên mỗi tuần mỗi khác.
+- **💬 PH …** (em làm qua phụ huynh, chưa nộp): chép tin riêng cho phụ huynh và mở thẳng Zalo của phụ huynh. Cô chỉ cần dán và gửi.
+- **✓ Đã nhắc**: ẩn thẻ của lớp đó đến tuần sau.
+
+Muốn nhắc vào ngày khác, hoặc xem tất cả lớp: **Học sinh → 📣 Nhắc BT**.
+
 ## Dùng Lịch trên điện thoại
 
 - **Dời một lớp sang giờ/ngày khác:** chạm và **giữ ô lớp khoảng 1 giây** cho đến khi ô nổi lên (máy rung nhẹ), rồi kéo đến ô mới và thả. Vuốt nhanh trên lịch chỉ cuộn trang, không dời lớp; bấm nhẹ vào ô lớp để mở buổi học. Trên máy tính, dùng chuột kéo ngay không cần giữ.
@@ -153,8 +176,8 @@ Cô vẫn sửa trực tiếp trong các tab được. Sửa xong, mở lại we
 
 | Tab | Nội dung | Lưu ý khi sửa tay |
 |---|---|---|
-| **Lop** | Mã lớp, kiểu học phí (`Tháng` / `Gói`), số buổi, giáo trình, sticker, màu | Màu ghi dạng `#FF595E`. Lớp không dạy nữa: ghi `Ngừng` ở cột *Trạng thái*. |
-| **HocSinh** | Tên gọi, họ tên đầy đủ, lớp, học phí, ngày bắt đầu | **Không đổi Tên gọi ở đây** (tên gọi dùng để nối dữ liệu). Muốn đổi tên: web app → **Học sinh** → bấm tên em → **✏️ Sửa** → sửa *Tên gọi* → **Lưu**. Điểm danh, học phí, điểm, Lucky Draw, báo cáo tự chuyển sang tên mới, tên cũ được thêm vào *Tên khác*. Em nghỉ: ghi `Nghỉ học` ở *Trạng thái*. |
+| **Lop** | Mã lớp, kiểu học phí (`Tháng` / `Gói`), số buổi, giáo trình, sticker, màu | Màu ghi dạng `#FF595E`. Lớp không dạy nữa: ghi `Ngừng` ở cột *Trạng thái*. *Link bài tập* và *Ngày làm BT* (`T2`…`CN`, trống = tự tính) dùng cho 📣 Nhắc bài tập. |
+| **HocSinh** | Tên gọi, họ tên đầy đủ, lớp, học phí, ngày bắt đầu | **Không đổi Tên gọi ở đây** (tên gọi dùng để nối dữ liệu). Muốn đổi tên: web app → **Học sinh** → bấm tên em → **✏️ Sửa** → sửa *Tên gọi* → **Lưu**. Điểm danh, học phí, điểm, Lucky Draw, báo cáo tự chuyển sang tên mới, tên cũ được thêm vào *Tên khác*. Em nghỉ: ghi `Nghỉ học` ở *Trạng thái*. *Phụ huynh*, *SĐT/Zalo* và *Nhắc BT qua phụ huynh* (`x`) dùng cho 📣 Nhắc bài tập. |
 | **Lich** | Mỗi dòng một buổi | Ngày ghi `2026-11-20`, giờ ghi `17:00`. Không sửa cột `id`. Buổi học bù ghi `x`. |
 | **GiaoAn** | Mỗi dòng một buổi của một lớp | Để trống *Ngày dạy* thì bài tự xếp vào các buổi tiếp theo. |
 | **GhiChuTuan** | Ghi chú và việc cần làm theo tuần | Việc cần làm: mỗi dòng 1 việc. `[ ] việc` = chưa xong, `[x 2026-11-14] việc` = xong ngày đó (web app tự xóa sau 7 ngày). Dễ nhất là tick trong web app: **Lịch** → ô *Việc cần làm*. Nút **⧉ Chép tuần trước** ở mỗi ô: Ghi chú thêm các dòng tuần này chưa có; Việc cần làm thêm các việc **chưa xong** của tuần trước (bỏ trùng). Có Hoàn tác. |
@@ -166,6 +189,7 @@ Cô vẫn sửa trực tiếp trong các tab được. Sửa xong, mở lại we
 | **ChoGhepTen** | Bài nộp online chưa khớp tên | Xử lý trong web app (Học sinh → Bài nộp online). |
 | **MauNhanXet** | Mẫu nhận xét M01–M15 | Thêm hoặc sửa mẫu tự do. |
 | **BaoCao** | Nội dung báo cáo đã sửa của từng em | |
+| **NhacBT** | Tuần nào đã nhắc bài tập lớp nào (Thứ Hai của tuần, Lớp, Đã nhắc lúc) | Tab tự tạo khi cô bấm **✓ Đã nhắc** lần đầu. |
 | **CaiDat** | Tên cô ký báo cáo | |
 
 **Không đổi tên tab và không đổi chữ ở hàng tiêu đề.** Script tìm cột theo đúng chữ ở hàng 1. Cô được thêm cột mới ở bên phải, script sẽ giữ nguyên các cột đó.

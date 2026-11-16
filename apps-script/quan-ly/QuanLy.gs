@@ -15,10 +15,14 @@ const APP_TITLE = "Mia's Classroom";
 const SCHEMA = {
   Lop: { key: ['code'], cols: [
     ['code', 'Mã lớp', 't'], ['type', 'Kiểu học phí (Tháng/Gói)', ''], ['size', 'Số buổi/gói', 'n'], ['perWeek', 'Số buổi/tuần', 'n'],
-    ['book', 'Giáo trình', ''], ['extra', 'Extra', ''], ['emo', 'Sticker', ''], ['bg', 'Màu nền', 't'], ['fg', 'Màu chữ', 't'], ['status', 'Trạng thái', '']] },
+    ['book', 'Giáo trình', ''], ['extra', 'Extra', ''], ['emo', 'Sticker', ''], ['bg', 'Màu nền', 't'], ['fg', 'Màu chữ', 't'], ['status', 'Trạng thái', ''],
+    ['hwLink', 'Link bài tập', ''], ['hwDay', 'Ngày làm BT (T2…CN, trống = tự tính)', 't']] },
   HocSinh: { key: ['name'], cols: [
     ['name', 'Tên gọi', 't'], ['full', 'Họ tên đầy đủ', ''], ['cls', 'Lớp', 't'], ['fee', 'Học phí', 'n'], ['from', 'Bắt đầu học', 'd'],
-    ['status', 'Trạng thái', ''], ['parent', 'Phụ huynh', ''], ['phone', 'SĐT/Zalo', 't'], ['alias', 'Tên khác (bài nộp online)', ''], ['note', 'Ghi chú', '']] },
+    ['status', 'Trạng thái', ''], ['parent', 'Phụ huynh', ''], ['phone', 'SĐT/Zalo', 't'], ['alias', 'Tên khác (bài nộp online)', ''], ['note', 'Ghi chú', ''],
+    ['viaParent', 'Nhắc BT qua phụ huynh (x)', '']] },
+  // Nhắc bài tập: tuần nào đã nhắc lớp nào (web app: Trang chủ → 📣 Nhắc bài tập → ✓ Đã nhắc)
+  NhacBT: { key: ['mon', 'cls'], cols: [['mon', 'Thứ Hai của tuần', 'd'], ['cls', 'Lớp', 't'], ['at', 'Đã nhắc lúc', 't']] },
   Lich: { key: ['id'], cols: [
     ['id', 'id', 't'], ['date', 'Ngày', 'd'], ['time', 'Giờ bắt đầu', 'h'], ['dur', 'Số phút', 'n'], ['cls', 'Lớp', 't'],
     ['makeup', 'Học bù (x)', ''], ['startNum', 'Buổi số (đặt tay, trống = tự đếm)', 'n']] },

@@ -285,6 +285,9 @@ table.qe td{vertical-align:top}table.qe .qm{color:var(--muted);font-weight:700;f
 input[type=color]{width:48px;height:34px;padding:0 2px;border:2px solid var(--line);border-radius:10px;background:#fff;vertical-align:middle}
 .pvw{display:flex;gap:12px;align-items:center;margin-top:10px;flex-wrap:wrap}.pvw .pb{width:80px;padding:7px 4px;border-radius:4px;text-align:center;font-weight:800;font-size:13px;line-height:1.25}
 .addbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.rmd{padding:10px 0 2px;margin-top:8px;border-top:1.5px dashed var(--line)}
+.card > .rmd:first-child{border-top:0;margin-top:0;padding-top:0}
+.rmd a.btn{text-decoration:none}
 .qrow{border-top:2px dotted var(--line);padding:9px 0 4px;margin-top:8px}.qsel{min-width:150px}
 body.ro #impNow,body.ro .qact{display:none!important}
 .hwtxt{background:#fff8e1;border:2px dashed #f5d98a;border-radius:14px;padding:8px 11px;font-size:14.5px;margin-top:6px}
@@ -436,14 +439,16 @@ function fromServer(D) { // các tab Google Sheet -> ST
   MAU = Object.fromEntries(MAU_LIST.map(m => [m.code, m]));
   SETTINGS = Object.fromEntries(T.CaiDat.map(r => [S(r.key), S(r.value)]));
   SCORES = mkScores(T.Diem.map(r => ({ date: S(r.date), cls: S(r.cls), name: S(r.name), type: S(r.type).toUpperCase(), test: S(r.test), score: S(r.score), max: S(r.max), pct: S(r.pct), ta: S(r.ta), note: S(r.note), res: S(r.res), src: S(r.src) })));
+  ST.reminded = {}; (T.NhacBT || []).filter(r => r.mon && r.cls).forEach(r => { ST.reminded[S(r.mon) + '|' + S(r.cls)] = S(r.at) || '✓'; });
   SUBQ = (T.ChoGhepTen || []).filter(r => r.ref && !S(r.status)).map(r => ({ ref: S(r.ref), src: S(r.src), date: S(r.date), typedName: S(r.typedName), typedCls: S(r.typedCls), test: S(r.test), score: S(r.score), max: S(r.max) }));
   rebuild(); reindex(); SNAP = flat();
 }
 function flat() { // ST -> các dòng theo tab, để so sánh và chỉ gửi dòng thay đổi
   const o = {}; const put = (t, key, row) => { o[t + '\u0001' + key] = JSON.stringify(row); };
   const pick = (o, ks) => { const r = {}; ks.forEach(k => r[k] = o[k] == null ? '' : o[k]); Object.keys(o).sort().forEach(k => { if (k[0] === '_') r[k] = o[k]; }); return r; };
-  ST.classes.forEach(c => put('Lop', c.code, { ...pick(c, ['code', 'type', 'size', 'perWeek', 'book', 'extra', 'emo', 'bg', 'fg', 'status']), type: c.type === 'goi' ? 'Gói' : 'Tháng', book: (ST.cinfo[c.code] || {}).book ?? S(c.book), extra: (ST.cinfo[c.code] || {}).extra ?? S(c.extra) }));
-  ST.students.forEach(x => put('HocSinh', x.name, { ...pick(x, ['name', 'full', 'cls', 'fee', 'from', 'status', 'parent', 'phone', 'alias', 'note']), full: ST.full[x.name] || '' }));
+  ST.classes.forEach(c => put('Lop', c.code, { ...pick(c, ['code', 'type', 'size', 'perWeek', 'book', 'extra', 'emo', 'bg', 'fg', 'status', 'hwLink', 'hwDay']), type: c.type === 'goi' ? 'Gói' : 'Tháng', book: (ST.cinfo[c.code] || {}).book ?? S(c.book), extra: (ST.cinfo[c.code] || {}).extra ?? S(c.extra) }));
+  ST.students.forEach(x => put('HocSinh', x.name, { ...pick(x, ['name', 'full', 'cls', 'fee', 'from', 'status', 'parent', 'phone', 'alias', 'note', 'viaParent']), full: ST.full[x.name] || '' }));
+  Object.entries(ST.reminded || {}).forEach(([k, at]) => { const [mon, cls] = k.split('|'); put('NhacBT', k, { mon, cls, at }); });
   ST.sess.forEach(x => put('Lich', x.id, { id: x.id, date: x.date, time: pd(Math.floor(x.m / 60)) + ':' + pd(x.m % 60), dur: x.dur, cls: x.cls, makeup: x.makeup ? 'x' : '', startNum: x.startNum || '' }));
   Object.entries(ST.plan).forEach(([cls, L]) => L.forEach((l, i) => put('GiaoAn', l.id, { id: l.id, cls, date: l.date || '', num: l.num || '', lesson: l.lesson || '', content: l.content || '', mat: l.mat || '', hw: l.hw || '', print: l.print || '', note: l.note || '', ord: i + 1 })));
   Object.entries(ST.weekNotes).forEach(([mon, w]) => { if (w.gc || w.todo) put('GhiChuTuan', mon, { mon, gc: w.gc || '', todo: w.todo || '' }); });
@@ -528,7 +533,7 @@ function writeCache() { // bảng = dữ liệu Google lần cuối + các dòng
   try {
     const tables = {}; Object.keys(DB.tables).forEach(t => { tables[t] = DB.tables[t]; });
     const mine = {}; Object.keys(SNAP).forEach(k => { const t = k.slice(0, k.indexOf('\u0001')); (mine[t] = mine[t] || []).push(JSON.parse(SNAP[k])); });
-    ['Lop', 'HocSinh', 'Lich', 'GiaoAn', 'GhiChuTuan', 'DiemDanh', 'HocPhi', 'BangGia', 'LuckyDraw', 'BaoCao'].forEach(t => { tables[t] = mine[t] || []; });
+    ['Lop', 'HocSinh', 'Lich', 'GiaoAn', 'GhiChuTuan', 'DiemDanh', 'HocPhi', 'BangGia', 'LuckyDraw', 'BaoCao', 'NhacBT'].forEach(t => { tables[t] = mine[t] || []; });
     localStorage.setItem(CACHEKEY, JSON.stringify({ at: Date.now(), canEdit: DB.canEdit, tables }));
   } catch (e) { try { localStorage.removeItem(CACHEKEY); } catch (_) {} }
 }
@@ -718,12 +723,117 @@ function setTab(t, sub) { document.querySelectorAll('#tabs a').forEach(a => a.cl
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2200); }
 const sessOn = iso => SESS.filter(s => s.date === iso);
 
+// ================= NHẮC BÀI TẬP (1 lần/tuần, ~20:00, vào ngày nghỉ cách xa ngày học nhất) =================
+// Tin nhắn soạn sẵn để cô dán vào nhóm Zalo lớp / Zalo phụ huynh (không tự gửi được Zalo cá nhân).
+const NHAC_TIME = '20:00';
+const WD_KEY = { cn: 0, chunhat: 0, t2: 1, thu2: 1, thuhai: 1, t3: 2, thu3: 2, thuba: 2, t4: 3, thu4: 3, thutu: 3, t5: 4, thu5: 4, thunam: 4, t6: 5, thu6: 5, thusau: 5, t7: 6, thu7: 6, thubay: 6 };
+const clsRow = c => ST.classes.find(x => x.code === c) || {};
+const stuRow = n => ST.students.find(x => x.name === n) || {};
+function classDays(cls) { // các thứ lớp học đều (lịch 4 tuần trước → 2 tuần sau, bỏ buổi bù)
+  const a = addDays(TODAY, -28), b = addDays(TODAY, 14);
+  return [...new Set(SESS.filter(s => s.cls === cls && !s.makeup && s.date >= a && s.date <= b).map(s => dateOf(s.date).getDay()))];
+}
+function autoHwDay(cls) { // ngày không học, xa ngày học gần nhất nhất; hòa → ưu tiên T7/CN, rồi ngày muộn hơn trong tuần
+  const days = classDays(cls); if (!days.length || days.length >= 7) return null;
+  const dist = d => Math.min(...days.map(x => { const k = Math.abs(d - x); return Math.min(k, 7 - k); }));
+  const score = d => [dist(d), d === 0 || d === 6 ? 1 : 0, (d + 6) % 7];
+  return [0, 1, 2, 3, 4, 5, 6].filter(d => !days.includes(d)).sort((x, y) => { const a = score(x), b = score(y); return b[0] - a[0] || b[1] - a[1] || b[2] - a[2]; })[0];
+}
+function hwDayOf(cls) { const k = WD_KEY[nrm(clsRow(cls).hwDay).replace(/\s+/g, '')]; return k != null ? k : autoHwDay(cls); }
+const parentMode = n => !!S(stuRow(n).viaParent);
+const zaloNum = p => String(p || '').replace(/[^\d+]/g, '').replace(/^\+?84/, '0');
+function remindInfo(cls, iso) {
+  const prev = SESS.filter(s => s.cls === cls && s.date <= iso).pop(); const next = SESS.find(s => s.cls === cls && s.date > iso);
+  const hw = prev ? S((lessonFor(cls, prev.date) || {}).hw) : '';
+  const studs = studentsOf(cls); const link = S(clsRow(cls).hwLink);
+  const online = !!link || SCORES.some(x => /online|speaking/i.test(x.src || '') && studs.some(st => st.name === x.name));
+  const from = prev ? prev.date : addDays(iso, -7);
+  const done = online ? studs.filter(st => onlineSubs(st.name, from, iso).length) : [];
+  const todo = studs.filter(st => !done.includes(st));
+  return { cls, prev, next, hw, link, online, done, todo, studs };
+}
+const dueTxt = I => I.next ? `trước buổi học ${wdName(I.next.date)} ${dm(I.next.date)}` : 'trước buổi học tới';
+function groupMsg(I) {
+  const L = [`📚 Bài tập tuần này – lớp ${I.cls}`];
+  if (I.hw) L.push('✏️ ' + I.hw);
+  L.push('⏰ Hạn nộp: ' + dueTxt(I));
+  if (I.online && I.done.length) L.push('✅ Đã nộp: ' + I.done.map(s => s.display).join(', '));
+  if (I.online && I.todo.length && I.done.length) L.push('🙏 Chưa nộp: ' + I.todo.map(s => s.display).join(', ') + ' – tối nay các em làm nhé!');
+  else if (!I.online || I.todo.length) L.push('🙏 Tối nay các em nhớ làm bài nhé!');
+  else L.push('🎉 Cả lớp đã nộp đủ, giỏi quá!');
+  if (I.link) L.push('👉 ' + I.link);
+  return L.join('\n');
+}
+function parentMsg(I, st) {
+  const r = stuRow(st.name); const me = S(SETTINGS['Tên cô (ký báo cáo)']);
+  const L = [`Chào anh/chị${S(r.parent) ? ' ' + S(r.parent) : ''}, cô${me ? ' ' + me : ''} nhắn ạ 🌷`, `Tuần này con ${fullName(st.name) || baseName(st.name)} (lớp ${I.cls}) có bài tập tiếng Anh:`];
+  if (I.hw) L.push('✏️ ' + I.hw);
+  L.push('⏰ Hạn: ' + dueTxt(I) + '.');
+  if (I.link) L.push('👉 Link làm bài: ' + I.link);
+  L.push('Tối nay anh/chị nhắc con vào làm giúp cô nhé. Cảm ơn anh/chị!');
+  return L.join('\n');
+}
+const zaloRemindMsg = cls => `📚 Tối nay lớp ${cls} làm bài tập tuần này nhé! Làm xong nhớ bấm Nộp bài.${S(clsRow(cls).hwLink) ? '\n👉 ' + S(clsRow(cls).hwLink) : ''}`;
+function copyText(t, msg) { // execCommand trước (chạy được trong khung web app), không được thì dùng Clipboard API
+  const a = document.createElement('textarea'); a.value = t; a.setAttribute('readonly', ''); a.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+  document.body.appendChild(a); a.select(); a.setSelectionRange(0, t.length); let ok = false; try { ok = document.execCommand('copy'); } catch (e) {} a.remove();
+  if (ok) { toast(msg || '📋 Đã chép – dán vào Zalo'); return; }
+  if (navigator.clipboard) navigator.clipboard.writeText(t).then(() => toast(msg || '📋 Đã chép – dán vào Zalo'), () => prompt('Chép tin nhắn này:', t)); else prompt('Chép tin nhắn này:', t);
+}
+const remindKey = cls => mondayOf(TODAY) + '|' + cls;
+const dueToday = () => CLASSES.filter(c => studentsOf(c).length && hwDayOf(c) === dateOf(TODAY).getDay() && !ST.reminded[remindKey(c)]);
+function remindBlock(cls, extra = '') { // 1 lớp: tình trạng nộp bài + các nút chép tin (extra = dòng thêm dưới tên lớp)
+  const I = remindInfo(cls, TODAY); const rk = ST.reminded[remindKey(cls)];
+  const par = I.studs.filter(st => parentMode(st.name) && (!I.online || I.todo.includes(st)));
+  let h = `<div class="rmd" data-cls="${esc(cls)}"><div class="row between wrapf" style="gap:6px">${cp(cls)}<span class="small muted">${I.hw ? '✏️ ' + esc(firstLine(I.hw)) : '<i>Giáo án buổi trước chưa ghi Homework</i>'}</span></div>${extra}`;
+  h += I.online ? `<div class="small" style="margin-top:4px">✅ <b>${I.done.length}/${I.studs.length}</b> đã nộp${I.done.length ? ': ' + I.done.map(s => esc(s.display)).join(', ') : ''}${I.todo.length ? ` · <span style="color:#b4232f">⏰ chưa: ${I.todo.map(s => esc(s.display)).join(', ')}</span>` : ''}</div>`
+    : '<div class="small muted" style="margin-top:4px">Lớp này chưa có bài nộp online → tin nhắn chỉ nhắc chung.</div>';
+  h += `<div class="row wrapf" style="gap:6px;margin-top:8px"><button class="btn sm" type="button" data-cpg="${esc(cls)}">📋 Chép tin nhóm lớp</button>`;
+  h += par.map(st => { const z = zaloNum(stuRow(st.name).phone);
+    return z ? `<a class="btn sm mint" href="https://zalo.me/${z}" target="_blank" rel="noopener" data-cpp="${esc(st.name)}" data-c="${esc(cls)}">💬 PH ${esc(st.display)}</a>`
+      : `<a class="btn sm ghost" href="#hs/${encodeURIComponent(st.name)}" title="Bấm ✏️ Sửa để thêm SĐT phụ huynh">💬 ${esc(st.display)}: chưa có SĐT PH</a>`; }).join('');
+  if (!READONLY) h += `<button class="btn sm ghost" type="button" data-rmd="${esc(cls)}">${rk ? '✓ Đã nhắc ' + esc(rk) + ' · bỏ' : '✓ Đã nhắc'}</button>`;
+  return h + `</div>${I.link ? '' : `<div class="small muted" style="margin-top:4px">Chưa có link bài tập – thêm ở Học sinh → ✏️ Sửa lớp ${esc(cls)}.</div>`}</div>`;
+}
+function homeRemindCard() {
+  const L = dueToday(); if (!L.length) return '';
+  const eve = new Date().getHours() >= 17;
+  return `<div class="card tape ${eve ? 'butter' : ''}"><div class="row between wrapf" style="gap:6px"><h3>📣 Nhắc bài tập tối nay${eve ? ' 🌙' : ''}</h3><a class="small" href="#nhac">Tất cả lớp ›</a></div>
+    <div class="small muted">Hôm nay là ngày làm bài của ${L.join(', ')} · nhắc lúc ~${NHAC_TIME}. Bấm chép rồi dán vào Zalo.</div>${L.map(remindBlock).join('')}</div>`;
+}
+function viewNhac() {
+  setTab('home', '📣 Nhắc bài tập');
+  const L = CLASSES.filter(c => studentsOf(c).length); const day = c => { const d = hwDayOf(c); return d == null ? '—' : WD[d]; };
+  let h = `<p><a href="#">← Trang chủ</a></p><div class="card tape mint"><h3>📣 Nhắc bài tập hàng tuần</h3><div class="small">Mỗi lớp nhắc <b>1 lần/tuần lúc ~${NHAC_TIME}</b> vào <b>ngày làm bài</b> (ngày nghỉ cách xa ngày học nhất; đổi được ở ✏️ Sửa lớp).
+    Đúng ngày đó Trang chủ tự hiện thẻ nhắc. Tin nhắn mỗi tuần tự ghi bài tập (cột Homework của giáo án buổi gần nhất), hạn nộp, em đã / chưa nộp.</div></div>`;
+  h += L.map(c => `<div class="card">${remindBlock(c, `<div class="small" style="margin-top:4px">📅 Làm BT: <b>${day(c)}</b>${S(clsRow(c).hwDay) ? '' : ' <span class="muted">(tự tính)</span>'} · nhắc ${NHAC_TIME}${!READONLY ? ` · <a href="#nhac" data-ecl="${esc(c)}">✏️ đổi ngày / link</a>` : ''}</div>`)}</div>`).join('');
+  const byDay = {}; L.forEach(c => { const d = hwDayOf(c); if (d != null) (byDay[d] = byDay[d] || []).push(c); });
+  h += `<h2><span class="stk">⏰</span>Cài nhắc hẹn Zalo (làm 1 lần)</h2><div class="card"><ol class="small" style="margin:0;padding-left:18px">
+    <li>Mở nhóm Zalo của lớp → bấm <b>⋯ / ＋</b> → <b>Nhắc hẹn</b> (Tạo nhắc hẹn).</li><li>Nội dung: bấm <b>📋 Chép tin</b> của lớp đó ở bảng dưới rồi dán vào.</li>
+    <li>Thời gian: ngày làm BT sắp tới, <b>${NHAC_TIME}</b> → <b>Lặp lại: Hàng tuần</b> → Xong. Từ đó Zalo tự báo cả nhóm mỗi tuần.</li>
+    <li>Nhắc chính cô: trong <b>Cloud của tôi</b> tạo nhắc hẹn lặp hàng tuần lúc 19:55 các ngày bên dưới: "📣 Mở Mia's Classroom → nhắc em chưa làm / phụ huynh".</li></ol>
+    <table style="margin-top:10px;width:100%"><tr><th style="text-align:left">Lớp</th><th style="text-align:left">Nhắc hẹn</th><th></th></tr>${L.map(c => `<tr><td>${cp(c)}</td><td class="small" style="white-space:nowrap">${hwDayOf(c) == null ? '—' : WDS[hwDayOf(c)]} ${NHAC_TIME}<br><span class="muted">hàng tuần</span></td><td style="text-align:right"><button class="btn sm ghost" type="button" data-cpz="${esc(c)}" style="white-space:nowrap">📋 Chép tin</button></td></tr>`).join('')}</table>
+    <div class="small muted" style="margin-top:8px">Nhắc chính cô (Cloud của tôi): ${Object.keys(byDay).sort((a, b) => (+a + 6) % 7 - (+b + 6) % 7).map(d => `<b>${WD[d]}</b> (${byDay[d].join(', ')})`).join(' · ') || '—'}</div></div>`;
+  V.innerHTML = h;
+  V.querySelectorAll('[data-ecl]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); classModal(a.dataset.ecl); }));
+}
+document.addEventListener('click', e => { // nút trong thẻ nhắc (Trang chủ + màn 📣)
+  const t = e.target.closest && e.target.closest('[data-cpg],[data-cpp],[data-cpz],[data-rmd]'); if (!t || !ST) return;
+  if (t.dataset.cpg) copyText(groupMsg(remindInfo(t.dataset.cpg, TODAY)), '📋 Đã chép tin cho nhóm lớp ' + t.dataset.cpg + ' – dán vào Zalo');
+  else if (t.dataset.cpp) { const st = byName(t.dataset.cpp); if (st) copyText(parentMsg(remindInfo(t.dataset.c, TODAY), st), '📋 Đã chép tin cho phụ huynh ' + st.display + ' – dán vào Zalo vừa mở'); } // <a> tự mở Zalo
+  else if (t.dataset.cpz) copyText(zaloRemindMsg(t.dataset.cpz), '📋 Đã chép – dán vào Nhắc hẹn Zalo');
+  else if (t.dataset.rmd && !READONLY) { const k = remindKey(t.dataset.rmd);
+    if (ST.reminded[k]) delete ST.reminded[k]; else { const d = new Date(); ST.reminded[k] = pd(d.getHours()) + ':' + pd(d.getMinutes()) + ' ' + dm(TODAY); toast('✓ Đã nhắc ' + t.dataset.rmd); }
+    save(); route(true); }
+});
+
 // ================= TRANG CHỦ =================
 function viewHome() {
   setTab('home', wdName(TODAY) + ', ' + dmy(TODAY));
   const today = sessOn(TODAY);
   let h = `<h2><span class="stk">🧸</span>Hôm nay dạy ${today.length} buổi</h2>`;
   h += today.map(homeCard).join('') || `<div class="card empty"><span class="big stk">🌈</span>Hôm nay cô được nghỉ!</div>`;
+  h += homeRemindCard();
   { const E = luckyEarned(); const rd = luckyStudents(E).filter(s => luckyOf(s.name, E).can > 0);
     if (rd.length) h += `<a class="card" href="#lucky" style="display:block;text-decoration:none;color:inherit">🎁 <b>${rd.length} em đủ ${LUCKY_GOAL} điểm Lucky Draw:</b> ${rd.map(s => esc(s.display)).join(', ')} <span class="muted">›</span></a>`; }
   if (SUBQ.length && !READONLY) h += `<a class="card" href="#hs" style="display:block;text-decoration:none;color:inherit">📥 <b>${SUBQ.length} bài nộp online</b> chưa khớp tên học sinh – bấm để ghép <span class="muted">›</span></a>`;
@@ -1099,7 +1209,7 @@ function viewGiaoAn(cls, focus) {
 function viewHS(name) {
   setTab('hs', 'Học sinh');
   if (!name) {
-    let h = `<div class="addbar"><button class="btn sm" id="addSt">➕ Thêm học sinh</button><button class="btn sm mint" id="addCl">➕ Thêm lớp</button></div><div style="margin-top:12px">${subsCard()}</div><input type="text" id="q" placeholder="🔍 Tìm tên học sinh…" style="margin:0 0 14px">`;
+    let h = `<div class="addbar"><button class="btn sm" id="addSt">➕ Thêm học sinh</button><button class="btn sm mint" id="addCl">➕ Thêm lớp</button><a class="btn sm ghost" href="#nhac">📣 Nhắc BT</a></div><div style="margin-top:12px">${subsCard()}</div><input type="text" id="q" placeholder="🔍 Tìm tên học sinh…" style="margin:0 0 14px">`;
     h += CLASSES.map(c => { const ss = studentsOf(c);
       return `<div class="card" data-cls="${c}"><div class="clshead">${cp(c)}<span class="small muted grow" style="text-align:right">${esc(CLASS_CFG[c].book)}</span><button class="iconb" data-ec="${c}">✏️ Sửa lớp</button></div><div class="stlist">${ss.length ? '' : '<div class="small muted" style="padding:8px 2px">Chưa có học sinh</div>'}${ss.map(s => {
         const a = attOf(s.name); const sc = scoresOf(s.name);
@@ -1148,6 +1258,8 @@ function classModal(code) {
       <label class="grow"><div class="lbl">Kiểu học phí</div><select id="cT"><option value="thang" ${c0.type === 'thang' ? 'selected' : ''}>Theo tháng</option><option value="goi" ${c0.type === 'goi' ? 'selected' : ''}>Theo gói buổi</option></select></label>
       <label style="width:96px"><div class="lbl" id="cNl">Buổi</div><input type="number" id="cN" min="1"></label></div>
     <label><div class="lbl">Giáo trình</div><input type="text" id="cB" value="${esc(c0.book || '')}" placeholder="VD: Mindset for IELTS 1"></label>
+    <div class="row" style="gap:10px"><label class="grow"><div class="lbl">📣 Link bài tập (để nhắc)</div><input type="url" id="cL" value="${esc(code ? S(clsRow(code).hwLink) : '')}" placeholder="https://yumienglish.github.io/…"></label>
+      <label style="width:128px"><div class="lbl">Ngày làm BT</div><select id="cW"><option value="">Tự tính${code && autoHwDay(code) != null ? ' (' + WDS[autoHwDay(code)] + ')' : ''}</option>${[1, 2, 3, 4, 5, 6, 0].map(d => `<option value="${WDS[d]}" ${code && WD_KEY[nrm(clsRow(code).hwDay).replace(/\s+/g, '')] === d ? 'selected' : ''}>${WD[d]}</option>`).join('')}</select></label></div>
     <div class="lbl">Sticker</div><div class="emos" id="cE">${EMO_SET.map(e => `<button data-e="${e}" class="${e === emo ? 'on' : ''}">${e}</button>`).join('')}</div>
     <div class="lbl">Màu lớp (dùng ở Lịch, Giáo án, Học phí)</div><div class="sws" id="cS">${SWATCH.map(([b, f]) => `<button data-b="${b}" data-f="${f}" style="background:${b};color:${f}">A</button>`).join('')}</div>
     <div class="row wrapf" style="gap:14px;margin-top:8px"><label class="row" style="gap:6px">Nền <input type="color" id="cBg" value="${bg}"></label><label class="row" style="gap:6px">Chữ <input type="color" id="cFg" value="${fg}"></label></div>
@@ -1170,7 +1282,7 @@ function classModal(code) {
     if (!/^[A-Z0-9]{2,10}$/.test(cd)) { toast('Mã lớp chỉ gồm chữ và số, VD IE505'); return; }
     if (isNew && CLASS_CFG[cd]) { toast('Mã lớp ' + cd + ' đã có'); return; }
     const t = $('#cT').value; const n = Math.max(1, +$('#cN').value || (t === 'goi' ? 10 : 2));
-    const row = { type: t, book: $('#cB').value.trim(), emo, bg, fg, ...(t === 'goi' ? { size: n } : { perWeek: n }) };
+    const row = { type: t, book: $('#cB').value.trim(), emo, bg, fg, hwLink: $('#cL').value.trim(), hwDay: $('#cW').value, ...(t === 'goi' ? { size: n } : { perWeek: n }) };
     if (isNew) ST.classes.push({ code: cd, status: 'Đang học', extra: '', size: '', perWeek: '', ...row }); else Object.assign(ST.classes.find(c => c.code === cd), row);
     ST.cinfo[cd] = { ...(ST.cinfo[cd] || {}), book: row.book };
     save(); close(); toast(isNew ? 'Đã thêm lớp ' + cd + ' 🎉' : 'Đã lưu lớp ' + cd); route(true);
@@ -1186,6 +1298,9 @@ function stModal(name) {
     <div class="row" style="gap:10px"><label class="grow"><div class="lbl">Lớp</div><select id="sC">${CLASSES.map(c => `<option value="${c}" ${c === c1 ? 'selected' : ''}>${EMO[c] || ''} ${c}</option>`).join('')}</select></label>
       <label style="width:120px"><div class="lbl" id="sFl">Học phí (nghìn)</div><input type="number" id="sP" min="0" step="10" value="${old ? (+String(old.fee).replace(/[^\d.]/g, '') || 0) / 1000 : typFee(c1)}"></label></div>
     <label><div class="lbl">Bắt đầu học từ (tính học phí từ tháng này)</div><input type="date" id="sD" value="${old ? old.from : TODAY}"></label>
+    <div class="row" style="gap:10px"><label class="grow"><div class="lbl">Phụ huynh (tên gọi)</div><input type="text" id="sPa" value="${esc(old ? S(old.parent) : '')}" placeholder="VD: mẹ Lan"></label>
+      <label class="grow"><div class="lbl">SĐT / Zalo phụ huynh</div><input type="tel" id="sPh" value="${esc(old ? S(old.phone) : '')}" placeholder="09…" inputmode="tel"></label></div>
+    <label class="row" style="margin-top:10px;gap:8px"><input type="checkbox" id="sVp" ${old && S(old.viaParent) ? 'checked' : ''} style="width:20px;height:20px"> 📣 Nhắc bài tập qua phụ huynh (em không tự làm)</label>
     <div class="row wrapf" style="margin-top:16px;gap:8px"><button class="btn" id="sSave">💾 Lưu</button>${old ? '<button class="btn ghost" id="sDel">🌙 Cho nghỉ học</button>' : ''}<button class="btn ghost" id="stCancel">Hủy</button></div>
     <div class="small muted" style="margin-top:8px">Lớp chưa có? Bấm "➕ Thêm lớp" trước. Tên trùng với em khác thì thêm số/ký hiệu (VD "Minh 11").${old ? '<br>✏️ Đổi <b>tên gọi</b> → điểm danh, học phí, điểm, Lucky Draw, báo cáo tự chuyển sang tên mới; tên cũ được nhớ ở cột "Tên khác" để bài nộp online vẫn khớp.' : ''}</div></div>`;
   M.hidden = false;
@@ -1199,7 +1314,8 @@ function stModal(name) {
     if (!n) { toast('Nhập tên gọi'); return; }
     if ((!old || ren) && ST.students.some(x => x.name === n)) { toast('Đã có em tên "' + n + '", thêm số/ký hiệu để phân biệt'); return; }
     if (ren && !confirm(`Đổi tên "${name}" thành "${n}"?\nĐiểm danh, học phí, điểm, Lucky Draw, báo cáo của em sẽ chuyển sang tên mới.`)) return;
-    const v = { name: old ? name : n, cls: $('#sC').value, fee: Math.round((+$('#sP').value || 0) * 1000), from: $('#sD').value || TODAY };
+    const v = { name: old ? name : n, cls: $('#sC').value, fee: Math.round((+$('#sP').value || 0) * 1000), from: $('#sD').value || TODAY,
+      parent: $('#sPa').value.trim(), phone: $('#sPh').value.trim(), viaParent: $('#sVp').checked ? 'x' : '' };
     if (old) Object.assign(old, v); else ST.students.push({ ...v, status: 'Đang học' });
     const full = $('#sF').value.trim(); if (full) ST.full[v.name] = full;
     save(); close();
@@ -1544,6 +1660,7 @@ function route(keep) {
   else if (p[0] === 'hocphi') viewHocPhi();
   else if (p[0] === 'lucky') viewLucky();
   else if (p[0] === 'baocao') viewBaoCao(p[1]);
+  else if (p[0] === 'nhac') viewNhac();
   else viewHome();
 }
 window.addEventListener('hashchange', () => route());
