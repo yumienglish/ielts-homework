@@ -69,6 +69,11 @@ Lỗi này thường xảy ra khi trình duyệt đang **đăng nhập nhiều t
 - Quay lại web app sau hơn 3 phút không dùng, dữ liệu cũng tự tải lại.
 - **Mở app tức thì:** web app lưu tạm bản dữ liệu gần nhất ngay trên trình duyệt của máy đang dùng, nên mở app là thấy ngay. Trong lúc lấy bản mới từ Google, đầu trang hiện **🔄 Đang cập nhật…**. Nếu có gì khác, màn hình tự cập nhật và báo "Đã cập nhật dữ liệu mới nhất". Khi sửa liên tục (như gõ ghi chú), app đợi cô ngừng tay khoảng nửa giây rồi mới gửi lên Google một lần. Muốn xóa bản lưu tạm trên một máy thì xóa dữ liệu duyệt web của trình duyệt đó.
 - **Giáo án — xem buổi cũ:** bình thường chỉ hiện các buổi từ hôm nay trở đi. Trên thanh tên lớp có 2 nút: **👁 Hiện 1 buổi trước** (chỉ buổi gần nhất đã dạy) và **📜 Hiện tất cả buổi cũ**. Bấm lại nút đang bật để ẩn đi. App nhớ lựa chọn này cho lần mở sau.
+- **Hủy / dời buổi, giáo án tự đi theo.** Giáo án xếp theo thứ tự buổi:
+  - Xóa (hủy) một buổi: bài của buổi đó chuyển sang buổi kế tiếp, các bài sau lùi 1 buổi.
+  - Dời buổi sang ngày khác, hoặc thêm buổi học bù: các bài được xếp lại theo thứ tự buổi mới.
+  - Bài nào nằm ở ngày lớp không còn buổi (VD buổi bị xóa trước khi có tính năng này): Trang chủ, Buổi học và Giáo án báo **⚠️ chưa được dạy**, bấm **⤵️ Dời bài xuống** để sửa.
+  - Mọi lần dời đều có **↶ Hoàn tác**.
 - **Xóa nhầm?** Sau khi xóa buổi học, xóa dòng giáo án, xóa lớp hoặc cho học sinh nghỉ học, ở cuối màn hình hiện ô **↶ Hoàn tác** trong 10 giây. Bấm vào là mọi thứ trở lại như cũ.
 
 ## Bài học sinh nộp online (BTVN, Speaking)
@@ -152,10 +157,11 @@ Cô vẫn sửa trực tiếp trong các tab được. Sửa xong, mở lại we
 | **HocSinh** | Tên gọi, họ tên đầy đủ, lớp, học phí, ngày bắt đầu | **Không đổi Tên gọi ở đây** (tên gọi dùng để nối dữ liệu). Muốn đổi tên: web app → **Học sinh** → bấm tên em → **✏️ Sửa** → sửa *Tên gọi* → **Lưu**. Điểm danh, học phí, điểm, Lucky Draw, báo cáo tự chuyển sang tên mới, tên cũ được thêm vào *Tên khác*. Em nghỉ: ghi `Nghỉ học` ở *Trạng thái*. |
 | **Lich** | Mỗi dòng một buổi | Ngày ghi `2026-11-20`, giờ ghi `17:00`. Không sửa cột `id`. Buổi học bù ghi `x`. |
 | **GiaoAn** | Mỗi dòng một buổi của một lớp | Để trống *Ngày dạy* thì bài tự xếp vào các buổi tiếp theo. |
-| **GhiChuTuan** | Ghi chú và việc cần làm theo tuần | |
+| **GhiChuTuan** | Ghi chú và việc cần làm theo tuần | Việc cần làm: mỗi dòng 1 việc. `[ ] việc` = chưa xong, `[x 2026-11-14] việc` = xong ngày đó (web app tự xóa sau 7 ngày). Dễ nhất là tick trong web app: **Lịch** → ô *Việc cần làm*. Nút **⧉ Chép tuần trước** ở mỗi ô: Ghi chú thêm các dòng tuần này chưa có; Việc cần làm thêm các việc **chưa xong** của tuần trước (bỏ trùng). Có Hoàn tác. |
 | **DiemDanh** | Mỗi dòng một em trong một buổi | Web app tự ghi. Cột *Lucky Draw* liệt kê các tiêu chí được +1 của buổi đó, cách nhau bằng dấu phẩy. |
 | **LuckyDraw** | Điểm mang sang, lần bốc thăm (−50) + quà, điều chỉnh tay | Loại là `Mang sang`, `Bốc thăm` hoặc `Điều chỉnh`. Không sửa cột `id`. |
 | **HocPhi** | Mỗi dòng: học sinh, tháng (`2026-11`), trạng thái | Trạng thái là `Đã đóng`, `Chưa đóng` hoặc `Nghỉ`. Xóa dòng = trả về *Tự động*. |
+| **BangGia** | Bảng giá (Quote): mỗi dòng 1 cấp độ: *Nhóm*, *LEVEL*, *Giá 1 giờ kèm 1-1* | Tab tự tạo khi cô lưu bảng giá lần đầu trong web app (**Học phí → 📋 Quote → 📥 Dán bảng giá**). Giá ghi đủ đồng, VD `180000`. Lớp 2 / 3 / 4 / 5+ học viên (75% / 65% / 55% / 50%) và giá 1 tháng (8 tiết × 1h30) web app tự tính. |
 | **Diem** | Điểm HW / XT / CT: tab SCORES cũ + bài nộp online | Nhập tay được. Không sửa cột *Mã bài nộp*. Bài Speaking: điền điểm vào cột *Điểm* / *Max* sau khi chấm. |
 | **ChoGhepTen** | Bài nộp online chưa khớp tên | Xử lý trong web app (Học sinh → Bài nộp online). |
 | **MauNhanXet** | Mẫu nhận xét M01–M15 | Thêm hoặc sửa mẫu tự do. |

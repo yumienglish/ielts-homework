@@ -31,6 +31,10 @@ const SCHEMA = {
     ['date', 'Ngày', 'd'], ['cls', 'Lớp', 't'], ['name', 'Học sinh', 't'], ['status', 'Trạng thái', ''], ['hw', 'BT buổi trước', ''],
     ['tpl', 'Mẫu nhận xét', ''], ['note', 'Ghi chú', ''], ['lucky', 'Lucky Draw (điểm cộng buổi này)', '']] },
   HocPhi: { key: ['name', 'ym'], cols: [['name', 'Học sinh', 't'], ['ym', 'Tháng (yyyy-mm)', 'm'], ['state', 'Trạng thái (Đã đóng/Chưa đóng/Nghỉ)', '']] },
+  // Bảng giá (Quote) — web app: Học phí → nút 📋 Quote. Mỗi dòng 1 cấp độ + giá 1 giờ lớp kèm 1-1;
+  // lớp 2/3/4/5+ học viên và giá 1 tháng (8 tiết × 1h30) do web app tự tính (App.html: Q_PCT, Q_HOURS).
+  BangGia: { key: ['group', 'level'], cols: [
+    ['group', 'Nhóm', 't'], ['level', 'LEVEL', 't'], ['hour', 'Giá 1 giờ kèm 1-1 (đ)', 'n'], ['ord', 'Thứ tự', 'n']] },
   // Lucky Draw: điểm mang sang, lần bốc thăm (−50) + quà, điều chỉnh tay. Điểm cộng từng buổi nằm ở cột Lucky Draw của DiemDanh.
   LuckyDraw: { key: ['id'], cols: [
     ['id', 'id', 't'], ['date', 'Ngày', 'd'], ['name', 'Học sinh', 't'], ['kind', 'Loại (Mang sang/Bốc thăm/Điều chỉnh)', ''],

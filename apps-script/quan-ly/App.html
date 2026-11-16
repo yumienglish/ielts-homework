@@ -209,6 +209,13 @@ table.lkt tr[data-lkn]:hover td{background:#fff9fa}
 .notes2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
 .notes2 h4{margin:0 0 6px;color:#0F9D58;font-weight:800;font-size:15px}
 @media (max-width:560px){.notes2{grid-template-columns:1fr}}
+.todo .td{display:flex;align-items:center;gap:6px;padding:2px 0;border-bottom:1.5px dotted var(--line)}
+.todo .td input[type=checkbox]{width:20px;height:20px;flex:none;accent-color:#0F9D58;cursor:pointer}
+.todo .td input.tdt{border:0;border-radius:8px;padding:6px 4px;background:transparent;flex:1;min-width:0}
+.todo .td input.tdt:focus{background:#fffbea;box-shadow:inset 0 0 0 2px #f5d76e}
+.todo .td.done input.tdt{text-decoration:line-through;color:#a99aa3}
+.todo .tdx{border:0;background:none;color:#c9a9b6;font-size:18px;cursor:pointer;padding:0 4px;flex:none}
+.todo .tdadd{border:0;background:none;color:#0F9D58;font:800 14px Nunito,sans-serif;cursor:pointer;padding:8px 2px 2px}
 /* ===== Giáo án dạng Syllabus ===== */
 .sylwrap{overflow:hidden;border-radius:18px;border:2px solid var(--line);background:#fff;box-shadow:0 4px 0 #fbe3e8}
 .sylbar{background:#C00000;color:#fff;font-weight:800;font-size:18px;padding:6px 12px;font-family:'Baloo 2',Nunito,sans-serif}
@@ -258,6 +265,19 @@ table.fee2 tr.grp td{padding:12px 2px 5px;border-bottom:2px solid var(--line)}
 b.nm{cursor:pointer;border-bottom:1.5px dotted #d9b8c4}
 table.fee2 th small{display:block;font-size:10.5px;font-weight:700;opacity:.7}
 .fm{border-top:2px dotted var(--line);padding:8px 0}
+.quote{margin-bottom:12px}
+table.quote{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px}
+table.quote th{font-size:11.5px;color:var(--muted);padding:4px 3px;text-align:right;line-height:1.15;vertical-align:bottom}
+table.quote th:first-child{text-align:left}
+table.quote td{padding:5px 3px;border-bottom:1.5px dotted var(--line);text-align:right;font-weight:800;white-space:nowrap}
+table.quote td.lv{text-align:left;font-weight:700;white-space:normal;min-width:84px;font-size:13px}
+table.quote td b{display:block;line-height:1.15}
+table.quote .qh{display:inline-block;font-size:10.5px;font-weight:800;color:var(--butter-ink);background:var(--butter-soft);border-radius:6px;padding:0 4px;margin-top:1px}
+table.quote tr.qg td{text-align:left;font-size:11.5px;font-weight:900;color:var(--pink-ink);letter-spacing:.3px;text-transform:uppercase;padding:9px 3px 2px;border-bottom:2px solid var(--line)}
+table.quote input{padding:5px 6px;border-radius:10px;font-size:13.5px}
+table.quote input.qgi{min-width:90px}table.quote input.qlv{min-width:118px}table.quote input.qhr{min-width:60px;width:64px;text-align:right}
+table.qe th{text-align:left}
+table.qe td{vertical-align:top}table.qe .qm{color:var(--muted);font-weight:700;font-size:11px;text-align:right;margin-top:2px}
 .fm .seg button{padding:5px 9px;font-size:13px}
 .iconb{border:0;background:#fff4f7;border-radius:10px;padding:3px 8px;cursor:pointer;font:800 13px Nunito,sans-serif;color:var(--pink-ink)}
 .emos{display:flex;flex-wrap:wrap;gap:4px}.emos button{font-size:20px;border:2px solid transparent;background:#fff;border-radius:10px;padding:1px 4px;cursor:pointer}.emos button.on{border-color:var(--pink);background:var(--pink-soft)}
@@ -401,6 +421,9 @@ function fromServer(D) { // các tab Google Sheet -> ST
     sess: T.Lich.filter(r => r.id && r.date).map(r => ({ id: S(r.id), date: S(r.date), m: mins(r.time), dur: +r.dur || 90, cls: S(r.cls), makeup: !!S(r.makeup), startNum: +r.startNum || null })),
     plan: {}, cinfo: {}, weekNotes: {}, att: {}, paid: {}, full: {}, report: {}, ui: {},
     lucky: (T.LuckyDraw || []).filter(r => r.id && r.name).map(r => ({ id: S(r.id), date: S(r.date), name: S(r.name), kind: S(r.kind) || 'Điều chỉnh', pts: +r.pts || 0, gift: S(r.gift) })) };
+  // Bảng giá (tab BangGia): giá 1 giờ kèm 1-1, lưu đủ đồng (180000); gõ tay "180" hay "180 đ" = 180 nghìn
+  ST.prices = (T.BangGia || []).filter(r => S(r.level)).map((r, i) => ({ r, i })).sort((a, b) => ((+a.r.ord || 1e4 + a.i) - (+b.r.ord || 1e4 + b.i)))
+    .map(({ r }) => { const o = { group: S(r.group), level: S(r.level), hour: qNum(r.hour) }; Object.keys(r).forEach(k => { if (k[0] === '_') o[k] = r[k]; }); return o; });
   try { ST.ui = JSON.parse(localStorage.getItem(UIKEY)) || {}; } catch (e) {}
   ST.classes.forEach(c => ST.cinfo[c.code] = { book: S(c.book), extra: S(c.extra) });
   ST.students.forEach(x => { if (S(x.full)) ST.full[x.name] = S(x.full); });
@@ -427,6 +450,7 @@ function flat() { // ST -> các dòng theo tab, để so sánh và chỉ gửi d
   Object.entries(ST.att).forEach(([k, a]) => { const [date, cls] = k.split('|'); Object.entries(a.rows || {}).forEach(([name, r]) => put('DiemDanh', [date, cls, name].join('|'), { date, cls, name, status: ST_LABEL[r.status] || '', hw: HW_LABEL[r.hw] || '', tpl: (r.tpl || []).join(', '), note: r.note || '', lucky: lkOut(r.lucky) })); });
   (ST.lucky || []).forEach(x => put('LuckyDraw', x.id, { id: x.id, date: x.date, name: x.name, kind: x.kind, pts: x.pts, gift: x.gift || '' }));
   Object.entries(ST.paid).forEach(([name, m]) => Object.entries(m).forEach(([ym, v]) => { if (v !== undefined) put('HocPhi', name + '|' + ym, { name, ym, state: PAY_OUT(v) }); }));
+  (ST.prices || []).forEach((x, i) => { const r = { group: x.group, level: x.level, hour: x.hour || '', ord: i + 1 }; Object.keys(x).sort().forEach(k => { if (k[0] === '_') r[k] = x[k]; }); put('BangGia', qKey(x), r); });
   Object.entries(ST.report).forEach(([name, r]) => put('BaoCao', name, { name, from: r.from || '', to: r.to || '', learn: r.learn ?? '', good: r.good ?? '', weak: r.weak ?? '', goal: r.goal ?? '', sent: r.sent || '' }));
   return o;
 }
@@ -465,11 +489,12 @@ function bindSubs() {
 }
 // Xóa có hoàn tác: chụp lại lịch, giáo án, lớp, học sinh trước khi xóa; ô "↶ Hoàn tác" hiện 10 giây
 let UNDO_T = null;
-function withUndo(msg, act) {
-  const snap = JSON.stringify({ sess: ST.sess, plan: ST.plan, classes: ST.classes, students: ST.students, cinfo: ST.cinfo, full: ST.full, lucky: ST.lucky });
+function withUndo(msg, act, ico = '🗑️') { // msg có thể là hàm (tính sau khi làm); trả về '' = không cần nút Hoàn tác
+  const snap = JSON.stringify({ sess: ST.sess, plan: ST.plan, classes: ST.classes, students: ST.students, cinfo: ST.cinfo, full: ST.full, lucky: ST.lucky, prices: ST.prices, weekNotes: ST.weekNotes });
   act(); save(); if (READONLY) return;
+  if (typeof msg === 'function') msg = msg(); if (!msg) return;
   const box = $('#undoBox'); $('#toast').classList.remove('show');
-  box.innerHTML = `<span>🗑️ ${esc(msg)}</span><button type="button">↶ Hoàn tác</button><i></i>`; box.hidden = false;
+  box.innerHTML = `<span>${ico} ${esc(msg)}</span><button type="button">↶ Hoàn tác</button><i></i>`; box.hidden = false;
   clearTimeout(UNDO_T); UNDO_T = setTimeout(() => { box.hidden = true; }, 10000);
   box.querySelector('button').onclick = () => { clearTimeout(UNDO_T); box.hidden = true;
     Object.assign(ST, JSON.parse(snap)); save(); toast('Đã hoàn tác ↶'); route(true); };
@@ -503,7 +528,7 @@ function writeCache() { // bảng = dữ liệu Google lần cuối + các dòng
   try {
     const tables = {}; Object.keys(DB.tables).forEach(t => { tables[t] = DB.tables[t]; });
     const mine = {}; Object.keys(SNAP).forEach(k => { const t = k.slice(0, k.indexOf('\u0001')); (mine[t] = mine[t] || []).push(JSON.parse(SNAP[k])); });
-    ['Lop', 'HocSinh', 'Lich', 'GiaoAn', 'GhiChuTuan', 'DiemDanh', 'HocPhi', 'LuckyDraw', 'BaoCao'].forEach(t => { tables[t] = mine[t] || []; });
+    ['Lop', 'HocSinh', 'Lich', 'GiaoAn', 'GhiChuTuan', 'DiemDanh', 'HocPhi', 'BangGia', 'LuckyDraw', 'BaoCao'].forEach(t => { tables[t] = mine[t] || []; });
     localStorage.setItem(CACHEKEY, JSON.stringify({ at: Date.now(), canEdit: DB.canEdit, tables }));
   } catch (e) { try { localStorage.removeItem(CACHEKEY); } catch (_) {} }
 }
@@ -578,14 +603,43 @@ function lessonFor(cls, iso) {
   return k < 0 ? null : { ...L.find(x => x.id === slots[k][1]), guessed: true };
 }
 const hasPlan = l => !!(l && (l.lesson || l.content));
+const planEmpty = l => !['lesson', 'content', 'mat', 'hw', 'print', 'note'].some(k => l[k]);
+const planOrder = (a, b) => (a.date ? 0 : 1) - (b.date ? 0 : 1) || (a.date && b.date ? a.date.localeCompare(b.date) : 0);
 function lessonAt(cls, iso, create) { // lấy bài của ngày, chốt ngày nếu đang tự xếp
   const L = ST.plan[cls] || (ST.plan[cls] = []);
   let l = lessonFor(cls, iso);
   if (l && l.guessed) { const { slots } = planMap(cls); for (const [d, id] of slots) { L.find(x => x.id === id).date = d; if (d === iso) break; } l = L.find(x => x.id === l.id); }
   if (!l && create) { l = { id: uid('l'), date: iso, lesson: '', content: '', mat: '', hw: '', print: '', note: '' }; L.push(l); }
-  L.sort((a, b) => (a.date ? 0 : 1) - (b.date ? 0 : 1) || (a.date && b.date ? a.date.localeCompare(b.date) : 0));
+  L.sort(planOrder);
   return l;
 }
+// Hủy / dời / thêm buổi → xếp lại giáo án: các bài có ngày từ `from` trở đi lần lượt vào các buổi của lớp từ `from` trở đi
+// (giữ nguyên thứ tự bài). Bài dư khi lịch chưa có đủ buổi → "chưa xếp ngày", tự xếp khi có buổi mới. Trả về số bài đổi ngày.
+function reflowPlan(cls, from) {
+  const L = ST.plan[cls]; if (!L || !from) return 0;
+  for (let i = L.length - 1; i >= 0; i--) if (L[i].date && L[i].date >= from && planEmpty(L[i])) L.splice(i, 1); // dòng trống: bỏ, tránh 2 bài trùng ngày
+  const ds = [...new Set(ST.sess.filter(s => s.cls === cls && s.date >= from).map(s => s.date))].sort();
+  const ls = L.filter(x => x.date && x.date >= from).sort((a, b) => a.date.localeCompare(b.date));
+  const und = L.filter(x => !x.date); let n = 0;
+  ls.forEach((x, i) => { const d = ds[i] || ''; if (x.date !== d) { x.date = d; n++; } });
+  if (n) { const left = ls.filter(x => !x.date); const dated = L.filter(x => x.date).sort(planOrder); L.length = 0; L.push(...dated, ...left, ...und); }
+  return n;
+}
+// Bài đã soạn nằm ở ngày lớp KHÔNG có buổi trong Lịch (buổi đã hủy / dời mà bài chưa dời theo) → bài chưa được dạy.
+// Chỉ xét trong khoảng Lịch có dữ liệu (từ buổi đầu đến buổi cuối của lớp); from / to = chỉ lấy bài sau from, trước to.
+function orphanLessons(cls, from, to) {
+  const S = SESS.filter(s => s.cls === cls); if (!S.length) return [];
+  const ds = new Set(S.map(s => s.date)); const first = S[0].date, last = S[S.length - 1].date;
+  return (ST.plan[cls] || []).filter(x => x.date && x.date > first && x.date < last && !ds.has(x.date) && hasPlan(x) && (!from || x.date > from) && (!to || x.date < to))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+const orphanBefore = (cls, iso) => orphanLessons(cls, (SESS.filter(s => s.cls === cls && s.date < iso).pop() || {}).date, iso); // bài lẽ ra học giữa buổi trước và buổi này
+function reflowBtn(cls, from, label) { return READONLY ? '' : `<button class="btn sm" type="button" data-reflow="${esc(cls)}|${from}">${label}</button>`; }
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-reflow]'); if (!b) return;
+  const [cls, from] = b.dataset.reflow.split('|'); let n = 0;
+  withUndo(() => n ? `Đã dời giáo án ${cls}: bài ${dm(from)} xuống buổi kế tiếp, các bài sau lùi theo (${n} bài đổi ngày)` : '', () => { n = reflowPlan(cls, from); }, '📒');
+  if (!n) toast('Không có bài nào cần dời'); route(true); });
+const orphanTxt = o =>o.map(x => `${wdS(x.date)} ${dm(x.date)}${x.lesson ? ' (' + esc(firstLine(x.lesson)) + ')' : ''}`).join(', ');
 function prevHw(cls, iso) {
   const ps = SESS.filter(s => s.cls === cls && s.date < iso).pop();
   if (ps) { const l = lessonFor(cls, ps.date); return l && l.hw ? { date: ps.date, hw: l.hw } : null; }
@@ -687,7 +741,7 @@ function viewHome() {
     <h3>📝 Buổi chưa soạn giáo án <span class="badge b-bad">${noPlan.length}</span></h3>${noPlan.length ? li(noPlan) : '<div class="muted">Đủ giáo án rồi 👍</div>'}
     <h3 style="margin-top:12px">🧪 Kiểm tra / ôn tập sắp tới</h3>${tests.length ? li(tests) : '<div class="muted small">Không có</div>'}
     <h3 style="margin-top:12px">🖨️ File cần in</h3>${prints.length ? li(prints) : '<div class="muted small">Không có</div>'}</div>`;
-  const wn = ST.weekNotes[mondayOf(TODAY)] || {}; const note = [wn.gc, wn.todo].filter(Boolean).join('\n');
+  const wn = ST.weekNotes[mondayOf(TODAY)] || {}; const note = [wn.gc, parseTodo(wn.todo).filter(x => !x.done).map(x => '☐ ' + x.t).join('\n')].filter(Boolean).join('\n');
   h += `<h2><span class="stk">📌</span>Ghi chú tuần này</h2><a class="card tape butter" href="#lich" style="display:block;text-decoration:none;color:inherit">${note ? `<div class="pre">${esc(note)}</div>` : '<span class="muted">Chưa có ghi chú. Bấm để thêm ở màn hình Lịch.</span>'}</a>`;
   const owe = ym => STUDENTS.filter(s => feeLine(s, ym) && !isPaid(s.name, ym)).length;
   const low = CLASSES.filter(c => CLASS_CFG[c].type === 'goi' && studentsOf(c).length && packCalc(c).left <= 2);
@@ -702,6 +756,7 @@ function homeCard(s) {
   return `<div class="card"><a class="sess" href="#buoi/${s.date}/${s.cls}"><div class="time" style="background:${bg};color:${ink}">${hhmm(s.m)}<small>${s.num ? 'buổi ' + s.num + '/' + CLASS_CFG[s.cls].size : s.makeup ? 'học bù' : '&nbsp;'}</small></div>
     <div class="grow"><div class="row between">${cp(s.cls)}${att ? '<span class="badge b-ok">✓ đã điểm danh</span>' : '<span class="badge">chưa điểm danh</span>'}</div>
     <div class="ellip" style="margin-top:3px">${hasPlan(l) ? '❤️ ' + esc(l.lesson || firstLine(l.content)) : '<span class="muted">⚠️ Chưa soạn giáo án</span>'}</div>
+    ${(o => o.length ? `<div class="small" style="margin-top:3px;color:#b4232f">⚠️ Bài ${orphanTxt(o)} chưa dạy (buổi đã hủy) – bấm để dời</div>` : '')(orphanBefore(s.cls, s.date))}
     <div class="small muted ellip">${studs.map(x => esc(x.display)).join(', ')}</div>
     <div class="small ellip" style="margin-top:3px">${ph ? `📚 <b>BT buổi trước:</b> ${esc(firstLine(ph.hw))}` : '<span class="muted">📚 Buổi trước không giao BT</span>'}${nBad ? ` <span class="badge b-warn">${nBad} em chưa đủ BT</span>` : ''}</div></div></a></div>`;
 }
@@ -724,6 +779,67 @@ function applyZoom() { // CSS zoom trên lưới (ảnh hưởng layout nên c�
 }
 let LAST_W = innerWidth; // chỉ tính lại khi bề ngang đổi (xoay máy) — thanh địa chỉ ẩn/hiện lúc cuộn chỉ đổi chiều cao
 window.addEventListener('resize', () => { if (innerWidth === LAST_W) return; LAST_W = innerWidth; if (ST && location.hash.startsWith('#lich') && lichZoom() === 'fit') applyZoom(); });
+// ---- Việc cần làm (cột "Việc cần làm" của tab GhiChuTuan): mỗi dòng 1 việc ----
+// "[ ] việc" = chưa xong · "[x 2026-11-14] việc" = xong ngày đó → gạch ngang, xuống cuối, tự xóa sau 7 ngày. Dòng chữ thường (ghi chú cũ) = việc chưa xong.
+const parseTodo = s => String(s || '').split('\n').map(l => {
+  let m = /^\s*\[x(?:\s+(\d{4}-\d{2}-\d{2}))?\]\s?(.*)$/i.exec(l); if (m) return { t: m[2].trim(), done: m[1] || TODAY };
+  m = /^\s*\[ ?\]\s?(.*)$/.exec(l); if (m) return m[1].trim() ? { t: m[1].trim(), done: '' } : null;
+  const t = l.replace(/^\s*[-•☐*]\s*/, '').trim(); return t ? { t, done: '' } : null; }).filter(Boolean);
+const sortTodo = L => [...L.filter(x => !x.done), ...L.filter(x => x.done)];
+const todoText = L => sortTodo(L).filter(x => x.t.trim()).map(x => (x.done ? `[x ${x.done}] ` : '[ ] ') + x.t.trim()).join('\n');
+function pruneTodos() { // xóa việc đã xong quá 7 ngày (mọi tuần)
+  if (READONLY || !ST) return; const lim = addDays(TODAY, -7); let ch = false;
+  Object.entries(ST.weekNotes).forEach(([mon, w]) => { if (!w.todo) return; const L = parseTodo(w.todo); const K = L.filter(x => !x.done || x.done > lim);
+    if (K.length !== L.length) { ST.weekNotes[mon] = { ...w, todo: todoText(K) }; ch = true; } });
+  if (ch) save();
+}
+// ⧉ Chép tuần trước: gc = thêm các dòng ghi chú tuần này chưa có · todo = thêm việc CHƯA XONG tuần trước (bỏ trùng). Có Hoàn tác.
+function copyWeekNote(mon, f) {
+  const pw = ST.weekNotes[addDays(mon, -7)] || {}, w = ST.weekNotes[mon] || {}; const norm = s => s.trim().replace(/\s+/g, ' ').toLowerCase();
+  let n = 0, val;
+  if (f === 'gc') {
+    const cur = w.gc || ''; const have = new Set(cur.split('\n').map(norm).filter(Boolean));
+    const add = (pw.gc || '').split('\n').filter(l => l.trim() && !have.has(norm(l)) && (have.add(norm(l)), true)); n = add.length;
+    val = !cur.trim() ? (pw.gc || '').replace(/\s+$/, '') : cur.replace(/\s+$/, '') + '\n' + add.join('\n');
+  } else {
+    const L = parseTodo(w.todo); const have = new Set(L.map(x => norm(x.t)));
+    const add = parseTodo(pw.todo).filter(x => !x.done && !have.has(norm(x.t)) && (have.add(norm(x.t)), true)); n = add.length;
+    val = todoText([...L, ...add.map(x => ({ t: x.t, done: '' }))]);
+  }
+  if (!n) { toast(f === 'gc' ? 'Ghi chú tuần trước đã có đủ ở tuần này' : 'Không còn việc chưa xong nào cần chép'); return; }
+  withUndo(`Đã chép ${n} ${f === 'gc' ? 'dòng ghi chú' : 'việc chưa xong'} từ tuần trước`, () => { ST.weekNotes[mon] = { ...w, [f]: val }; }, '⧉');
+  viewLich(mon);
+}
+function drawTodo(box, mon) {
+  const TD = sortTodo(parseTodo((ST.weekNotes[mon] || {}).todo));
+  const put = () => { ST.weekNotes[mon] = { ...(ST.weekNotes[mon] || {}), todo: todoText(TD) }; save(); };
+  const draw = focus => {
+    box.innerHTML = TD.map((x, i) => `<div class="td${x.done ? ' done' : ''}"><input type="checkbox" class="tdc" data-i="${i}" ${x.done ? 'checked' : ''} aria-label="Xong">
+      <input type="text" class="tdt" data-i="${i}" value="${esc(x.t)}" placeholder="Việc cần làm…" enterkeyhint="next">
+      <button class="tdx" data-i="${i}" type="button" title="Xóa việc này">×</button></div>`).join('')
+      + `<button class="tdadd" type="button">＋ Thêm việc</button>${TD.some(x => x.done) ? '<div class="small muted" style="margin-top:4px">✓ Việc đã xong tự xóa sau 7 ngày</div>' : ''}`;
+    box.querySelectorAll('.tdt').forEach(el => {
+      const i = +el.dataset.i;
+      el.addEventListener('input', () => { TD[i].t = el.value; put(); });
+      el.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); const at = TD[i].done ? TD.filter(x => !x.done).length : i + 1; TD.splice(at, 0, { t: '', done: '' }); draw(at); }
+        else if (e.key === 'Backspace' && !el.value) { e.preventDefault(); TD.splice(i, 1); put(); draw(Math.max(0, i - 1)); }
+      });
+      el.addEventListener('blur', () => setTimeout(() => { // bỏ dòng trống khi rời ô (không xóa nếu vừa bấm sang ô khác trong danh sách)
+        if (TD[i] && !TD[i].t.trim() && box.contains(el) && document.activeElement !== el) { TD.splice(i, 1); draw(); } }, 150));
+    });
+    box.querySelectorAll('.tdc').forEach(el => el.addEventListener('change', () => {
+      const [x] = TD.splice(+el.dataset.i, 1); if (!x.t.trim()) { draw(); return; }
+      x.done = el.checked ? TODAY : '';
+      if (x.done) TD.push(x); else TD.splice(TD.filter(y => !y.done).length, 0, x);
+      put(); draw(); if (x.done) toast('Xong 1 việc ✓');
+    }));
+    box.querySelectorAll('.tdx').forEach(b => b.addEventListener('click', () => { TD.splice(+b.dataset.i, 1); put(); draw(); }));
+    box.querySelector('.tdadd').addEventListener('click', () => { const at = TD.filter(x => !x.done).length; TD.splice(at, 0, { t: '', done: '' }); draw(at); });
+    if (focus != null) { const el = box.querySelectorAll('.tdt')[focus]; if (el) el.focus(); }
+  };
+  draw();
+}
 function viewLich(mon) {
   mon = mondayOf(mon || TODAY); setTab('lich', 'Lịch dạy');
   const days = [...Array(7)].map((_, i) => addDays(mon, i));
@@ -749,9 +865,10 @@ function viewLich(mon) {
       g += `<div class="blk ${lane} ${MOVED === s.id ? 'moved' : ''}" data-id="${s.id}" title="${s.cls} ${hhmm(s.m)}–${hhmm(s.m + s.dur)}" style="grid-row:${4 + slotIdx(s.m)}/span ${span};grid-column:${j + 3};background:${bg};color:${fg}">${s.cls}<div class="n">${s.num ? s.num : s.makeup ? 'bù' : ''}</div>${hasPlan(l) ? '<div class="n">❤️‍🔥</div>' : ''}</div>`;
     }); });
   h += `<div class="sgwrap"><div class="sg" style="grid-template-rows:auto auto auto;grid-auto-rows:${RH}px">${g}</div></div>`;
-  const wn = ST.weekNotes[mon] || {};
-  h += `<div class="notes2"><div class="card tape butter" style="margin:0"><h4>GHI CHÚ</h4><textarea data-n="gc" rows="6" placeholder="Học sinh cần lưu ý…">${esc(wn.gc || '')}</textarea></div>
-    <div class="card tape mint" style="margin:0"><h4>VIỆC CẦN LÀM</h4><textarea data-n="todo" rows="6" placeholder="Việc cần làm tuần này…">${esc(wn.todo || '')}</textarea></div></div>
+  const wn = ST.weekNotes[mon] || {}, pw = ST.weekNotes[addDays(mon, -7)] || {};
+  const cpBtn = (f, ok) => READONLY || !ok ? '' : `<button class="btn sm ghost cpw" data-cp="${f}" type="button" title="Chép từ tuần trước (${dm(addDays(mon, -7))})">⧉ Chép tuần trước</button>`;
+  h += `<div class="notes2"><div class="card tape butter" style="margin:0"><div class="row between" style="gap:6px"><h4>GHI CHÚ</h4>${cpBtn('gc', (pw.gc || '').trim())}</div><textarea data-n="gc" rows="6" placeholder="Học sinh cần lưu ý…">${esc(wn.gc || '')}</textarea></div>
+    <div class="card tape mint" style="margin:0"><div class="row between" style="gap:6px"><h4>VIỆC CẦN LÀM</h4>${cpBtn('todo', parseTodo(pw.todo).some(x => !x.done))}</div><div class="todo" id="todo"></div></div></div>
     <div class="alert info small" style="margin-top:14px">Số dưới mã lớp = buổi thứ mấy trong gói (<b>tự đếm</b>). ❤️‍🔥 = đã soạn giáo án (tự nhận biết). Muốn dời sang tuần khác: bấm ô lớp rồi đổi ngày.</div>`;
   V.innerHTML = h; MOVED = null;
   applyZoom();
@@ -762,8 +879,10 @@ function viewLich(mon) {
   V.querySelectorAll('[data-wk]').forEach(b => b.addEventListener('click', () => location.hash = '#lich/' + b.dataset.wk));
   V.querySelectorAll('.cell').forEach(c => c.addEventListener('click', () => editSess(null, c.dataset.d, SLOTS[+c.dataset.i])));
   const cw = $('#copyWk'); if (cw) cw.addEventListener('click', () => { prev.forEach(s => ST.sess.push({ id: uid('s'), date: addDays(s.date, 7), m: s.m, dur: s.dur, cls: s.cls, makeup: false, startNum: null })); save(); toast(`Đã chép ${prev.length} buổi 🐣`); viewLich(mon); });
-  const un = $('#undo'); if (un) un.addEventListener('click', () => { const s = ST.sess.find(x => x.id === LAST_MOVE.id); if (s) { s.date = LAST_MOVE.date; s.m = LAST_MOVE.m; MOVED = s.id; } LAST_MOVE = null; save(); toast('Đã hoàn tác'); viewLich(mon); });
+  const un = $('#undo'); if (un) un.addEventListener('click', () => { const s = ST.sess.find(x => x.id === LAST_MOVE.id); if (s) { s.date = LAST_MOVE.date; s.m = LAST_MOVE.m; MOVED = s.id; const L = ST.plan[LAST_MOVE.cls]; if (L && LAST_MOVE.pd) { const pd = new Map(LAST_MOVE.pd); L.forEach(x => { if (pd.has(x.id)) x.date = pd.get(x.id); }); L.sort(planOrder); } } LAST_MOVE = null; save(); toast('Đã hoàn tác'); viewLich(mon); });
   V.querySelectorAll('[data-n]').forEach(t => t.addEventListener('input', () => { ST.weekNotes[mon] = { ...(ST.weekNotes[mon] || {}), [t.dataset.n]: t.value }; save(); }));
+  drawTodo($('#todo'), mon);
+  V.querySelectorAll('[data-cp]').forEach(b => b.addEventListener('click', () => copyWeekNote(mon, b.dataset.cp)));
   bindDrag(mon);
 }
 // Kéo thả: chuột kéo ngay; ngón tay phải GIỮ ~0,45 giây (ô nổi lên, rung nhẹ) rồi mới kéo — vuốt nhanh là cuộn trang, bấm nhẹ là mở buổi
@@ -807,9 +926,11 @@ function bindDrag(mon) {
   });
 }
 function moveSess(s, date, m) {
-  LAST_MOVE = { id: s.id, date: s.date, m: s.m, cls: s.cls }; s.date = date; s.m = m; save();
+  LAST_MOVE = { id: s.id, date: s.date, m: s.m, cls: s.cls, pd: (ST.plan[s.cls] || []).map(x => [x.id, x.date]) }; // chỉ nhớ ngày từng bài (Hoàn tác không làm mất chữ cô gõ sau đó)
+  const from = s.date < date ? s.date : date, moved = s.date !== date; s.date = date; s.m = m;
+  const n = moved ? reflowPlan(s.cls, from) : 0; save(); // đổi ngày → giáo án đi theo thứ tự buổi
   const clash = SESS.filter(o => o.id !== s.id && o.date === s.date && o.m < s.m + s.dur && s.m < o.m + o.dur);
-  toast(`Đã dời ${s.cls} sang ${wdS(s.date)} ${dm(s.date)} lúc ${hhmm(s.m)}` + (clash.length ? ` · ⚠️ trùng giờ ${clash.map(x => x.cls).join(', ')}` : ''));
+  toast(`Đã dời ${s.cls} sang ${wdS(s.date)} ${dm(s.date)} lúc ${hhmm(s.m)}` + (n ? ' · giáo án dời theo' : '') + (clash.length ? ` · ⚠️ trùng giờ ${clash.map(x => x.cls).join(', ')}` : ''));
   MOVED = s.id;
 }
 function editSess(id, date, m0) {
@@ -834,10 +955,17 @@ function editSess(id, date, m0) {
   $('#eSave').addEventListener('click', () => {
     const [hh, mm] = ($('#eT').value || '00:00').split(':').map(Number); const c = $('#eC').value;
     const v = { date: $('#eD').value || s.date, m: hh * 60 + mm, dur: +$('#eL').value, cls: c, makeup: $('#eB').checked, startNum: CLASS_CFG[c].type === 'goi' && $('#eN').value ? +$('#eN').value : null };
-    if (id) Object.assign(s, v); else ST.sess.push({ id: uid('s'), ...v });
-    save(); close(); toast(id ? 'Đã sửa buổi học' : 'Đã thêm buổi học'); route(true);
+    const o = { date: s.date, cls: s.cls }; let n = 0; close();
+    withUndo(() => n ? (id ? 'Đã sửa buổi học' : 'Đã thêm buổi học') + ` · giáo án ${v.cls} đã xếp lại theo buổi (${n} bài đổi ngày)` : '', () => {
+      if (id) Object.assign(s, v); else ST.sess.push({ id: uid('s'), ...v });
+      if (!id) n = reflowPlan(v.cls, v.date); // thêm buổi (VD học bù) → bài kế tiếp vào buổi này
+      else if (o.cls !== v.cls) n = reflowPlan(o.cls, o.date) + reflowPlan(v.cls, v.date);
+      else if (o.date !== v.date) n = reflowPlan(v.cls, o.date < v.date ? o.date : v.date);
+    }, '📒');
+    if (!n) toast(id ? 'Đã sửa buổi học' : 'Đã thêm buổi học'); route(true);
   });
-  if (id) $('#eDel').addEventListener('click', () => { close(); withUndo(`Đã xóa buổi ${s.cls} ${wdS(s.date)} ${dm(s.date)}`, () => { ST.sess = ST.sess.filter(x => x.id !== id); }); route(true); });
+  if (id) $('#eDel').addEventListener('click', () => { close(); let n = 0;
+    withUndo(() => `Đã xóa buổi ${s.cls} ${wdS(s.date)} ${dm(s.date)}` + (n ? ' · giáo án dời xuống buổi sau' : ''), () => { ST.sess = ST.sess.filter(x => x.id !== id); n = reflowPlan(s.cls, s.date); }); route(true); });
 }
 
 // ================= BUỔI HỌC =================
@@ -862,6 +990,7 @@ function viewBuoi(iso, cls) {
   studentsOf(cls).forEach(st => { const r = W.rows[st.name]; if (!r.hw && subsOf(st.name).length) { r.hw = 'du'; r.autoHw = true; if (LK) setLk(r, 'bt', true); } });
 
   h += `<div class="card tape mint"><div class="row between"><h3>📒 Giáo án ${cls}${s.num ? ' · buổi ' + s.num + '/' + CLASS_CFG[cls].size : ''}</h3><a class="btn sm ghost" href="#giaoan/${cls}/${iso}">✏️ Sửa</a></div>`;
+  { const o = orphanBefore(cls, iso); if (o.length) h += `<div class="alert warn" style="margin:6px 0 8px">⚠️ Bài ${orphanTxt(o)} <b>chưa được dạy</b> – ngày đó lớp không có buổi trong Lịch (buổi đã hủy). ${reflowBtn(cls, o[0].date, '⤵️ Dời bài xuống buổi này')}</div>`; }
   if (hasPlan(l)) h += `<dl class="kv">${l.lesson ? `<dt>Bài dạy</dt><dd><b>${esc(l.lesson)}</b>${l.guessed ? ' <span class="badge b-warn">tự xếp theo thứ tự</span>' : ''}</dd>` : ''}
       ${l.content ? `<dt>Nội dung</dt><dd class="pre">${esc(l.content)}</dd>` : ''}${l.mat ? `<dt>Tài liệu</dt><dd class="pre">${esc(l.mat)}</dd>` : ''}
       ${l.print ? `<dt>File cần in</dt><dd class="pre">${esc(l.print)}</dd>` : ''}${l.hw ? `<dt>BT giao hôm nay</dt><dd class="pre">${esc(l.hw)}</dd>` : ''}</dl>`;
@@ -932,15 +1061,17 @@ function viewGiaoAn(cls, focus) {
   const oldBtn = (m, on, off) => `<button class="oldtg${oldMode === m ? ' on' : ''}" data-old="${m}" style="color:${cfg};border-color:${cfg}">${oldMode === m ? on : off}</button>`;
   const oldBtns = !old.length ? '' : `<span class="oldbtns">${oldBtn('one', '🙈 Ẩn buổi trước', '👁 Hiện 1 buổi trước')}${old.length > 1 ? oldBtn('all', '🙈 Ẩn buổi cũ', '📜 Hiện tất cả ' + old.length + ' buổi cũ') : ''}</span>`;
   const pool = L.filter(x => !x.date && !slots.some(z => z[1] === x.id));
+  const orph = orphanLessons(cls), orphD = new Set(orph.map(x => x.date));
   const row = (key, d, l, s) => { const g = l && l.guessed;
     return `<tr class="${d === TODAY ? 'today' : d && d < TODAY ? 'past' : ''}" id="r-${key.replace(':', '-')}" data-key="${key}">
-    <td><div class="dc">${d ? dm(d) + `<small>${wdS(d)}${s ? ' · ' + hhmm(s.m) : ''}${s && s.num ? ' · #' + s.num : ''}</small>` : `${l && l.num ? 'Buổi ' + esc(l.num) : ''}<small>chưa xếp ngày</small>`}${g ? '<small class="gl" style="color:#a2531f">tự xếp</small>' : ''}${l && l.id && !g ? `<button class="x" data-del="${l.id}" title="Xóa dòng">🗑</button>` : ''}</div></td>
+    <td><div class="dc">${d ? dm(d) + `<small>${wdS(d)}${s ? ' · ' + hhmm(s.m) : ''}${s && s.num ? ' · #' + s.num : ''}</small>${orphD.has(d) ? '<small style="color:#b4232f">🚫 không có buổi</small>' : ''}` : `${l && l.num ? 'Buổi ' + esc(l.num) : ''}<small>chưa xếp ngày</small>`}${g ? '<small class="gl" style="color:#a2531f">tự xếp</small>' : ''}${l && l.id && !g ? `<button class="x" data-del="${l.id}" title="Xóa dòng">🗑</button>` : ''}</div></td>
     ${SYL_COLS.map(([k, , w]) => `<td style="min-width:${w}px;max-width:${w + (k === 'lesson' ? 25 : 90)}px" class="${g ? 'guess' : ''}"><div class="cc" contenteditable="true" data-f="${k}">${esc(l ? l[k] : '')}</div></td>`).join('')}</tr>`; };
   let h = `<div class="clsbar" style="margin-top:14px">${CLASSES.map(c => chipC(c, c === cls, '#giaoan/' + c)).join('')}</div>`;
   h += `<div class="sylwrap"><div class="sylbar" style="background:${cbg};color:${cfg}"><span>${EMO[cls] || ''} ${esc(cls)}</span>${oldBtns}</div><div class="sylinfo">
     <div class="k">Tên học sinh</div><div class="v">${studentsOf(cls).map(s => esc(s.display)).join(', ') || '—'}</div>
     <div class="k">Giáo trình</div><div class="v"><div class="cc" style="padding:0;min-height:0" contenteditable="true" data-ci="book">${esc(ci.book || '')}</div></div>
     <div class="k">Extra</div><div class="v"><div class="cc" style="padding:0;min-height:0" contenteditable="true" data-ci="extra" data-ph="(trống)">${esc(ci.extra || '')}</div></div></div>
+    ${(o => o.length ? `<div class="alert warn" style="margin:8px">⚠️ Bài ${orphanTxt(o)} <b>chưa được dạy</b> – ngày đó lớp không có buổi trong Lịch (buổi đã hủy). ${reflowBtn(cls, o[0].date, '⤵️ Dời xuống buổi kế tiếp')}</div>` : '')(orph)}
     <div class="sylscroll"><table class="syl"><tr><th>Ngày dạy</th>${SYL_COLS.map(([, t]) => `<th>${t}</th>`).join('')}</tr>
     ${shown.map(d => row(d, d, lessonFor(cls, d), SESS.find(x => x.cls === cls && x.date === d))).join('')}
     ${pool.map(x => row('id:' + x.id, '', x, null)).join('')}</table></div>
@@ -1091,7 +1222,7 @@ function renameStu(from, to) {
 }
 
 // ================= HỌC PHÍ (tháng trước nếu còn nợ + tháng này + tháng sau) =================
-let HP_FILTER = 'all';
+let HP_FILTER = 'all', HP_QUOTE = false, QUOTE_EDIT = false; // HP_QUOTE: đang mở bảng giá (mặc định ẩn)
 function viewHocPhi() {
   const MS = shownMonths(); const nxt = MS[MS.length - 1]; const due = MS.filter(ym => ym <= CUR_M);
   setTab('hocphi', 'Học phí ' + MS.map(mLabel).join(' · '));
@@ -1103,7 +1234,10 @@ function viewHocPhi() {
   let h = `<div class="tiles t3" style="margin-top:16px">${due.map(ym => { const u = rows.filter(r => owe(r, ym)); return `<div class="tile"><div class="k">${mLabel(ym)} chưa đóng</div><div class="v">${u.length} em</div><div class="small muted">${kfmt(u.reduce((t, r) => t + r.f[ym].due, 0))}</div></div>`; }).join('')}
     <div class="tile"><div class="k">Đã thu ${mLabel(CUR_M)}</div><div class="v">${kfmt(rows.filter(r => r.f[CUR_M] && isPaid(r.s.name, CUR_M)).reduce((t, r) => t + r.f[CUR_M].due, 0))}</div></div>
     <div class="tile"><div class="k">${mLabel(nxt)} đóng trước</div><div class="v">${pre.length} em</div></div></div>
-    <div class="row between wrapf" style="margin:14px 0 8px;gap:6px"><div class="seg" id="hpf"><button data-v="all" class="${HP_FILTER === 'all' ? 'on' : ''}">Tất cả</button><button data-v="un" class="${HP_FILTER === 'un' ? 'on x' : ''}">Còn nợ (${nDebt})</button></div><span class="small muted">Bấm ô tiền = tick · bấm tên = nghỉ/sửa</span></div>
+    <div class="row between wrapf" style="margin:14px 0 8px;gap:6px"><div class="seg" id="hpf"><button data-v="all" class="${HP_FILTER === 'all' ? 'on' : ''}">Tất cả</button><button data-v="un" class="${HP_FILTER === 'un' ? 'on x' : ''}">Còn nợ (${nDebt})</button></div>
+      <button class="btn sm ${HP_QUOTE ? 'mint' : 'ghost'}" id="hpQ" type="button">📋 Quote ${HP_QUOTE ? '▴' : '▾'}</button></div>
+    ${HP_QUOTE ? quoteCard() : ''}
+    <div class="small muted" style="margin:0 4px 6px">Bấm ô tiền = tick đã đóng · bấm tên = sửa học phí / nghỉ</div>
     <div class="card" style="padding:6px 10px 10px"><table class="fee2"><tr><th>Học sinh</th>${MS.map(ym => `<th>${mLabel(ym)}${ym === nxt ? '<small>tháng sau</small>' : ''}</th>`).join('')}</tr>`;
   const cell = (r, ym) => { const f = r.f[ym]; const n = esc(r.s.name);
     if (!f) return chargeOf(r.s, ym) === 'off' ? `<td><div class="mc off" data-m="${n}">💤 nghỉ</div></td>` : `<td><div class="mc na" data-m="${n}" title="Tháng này không thu">—</div></td>`;
@@ -1126,15 +1260,111 @@ function viewHocPhi() {
   V.querySelectorAll('#hpf button').forEach(b => b.addEventListener('click', () => { HP_FILTER = b.dataset.v; viewHocPhi(); }));
   V.querySelectorAll('[data-p]').forEach(el => el.addEventListener('click', () => { const [n, ym] = el.dataset.p.split('|'); setPay(n, ym, !isPaid(n, ym)); viewHocPhi(); }));
   V.querySelectorAll('[data-m]').forEach(el => el.addEventListener('click', () => feeMenu(el.dataset.m)));
+  $('#hpQ').addEventListener('click', () => { HP_QUOTE = !HP_QUOTE; if (!HP_QUOTE) QUOTE_EDIT = false; viewHocPhi(); });
+  if (HP_QUOTE) bindQuote();
+}
+// ---- Bảng giá (Quote): chỉ hiện khi bấm nút 📋 Quote. Mỗi dòng lưu giá 1 giờ lớp kèm 1-1, các cột còn lại tự tính ----
+const Q_PCT = [100, 75, 65, 55, 50]; // giá mỗi học viên, lớp 1 (kèm 1-1) / 2 / 3 / 4 / 5+ học viên = % giá kèm 1-1
+const Q_HOURS = 8 * 1.5;            // 1 tháng = 8 tiết, 1 tiết = 1h30
+const QCOLS = ['Kèm 1-1', 'Nhóm 2', 'Nhóm 3', 'Nhóm 4', 'Nhóm 5+'];
+const qk = n => Math.round(n / 1000).toLocaleString("vi-VN"); // số nghìn đồng, không kèm chữ k (cho vừa điện thoại)
+const qKey = x => x.group + '|' + x.level;
+const qHour = (x, j) => x.hour * Q_PCT[j] / 100;            // tính bằng số nguyên → làm tròn đúng như Sheet (172.5k → 173k)
+const qMonth = (x, j) => x.hour * Q_PCT[j] * Q_HOURS / 100;
+function qNum(v) { // "180 đ" / "180" → 180000 · "2.000.000" → 2000000 · số < 10000 hiểu là nghìn đồng
+  if (typeof v === 'number') return v > 0 ? Math.round(v < 10000 ? v * 1000 : v) : '';
+  let s = String(v == null ? '' : v).replace(/[^\d.,]/g, ''); if (!s) return '';
+  s = /^\d{1,3}([.,]\d{3})+$/.test(s) ? s.replace(/[.,]/g, '') : s.replace(',', '.');
+  const n = parseFloat(s); return n > 0 ? Math.round(n < 10000 ? n * 1000 : n) : '';
+}
+function parseQuote(txt) { // dán từ Sheet (cột cách nhau bằng Tab) hoặc gõ "Nhóm | Cấp độ | Giá 1 giờ"
+  const out = [], seen = new Set(); let g = '';
+  String(txt || '').split(/\r?\n/).forEach(line => {
+    const c = line.split(/\t|\|/).map(x => x.trim());
+    const k = c.findIndex((x, j) => j > 0 && /^\d[\d.,\s]*(đ|k|vnđ|vnd)?$/i.test(x)); // ô giá đầu tiên (bỏ qua "5.0+")
+    if (k < 1 || !c[k - 1] || !qNum(c[k])) return;
+    if (k >= 2) g = c[k - 2] || g; // ô nhóm trống (ô gộp trong Sheet) = cùng nhóm với dòng trên
+    const x = { group: g, level: c[k - 1], hour: qNum(c[k]) }; if (seen.has(qKey(x).toLowerCase())) return;
+    seen.add(qKey(x).toLowerCase()); out.push(x);
+  });
+  return out;
+}
+function quoteCard() {
+  const L = ST.prices || []; const ed = QUOTE_EDIT && !READONLY;
+  let h = `<div class="card quote" id="quote"><div class="row between wrapf" style="gap:6px"><h3>📋 Bảng giá</h3>
+    ${READONLY ? '' : `<div class="row" style="gap:6px"><button class="btn sm ghost" id="qPaste" type="button">📥 Dán bảng giá</button><button class="btn sm ${ed ? 'mint' : 'ghost'}" id="qEd" type="button">${ed ? '✓ Xong' : '✏️ Sửa'}</button></div>`}</div>
+    <div class="small muted">Học phí của mỗi học viên (nghìn đồng) · 1 tháng: 8 tiết, 1 tiết: 1h30.${ed ? '' : ' <b>Số to</b> = 1 tháng, <span class="qh">số nhỏ</span> = 1 giờ.'}</div>`;
+  if (!ed) {
+    if (!L.length) return h + `<div class="small muted" style="margin-top:6px">Chưa có bảng giá. Bấm <b>📥 Dán bảng giá</b> ở trên (hoặc <b>✏️ Sửa → ＋ Thêm dòng</b>).</div></div>`;
+    h += `<div class="sylscroll"><table class="quote"><tr><th>Cấp độ</th>${QCOLS.map(c => `<th>${c.replace(' ', '<br>')}</th>`).join('')}</tr>`;
+    let g = null;
+    L.forEach(x => {
+      if (x.group !== g) { g = x.group; h += `<tr class="qg"><td colspan="6">${esc(g)}</td></tr>`; }
+      h += `<tr><td class="lv">${esc(x.level)}</td>${Q_PCT.map((_, j) => x.hour ? `<td><b>${qk(qMonth(x, j))}</b><span class="qh">${qk(qHour(x, j))}</span></td>` : '<td class="muted">—</td>').join('')}</tr>`;
+    });
+    return h + '</table></div></div>';
+  }
+  const groups = [...new Set(L.map(x => x.group).filter(Boolean))];
+  h += `<div class="sylscroll"><table class="quote qe"><tr><th>Nhóm</th><th>Cấp độ</th><th>Giá 1 giờ<br>kèm 1-1</th><th></th></tr>`;
+  h += L.map((x, i) => `<tr><td><input type="text" class="qgi" data-i="${i}" value="${esc(x.group)}" list="qgl" placeholder="(không nhóm)"></td>
+    <td><input type="text" class="qlv" data-i="${i}" value="${esc(x.level)}"></td>
+    <td><input type="number" class="qhr" data-i="${i}" min="0" step="1" inputmode="numeric" value="${x.hour ? x.hour / 1000 : ''}" placeholder="—"><div class="qm" data-i="${i}">${x.hour ? '= ' + kfmt(qMonth(x, 0)) + '/th' : ''}</div></td>
+    <td><button class="iconb qdel" data-i="${i}" type="button" title="Xóa dòng">🗑️</button></td></tr>`).join('');
+  h += `</table></div><datalist id="qgl">${groups.map(g => `<option value="${esc(g)}">`).join('')}</datalist>
+    <div class="row wrapf" style="gap:8px;margin-top:8px"><button class="btn sm ghost" id="qAdd" type="button">＋ Thêm dòng</button></div>
+    <div class="small muted" style="margin-top:6px">Chỉ cần gõ giá 1 giờ của lớp kèm 1-1 (nghìn đồng, VD 180). Lớp 2 / 3 / 4 / 5+ học viên tự tính = ${Q_PCT.slice(1).join('% / ')}% giá đó; 1 tháng = giá giờ × ${Q_HOURS} giờ.</div>`;
+  return h + '</div>';
+}
+function bindQuote() {
+  const ed = $('#qEd'); if (ed) ed.addEventListener('click', () => { QUOTE_EDIT = !QUOTE_EDIT; viewHocPhi(); });
+  const dup = (i, x) => ST.prices.some((y, k) => k !== i && qKey(y).toLowerCase() === qKey(x).toLowerCase());
+  const txt = (cls, f, empty) => V.querySelectorAll(cls).forEach(el => el.addEventListener('change', () => {
+    const i = +el.dataset.i; const x = ST.prices[i]; if (!x) return; const v = el.value.trim().replace(/\s+/g, ' ');
+    if (!v && !empty) { el.value = x[f]; toast('Cấp độ không được để trống'); return; }
+    const y = { ...x, [f]: v }; if (dup(i, y)) { el.value = x[f]; toast('Đã có dòng "' + y.level + '"' + (y.group ? ' trong nhóm ' + y.group : '')); return; }
+    ST.prices[i] = y; save(); }));
+  txt('.qgi', 'group', true); txt('.qlv', 'level', false);
+  V.querySelectorAll('.qhr').forEach(el => el.addEventListener('change', () => {
+    const i = +el.dataset.i; const x = ST.prices[i]; if (!x) return; const v = Math.round((+el.value || 0) * 1000);
+    ST.prices[i] = { ...x, hour: v > 0 ? v : '' }; save();
+    const m = V.querySelector(`.qm[data-i="${i}"]`); if (m) m.textContent = v > 0 ? '= ' + kfmt(qMonth(ST.prices[i], 0)) + '/th' : ''; }));
+  V.querySelectorAll('.qdel').forEach(b => b.addEventListener('click', () => {
+    const i = +b.dataset.i; const x = ST.prices[i]; if (!x) return;
+    withUndo('Đã xóa dòng giá ' + x.level, () => { ST.prices = ST.prices.filter((_, k) => k !== i); }); viewHocPhi(); }));
+  const add = $('#qAdd'); if (add) add.addEventListener('click', () => {
+    const g = ST.prices.length ? ST.prices[ST.prices.length - 1].group : '';
+    let n = 'Cấp độ mới', k = 2; while (dup(-1, { group: g, level: n })) n = 'Cấp độ mới ' + k++;
+    ST.prices = [...ST.prices, { group: g, level: n, hour: '' }]; save(); viewHocPhi();
+    const ins = V.querySelectorAll('.qlv'); const last = ins[ins.length - 1]; if (last) { last.focus(); last.select(); } });
+  const pb = $('#qPaste'); if (pb) pb.addEventListener('click', quotePaste);
+}
+function quotePaste() { // dán cả bảng giá: thay toàn bộ bảng hiện có (có Hoàn tác)
+  const M = $('#modal'); const close = () => { M.hidden = true; M.innerHTML = ''; };
+  M.innerHTML = `<div class="sheet"><span class="corner stk" style="right:18px;top:10px">📋</span><h3 style="font-size:20px">📥 Dán bảng giá</h3>
+    <div class="small muted">Mỗi dòng 1 cấp độ: <b>Nhóm | Cấp độ | Giá 1 giờ kèm 1-1</b> (nghìn đồng). Hoặc mở tab <b>Quote</b> cũ, chọn vùng <b>A3:C15</b> (hoặc cả bảng) → Copy → dán vào đây.</div>
+    <textarea id="qTxt" rows="9" placeholder="Giao tiếp | Cơ bản | 180&#10;Giao tiếp | Nâng cao | 200&#10;IELTS | 5.0+ | 200" style="margin-top:8px;font-size:14px"></textarea>
+    <div class="small" id="qPv" style="margin-top:6px"></div>
+    <div class="row wrapf" style="gap:8px;margin-top:12px"><button class="btn" id="qOk" type="button" disabled>💾 Thay bảng giá</button><button class="btn ghost" id="qNo" type="button">Hủy</button></div></div>`;
+  M.hidden = false; M.onclick = e => { if (e.target === M) close(); }; $('#qNo').addEventListener('click', close);
+  let rows = [];
+  $('#qTxt').addEventListener('input', e => { rows = parseQuote(e.target.value); $('#qOk').disabled = !rows.length;
+    $('#qPv').innerHTML = rows.length ? `✓ Đọc được <b>${rows.length} cấp độ</b>: ${rows.map(x => esc((x.group ? x.group + ' · ' : '') + x.level) + ' ' + kfmt(x.hour)).join(', ')}` : '<span class="muted">Chưa đọc được dòng nào.</span>'; });
+  $('#qOk').addEventListener('click', () => { if (!rows.length) return; close();
+    if (ST.prices.length) withUndo('Đã thay bảng giá (' + rows.length + ' cấp độ)', () => { ST.prices = rows; }); else { ST.prices = rows; save(); toast('Đã nhập bảng giá ' + rows.length + ' cấp độ 🎉'); }
+    QUOTE_EDIT = false; viewHocPhi(); });
 }
 function setPay(n, ym, v) { const o = { ...(ST.paid[n] || {}) }; if (v === undefined) delete o[ym]; else o[ym] = v; ST.paid[n] = o; save(); }
 function feeMenu(name) {
-  const st = byName(name); if (!st) return; const cfg = CLASS_CFG[st.cls]; const M = $('#modal');
-  const ms = shownMonths();
+  let st = byName(name); if (!st) return; const cfg = CLASS_CFG[st.cls]; const M = $('#modal');
+  const ms = shownMonths(); const per = cfg.type === 'thang' ? 'tháng' : 'gói ' + cfg.size + ' buổi';
   const draw = () => {
+    st = byName(name) || st;
     M.innerHTML = `<div class="sheet"><span class="corner stk" style="right:18px;top:10px">🍓</span>
       <div class="row wrapf" style="gap:8px"><h3 style="font-size:20px">${esc(st.display)}</h3>${cp(st.cls)}</div>
-      <div class="small muted" style="margin:2px 0 10px">Học phí gốc ${money(st.fee)} / ${cfg.type === 'thang' ? 'tháng' : 'gói ' + cfg.size + ' buổi'}</div>
+      ${READONLY ? `<div class="small muted" style="margin:2px 0 10px">Học phí gốc ${money(st.fee)} / ${per}</div>`
+        : `<div class="row wrapf" style="gap:6px;margin:6px 0 10px;align-items:center"><span class="small muted">Học phí gốc</span>
+          <input type="number" id="fmFee" min="0" step="50" inputmode="numeric" value="${st.fee / 1000}" style="width:100px;padding:5px 8px">
+          <span class="small muted">nghìn / ${per}</span><button class="btn sm mint" id="fmFeeOk" type="button">Lưu</button></div>`}
       ${ms.map(ym => { const f = feeLine(st, ym); const ch = chargeOf(st, ym); const v = payOf(name, ym);
         const cur = v === true ? 'paid' : v === false ? 'un' : v === 'off' ? 'off' : 'auto';
         const det = f ? (f.type === 'thang' ? `${kfmt(f.fee)}${f.missing ? ` − ${f.missing} buổi × ${kfmt(f.per)}` : ''} = <b>${kfmt(f.due)}</b> <span class="muted">(chuẩn ${f.std} buổi)</span>` : `Gói ${cfg.size} buổi${f.start ? ', bắt đầu ' + dm(f.start) : ''}: <b>${kfmt(f.due)}</b>`)
@@ -1145,6 +1375,11 @@ function feeMenu(name) {
       <div class="row" style="margin-top:14px"><button class="btn ghost" id="fmX">Đóng</button></div></div>`;
     M.querySelectorAll('[data-ym]').forEach(b => b.addEventListener('click', () => { const v = { paid: true, un: false, off: 'off', auto: undefined }[b.dataset.v]; setPay(name, b.dataset.ym, v); draw(); if (location.hash.startsWith('#hocphi')) viewHocPhi(); }));
     $('#fmX').addEventListener('click', close);
+    const fi = $('#fmFee');
+    if (fi) { const go = () => { const v = Math.round((+fi.value || 0) * 1000); const x = ST.students.find(s => s.name === name);
+        if (!x || v === st.fee) return; x.fee = v; save(); draw(); if (location.hash.startsWith('#hocphi')) viewHocPhi();
+        toast('Đã đổi học phí ' + st.display + ': ' + money(v)); };
+      $('#fmFeeOk').addEventListener('click', go); fi.addEventListener('keydown', e => { if (e.key === 'Enter') go(); }); }
   };
   const close = () => { M.hidden = true; M.innerHTML = ''; route(true); };
   M.onclick = e => { if (e.target === M) close(); };
@@ -1301,7 +1536,7 @@ function route(keep) {
   if (!ST) return; // dữ liệu chưa tải xong: boot() sẽ tự vẽ đúng màn đang chọn khi có dữ liệu
   const p = location.hash.replace(/^#/, '').split('/').map(decodeURIComponent);
   if (!keep && p[0] !== LAST) window.scrollTo(0, 0);
-  LAST = p[0];
+  LAST = p[0]; pruneTodos();
   if (p[0] === 'lich') viewLich(p[1]);
   else if (p[0] === 'buoi') viewBuoi(p[1], p[2]);
   else if (p[0] === 'giaoan') viewGiaoAn(p[1], p[2]);
