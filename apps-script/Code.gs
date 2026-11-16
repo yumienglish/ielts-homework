@@ -15,7 +15,7 @@ const TIMEZONE = 'Asia/Ho_Chi_Minh';
 const HEAD = ['Thời gian nộp', 'Họ tên', 'Lớp', 'Bài', 'Điểm', 'Tổng', 'Phần 1', 'Phần 2', 'Phần 3', 'Phần 4', 'Phần 5', 'Câu sai', 'Chi tiết (JSON)',
               'Bắt đầu lúc', 'Thời gian làm bài', 'Số lần rời trang', 'Phần 6', 'Ghi âm',
               'Mã lần nộp', 'Điểm lần 2', 'Câu sai lần 2', 'Nộp lần 2 lúc', 'Thời gian làm lần 2', 'Rời trang lần 2'];
-const MAX_AUDIO_B64 = 20 * 1024 * 1024; // ~15MB file ghi âm (giới hạn đính kèm Gmail là 25MB)
+const MAX_AUDIO_B64 = 20 * 1024 * 1024; // ~15MB file ghi âm, tính tổng mọi file (giới hạn đính kèm Gmail là 25MB)
 
 function fmtTime_(iso) {
   return iso ? Utilities.formatDate(new Date(iso), TIMEZONE, 'HH:mm:ss dd/MM/yyyy') : '—';
@@ -91,6 +91,21 @@ function validate_(d) {
   } else {
     d.audio = null;
   }
+  // Trang có nhiều câu ghi âm (VD: KET speaking) gửi "audios" = nhiều file, đính kèm hết vào mail lần 1;
+  // "extras" = phần tự đánh giá không chấm điểm (hiện trong mail lần 1).
+  const str = (v, n) => String(v == null ? '' : v).slice(0, n);
+  d.extras = (Array.isArray(d.extras) ? d.extras.slice(0, 10) : []).map(x => ({ label: str(x && x.label, 120), text: str(x && x.text, 3000) }));
+  if (d.attempt === 2) d.audios = [];
+  let size = d.audio ? d.audio.b64.length : 0;
+  d.audios = (Array.isArray(d.audios) ? d.audios.slice(0, 20) : []).map(a => {
+    if (!a || typeof a.b64 !== 'string' || !a.b64) throw new Error('File ghi âm không hợp lệ');
+    size += a.b64.length;
+    let mime = str(a.mime || 'audio/webm', 40).split(';')[0];
+    if (!/^audio\/[\w.+-]+$/.test(mime)) mime = 'audio/webm';
+    return { b64: a.b64, mime: mime, ext: str(a.ext || 'webm', 5).replace(/[^a-z0-9]/gi, '') || 'webm',
+      dur: Math.max(0, Number(a.dur) || 0), label: str(a.label || 'Ghi âm', 120), code: str(a.code, 20).replace(/[^A-Za-z0-9-]/g, '') || 'REC' };
+  });
+  if (size > MAX_AUDIO_B64) throw new Error('Các file ghi âm quá lớn');
 }
 
 function fmtClock_(sec) {
@@ -168,7 +183,9 @@ function appendFirst_(sh, d) {
   const secs = d.sections.map(secScore_);
   while (secs.length < 6) secs.push('');
   const when = d.submittedAt ? new Date(d.submittedAt) : new Date();
-  const rec = d.audio ? 'Có (' + fmtClock_(d.audio.dur) + ') – file đính kèm trong email' : (d.wantsAudio ? 'Không ghi âm' : '');
+  const audios = d.audios || [];
+  const rec = audios.length ? 'Có ' + audios.length + ' file (' + fmtClock_(audios.reduce((s, a) => s + a.dur, 0)) + ') – đính kèm trong email'
+    : d.audio ? 'Có (' + fmtClock_(d.audio.dur) + ') – file đính kèm trong email' : (d.wantsAudio ? 'Không ghi âm' : '');
   const second = d.sid && !d.canRetry ? 'Không cần (đúng hết)' : '';
   sh.appendRow([when, d.name, d.cls, d.title, d.score, d.total].concat(secs.slice(0, 5), [wrongList_(d.items), JSON.stringify(d.items),
     d.startedAt ? new Date(d.startedAt) : '—', fmtDur_(d.timeTakenSec), d.leaves, secs[5], rec, d.sid || '', second]));
@@ -210,7 +227,15 @@ function sendMail_(d, sheetUrl) {
     });
     html += '</table>';
   });
-  if (d.audio || d.wantsAudio) {
+  (d.extras || []).forEach(x => {
+    html += '<h3 style="margin:16px 0 6px">📝 ' + esc_(x.label) + '</h3>' +
+      '<p style="margin:0;padding:8px 10px;background:#f6f3ff;border-radius:6px">' + esc_(x.text).replace(/\n/g, '<br>') + '</p>';
+  });
+  const audios = d.audios || [];
+  if (audios.length) {
+    html += '<h3 style="margin:16px 0 6px">🎙 ' + audios.length + ' file ghi âm – <b>đính kèm ở cuối email này</b></h3><ul style="margin:0;padding-left:20px">' +
+      audios.map(a => '<li>' + esc_(a.label) + ' – ' + fmtClock_(a.dur) + '</li>').join('') + '</ul>';
+  } else if (d.audio || d.wantsAudio) {
     html += '<h3 style="margin:16px 0 6px">🎙 ' + esc_(d.audio ? d.audio.label : 'Ghi âm') + '</h3>' +
       (d.audio
         ? '<p style="margin:0">File ghi âm dài <b>' + fmtClock_(d.audio.dur) + '</b>, <b>đính kèm ở cuối email này</b>. Bấm vào file để nghe.</p>'
@@ -218,9 +243,14 @@ function sendMail_(d, sheetUrl) {
   }
   html += '<p style="margin-top:16px"><a href="' + sheetUrl + '">📊 Mở bảng tổng hợp bài nộp (Google Sheet)</a></p></div>';
 
-  const msg = { to: TEACHER_EMAIL, subject: subject + (d.audio ? ' 🎙' : ''), htmlBody: html, name: 'Bài tập về nhà' };
+  const hasRec = !!(d.audio || audios.length);
+  const msg = { to: TEACHER_EMAIL, subject: subject + (hasRec ? ' 🎙' : ''), htmlBody: html, name: 'Bài tập về nhà' };
+  const safe = s => String(s).replace(/[\\/:*?"<>|]+/g, '').trim();
+  const blobs = audios.map(a => Utilities.newBlob(Utilities.base64Decode(a.b64), a.mime,
+    safe(d.unit) + ' - ' + safe(d.name) + ' - ' + a.code + '.' + a.ext));
   const blob = audioBlob_(d);
-  if (blob) msg.attachments = [blob];
+  if (blob) blobs.unshift(blob);
+  if (blobs.length) msg.attachments = blobs;
   MailApp.sendEmail(msg);
 }
 
