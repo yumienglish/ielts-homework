@@ -33,7 +33,6 @@ const MAX_DESC = 20000;
 // Lịch tuần lấy từ file "Quản lý lớp học" (tab Lop + Lich). Để trống = tự tìm file theo tên trong Drive.
 const QUAN_LY_SHEET_ID = '';
 const QUAN_LY_FILE_NAME = 'Quản lý lớp học';
-const SCHEDULE_PACK_NAME = 'Việc cần làm'; // bài Lịch tuần nằm trong pack này
 const TIMEZONE = 'Asia/Ho_Chi_Minh';
 
 /* ───────────────────────── Cài đặt ───────────────────────── */
@@ -184,7 +183,8 @@ function addLink_(d) {
 }
 
 function addNote_(d) {
-  const pack = livePack_(load_('PACKS', PACK_COLS), d.packId);
+  // Không có packId → ghi chú tự do trên bảng Ghi chú (không thuộc pack nào)
+  const pack = d.packId ? livePack_(load_('PACKS', PACK_COLS), d.packId) : null;
   const item = baseItem_(d, pack, 'note');
   if (!item.desc && !str_(d.title, 150).trim()) throw new Error('Ghi chú đang trống');
   item.title = str_(d.title, 150).trim();
@@ -201,7 +201,10 @@ function updateItem_(d) {
   if (d.tags != null) it.tags = tags_(d.tags);
   if (d.pinned != null) it.pinned = !!d.pinned;
   if (d.color != null) it.color = itemColor_(d.color);
-  if (d.packId != null && String(d.packId) !== it.packId) {
+  if (d.packId === '' && it.packId !== '') { // chuyển ra bảng Ghi chú (chỉ ghi chú / link / lịch, không phải file)
+    if (it.type === 'file') throw new Error('Bài có file không chuyển thành ghi chú được');
+    it.packId = ''; it.packName = 'Ghi chú';
+  } else if (d.packId && String(d.packId) !== it.packId) {
     const packs = load_('PACKS', PACK_COLS);
     const pack = livePack_(packs, d.packId);
     if (it.type === 'file' && it.fileId) {
@@ -392,11 +395,7 @@ function syncSchedule_() {
     it.title = title; it.desc = JSON.stringify(data);
     save_(t, it);
   } else {
-    const packs = load_('PACKS', PACK_COLS);
-    const live = packs.rows.filter(p => !p.deleted);
-    const pack = live.find(p => p.name.toLowerCase() === SCHEDULE_PACK_NAME.toLowerCase()) || live[0];
-    if (!pack) throw new Error('Chưa có pack nào để đặt bài Lịch tuần');
-    it = baseItem_({ who: 'Tự động', pinned: true }, pack, 'schedule');
+    it = baseItem_({ who: 'Tự động', pinned: true }, null, 'schedule'); // nằm trên bảng Ghi chú
     it.title = title; it.desc = JSON.stringify(data);
     append_(t, it);
   }
@@ -409,7 +408,7 @@ function baseItem_(d, pack, type) {
   // createdAt chỉ dùng khi chép bài cũ sang (giữ ngày gốc); không nhận ngày trong tương lai
   const at = d.createdAt ? new Date(d.createdAt) : null;
   return {
-    id: newId_(), packId: pack.id, packName: pack.name, title: '', type: type,
+    id: newId_(), packId: pack ? pack.id : '', packName: pack ? pack.name : 'Ghi chú', title: '', type: type,
     tags: tags_(d.tags), desc: str_(d.desc, MAX_DESC).trim(), fileId: '', url: '', mime: '', size: '',
     by: str_(d.who, 30).trim() || '?', createdAt: at && !isNaN(at) && at <= new Date() ? at : new Date(),
     pinned: !!d.pinned, deleted: false, color: itemColor_(d.color),
@@ -435,7 +434,7 @@ function snapshot_() {
     .map(c => ({ id: c.id, itemId: c.itemId, by: c.by, text: c.text, createdAt: c.createdAt }));
   let classes = {};
   try { classes = JSON.parse(PropertiesService.getScriptProperties().getProperty('CLASSES') || '{}'); } catch (_) {}
-  return { ver: 2, packs: packs, items: items, comments: comments, classes: classes };
+  return { ver: 3, packs: packs, items: items, comments: comments, classes: classes };
 }
 
 /* ───────────────────────── Drive + Sheet ───────────────────────── */
