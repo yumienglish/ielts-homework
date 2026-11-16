@@ -172,6 +172,12 @@ ol.items{list-style:none;padding:0;margin:0}
 .prog .fill{height:100%;background:linear-gradient(90deg,#2bb39a,#14866d);width:0;transition:width .3s}
 
 #ghost{position:fixed;left:0;top:0;pointer-events:none;z-index:100;display:none;transform:translate(-50%,-70%) scale(1.08);box-shadow:0 8px 18px rgba(0,0,0,.2)}
+/* sau lần 1: thanh ghim đầu màn hình + chế độ chỉ hiện câu sai */
+.topbar{position:sticky;top:8px;z-index:45;display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;background:#fff4e6;border:2px solid var(--accent);border-radius:16px;padding:10px 14px;margin-bottom:16px;box-shadow:0 6px 18px rgba(0,0,0,.14)}
+.topbar .tt{flex:1;min-width:160px;font-weight:800;font-size:16.5px;line-height:1.35}
+.topbar .btn{padding:11px 18px}
+.rt-hide{display:none!important}
+body.retrying #summaryBox,body.retrying #whoBar,body.retrying .how{display:none}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -186,7 +192,7 @@ ol.items{list-style:none;padding:0;margin:0}
   <!-- Màn hình nhập tên -->
   <section class="card start" id="start">
     <h2>👋 Chào em!</h2>
-    <p style="margin:0;color:var(--muted)">Điền tên và lớp rồi bắt đầu nha. Bài làm tự lưu, xong bấm <b>Nộp bài</b> là cô nhận được (kể cả bài ghi âm). Nhớ đeo tai nghe hoặc bật loa để nghe bài nhé 🎧</p>
+    <p style="margin:0;color:var(--muted)">Điền tên, lớp rồi bấm <b>Bắt đầu</b>. Nhớ đeo tai nghe 🎧</p>
     <div class="field"><label for="inName">Họ và tên</label><input id="inName" autocomplete="name" placeholder="VD: Nguyễn Minh Anh"></div>
     <div class="field"><label for="inCls">Lớp</label><input id="inCls" placeholder="VD: 7A"></div>
     <div class="err-msg" id="startErr"></div>
@@ -194,6 +200,7 @@ ol.items{list-style:none;padding:0;margin:0}
   </section>
 
   <div id="work" hidden>
+    <div class="topbar" id="topbar" hidden></div>
     <div id="summaryBox"></div>
     <div class="card who" id="whoBar"></div>
 
@@ -419,7 +426,7 @@ const DRAG = [1, 2, 3, 4];
 // Nộp 2 lần: lần 1 chấm + gửi cô (kèm ghi âm) → câu sai tô đỏ kèm gợi ý, em sửa lại → nộp lần 2 → hiện đáp án.
 const blankState = () => ({name:'', cls:'', d:{1:{}, 2:{}, 3:{}, 4:{}}, mc:{}, wo:{}, rec:null,
   submitted:false, sent:false, submittedAt:null, startedAt:null, leaves:0,
-  sid:null, r1:null, done:false, sent2:false, submittedAt2:null, leaves2:0});
+  sid:null, r1:null, done:false, sent2:false, submittedAt2:null, leaves2:0, retrying:false, retryAt:null});
 let S = (() => {
   try {
     const o = Object.assign(blankState(), JSON.parse(localStorage.getItem(STORE_KEY)) || {});
@@ -433,9 +440,51 @@ let RES = null;  // kết quả chấm cuối cùng (sau khi xong hẳn)
 let sel = null;  // chip đang được chọn (chế độ chạm)
 
 /* ============ NỘP 2 LẦN ============ */
-const fixing = () => S.submitted && !S.done;
+const fixing = () => S.submitted && !S.done;          // đã nộp lần 1, chưa xong
+const retrying = () => fixing() && !!S.retrying;       // đang làm lại câu sai
 const r1ok = k => S.r1 ? S.r1.ok[k] : undefined;
-const editable = k => !S.submitted || (fixing() && r1ok(k) === false);
+const editable = k => !S.submitted || (retrying() && r1ok(k) === false);
+const wrongKeys = () => S.r1 ? Object.keys(S.r1.ok).filter(k => S.r1.ok[k] === false) : [];
+
+/* ============ LÀM LẠI: chỉ hiện câu sai ============ */
+const ITEM_SEL = '.pic, li.item';
+const wrongEls = () => wrongKeys().map(k => {
+  const [ex, id] = k.split('-');
+  return ex === '5' ? $(`#list5 .opts[data-id="${id}"]`) : ex === '7' ? $('#wo-' + id) : $('#slot-' + k);
+}).filter(Boolean);
+function focusWrong(on){
+  document.body.classList.toggle('retrying', !!on);
+  document.querySelectorAll('.rt-hide').forEach(x => x.classList.remove('rt-hide'));
+  if (!on) return;
+  const els = wrongEls();
+  document.querySelectorAll('section.card.ex').forEach(sec => {
+    if (!els.some(el => sec.contains(el))){ sec.classList.add('rt-hide'); return; }
+    sec.querySelectorAll(ITEM_SEL).forEach(c => { if (!els.some(el => c.contains(el))) c.classList.add('rt-hide'); });
+  });
+}
+// Thanh ghim đầu màn hình (sau lần 1)
+function renderTop(){
+  const tb = $('#topbar');
+  if (!fixing()){ tb.hidden = true; return; }
+  tb.hidden = false;
+  if (!retrying()){
+    tb.innerHTML = `<div class="tt">Lần 1: ${S.r1.score}/${S.r1.total} · ❌ Sai ${wrongKeys().length} câu</div><button class="btn orange" type="button" id="retryBtn">✏️ Làm lại câu sai</button>`;
+    $('#retryBtn').onclick = startRetry;
+  } else {
+    tb.innerHTML = `<div class="tt" id="topT"></div><button class="btn orange" type="button" id="submit2Btn">Nộp lần 2 ✔</button>`;
+    $('#submit2Btn').onclick = submit2;
+    topProgress();
+  }
+}
+function topProgress(){
+  const el = $('#topT'); if (!el) return;
+  const R = grade(), w = wrongKeys(), changed = R.items.filter(i => w.includes(i.key) && i.ans !== S.r1.ans[i.key]).length;
+  el.textContent = `✏️ Đã sửa ${changed}/${w.length} câu`;
+}
+function startRetry(){
+  S.retrying = true; S.retryAt = new Date().toISOString(); save();
+  render(); window.scrollTo({top:0});
+}
 const curAns = k => { const r = grade().map[k]; return r ? r.ans : ''; };
 const makeSid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const durSec = (a, b) => a && b ? Math.max(0, Math.round((new Date(b) - new Date(a)) / 1000)) : null;
@@ -537,13 +586,13 @@ function renderDrag(ex){
   const cfg = CFG[ex], D = S.d[ex], used = new Set(Object.values(D));
   const free = cfg.bank.filter(w => !used.has(w));
   const bank = $('#bank' + ex);
-  bank.hidden = S.done || (fixing() && !cfg.items.some(it => editable(`${ex}-${it.id}`)));
+  bank.hidden = S.done || (fixing() && !cfg.items.some(it => editable(`${ex}-${it.id}`)));  // xem kết quả: không ô nào sửa được → ẩn
   bank.innerHTML = free.length
     ? free.map(w => `<span class="chip${sel && sel.ex === ex && sel.w === w ? ' sel' : ''}" data-w="${esc(w)}">${esc(w)}</span>`).join('')
-    : `<span class="empty">Hết từ rồi 👍</span>`;
+    : `<span class="empty">${retrying() ? "👆 Chạm từ trong ô đỏ để bỏ ra, rồi xếp lại." : "Hết từ rồi 👍"}</span>`;
   bank.querySelectorAll('.chip').forEach(c => bindChip(c, ex, c.dataset.w, null));
   $('#ex' + ex).classList.toggle('pickmode', !!(sel && sel.ex === ex));
-  $('#ex' + ex).classList.toggle('locked', S.done);
+  $('#ex' + ex).classList.toggle('locked', S.submitted && !retrying());
   cfg.items.forEach(it => renderSlot(ex, it.id));
 }
 
@@ -792,10 +841,7 @@ function progress(){
     $('#progT').textContent = `Đã nộp${S.submittedAt2 ? ' lần 2' : ''} · ${RES.score}/${RES.total} câu đúng`;
     $('#progF').style.width = (RES.total ? RES.score / RES.total * 100 : 0) + '%';
   } else if (fixing()){
-    const wrong = S.r1.items.filter(i => i.ok === false).length;
-    const R = grade(), changed = R.items.filter(i => S.r1.ok[i.key] === false && i.ans !== S.r1.ans[i.key]).length;
-    $('#progT').textContent = `Lần 2 · đã sửa ${changed}/${wrong} câu sai`;
-    $('#progF').style.width = (wrong ? changed / wrong * 100 : 100) + '%';
+    topProgress();
   } else {
     const a = answeredList(), done = a.filter(Boolean).length;
     $('#progT').textContent = `Đã làm ${done}/${a.length} câu`;
@@ -860,11 +906,11 @@ function fbHtml(i){
   const errs = i.ok === false && i.msgs.length ? `<ul>${i.msgs.map(m => `<li>${m}</li>`).join('')}</ul>` : '';
   return `${head}${errs}<div class="why">💡 ${i.why}</div>`;
 }
-// Lúc sửa bài: chỉ báo đúng/sai + gợi ý, chưa hiện đáp án
+// Sau lần 1: chỉ báo đúng/sai; khi làm lại mới có gợi ý. Chưa hiện đáp án.
 function fixFbHtml(i){
-  return i.ok == null ? '<div class="h">⏳ Cô sẽ chấm câu này sau.</div>'
-    : i.ok ? '<div class="h">✅ Đúng rồi!</div>'
-    : `<div class="h">❌ Chưa đúng, em sửa lại nhé.</div>${S.r1.hint[i.key] || ''}`;
+  return i.ok == null ? '<div class="h">⏳ Cô chấm sau.</div>'
+    : i.ok ? '<div class="h">✅ Đúng</div>'
+    : `<div class="h">❌ Sai</div>${retrying() ? S.r1.hint[i.key] || '' : ''}`;
 }
 function paintFb(id, arr, fn = fbHtml){
   const el = document.getElementById(id); if (!el) return;
@@ -878,10 +924,13 @@ function showFix(){
   renderMC();
   EX7.items.forEach(it => renderWO(it.id));
   $('#script4').hidden = true; $('#script5').hidden = true;
-  const sb = $('#submitBtn'); sb.hidden = false; sb.textContent = 'Nộp lần 2 ✔';
-  renderRec(); renderWho(); renderSummary(); progress();
+  $('#bar').hidden = true; // nút ở thanh ghim đầu màn hình
+  focusWrong(retrying());
+  renderRec(); renderTop(); renderWho(); renderSummary(); progress();
 }
 function showFinal(){
+  focusWrong(false); renderTop();
+  $('#bar').hidden = false;
   RES = grade();
   RES.items.forEach(i => { if (i.sec !== '7') paintFb(i.fb, [i]); });
   DRAG.forEach(renderDrag);
@@ -903,13 +952,12 @@ function renderSummary(){
     `<span class="sec${S.rec ? ' full' : ''}">Ex 8: ${S.rec ? '🎙 ' + clock(S.rec.dur) : 'chưa ghi âm'}</span>`;
   let html;
   if (fixing()){
-    const r = S.r1, wrong = r.items.filter(i => i.ok === false).length;
+    const r = S.r1;
     html = `<div class="card summary">
       <div class="score">${r.score}<span>/${r.total}</span></div>
       <div style="flex:1;min-width:220px">
-        <div style="font-weight:800;font-size:18px">🔁 Lần 1: em sai ${wrong} câu. Sửa lại nha!</div>
         <div class="secs">${secTags(r)}</div>
-        <div style="font-size:14.5px;color:var(--muted)">Câu sai tô <b style="color:var(--bad)">đỏ</b>, có 💡 gợi ý. Câu đúng đã khoá. Sửa xong bấm <b>Nộp lần 2</b> (chỉ được sửa 1 lần). Đáp án và lời thoại bài nghe sẽ hiện sau lần 2.</div>
+        <div style="font-size:14.5px;color:var(--muted)">Ô đỏ = câu sai.</div>
         <div class="status" id="sendStatus"></div>
       </div></div>`;
   } else {
@@ -917,10 +965,10 @@ function renderSummary(){
     html = `<div class="card summary">
       <div class="score">${RES.score}<span>/${RES.total}</span></div>
       <div style="flex:1;min-width:220px">
-        <div style="font-weight:800;font-size:18px">${RES.score === RES.total ? '🎉 Đúng hết luôn, giỏi quá!' : pct >= .8 ? '👏 Giỏi lắm!' : pct >= .5 ? '💪 Khá rồi, cố thêm chút nữa nhé!' : '📚 Xem lại giải thích bên dưới nha!'}</div>
+        <div style="font-weight:800;font-size:18px">${RES.score === RES.total ? '🎉 Đúng hết, giỏi quá!' : pct >= .8 ? '👏 Giỏi lắm!' : pct >= .5 ? '💪 Khá rồi!' : '📚 Cố lên nhé!'}</div>
         ${two ? `<div style="font-weight:700">Lần 1: ${S.r1.score}/${S.r1.total} → Lần 2: ${RES.score}/${RES.total}</div>` : ''}
         <div class="secs">${secTags(RES)}</div>
-        <div style="font-size:14.5px;color:var(--muted)">Kéo xuống xem đáp án nhé, câu sai tô đỏ. Lời thoại bài nghe hiện ở cuối Ex 4 và Ex 5.</div>
+        <div style="font-size:14.5px;color:var(--muted)">Xem đáp án bên dưới. Lời thoại ở cuối Ex 4, Ex 5.</div>
         <div class="status" id="sendStatus"></div>
       </div></div>`;
   }
@@ -965,7 +1013,7 @@ async function payload1(){
 function payload2(){
   const R = grade(), r = S.r1;
   return Object.assign(base(), {attempt:2,
-    submittedAt:S.submittedAt2, startedAt:S.submittedAt, leaves:S.leaves2 || 0, timeTakenSec:durSec(S.submittedAt, S.submittedAt2),
+    submittedAt:S.submittedAt2, startedAt:S.retryAt || S.submittedAt, leaves:S.leaves2 || 0, timeTakenSec:durSec(S.retryAt || S.submittedAt, S.submittedAt2),
     score:R.score, total:R.total,
     sections:R.sections.map(s => ({id:s.id, title:s.title, score:s.score, total:s.total, pending:s.pending && !s.total})),
     items:R.items.map(i => ({sec:i.sec, n:i.n, q:i.q, ans:i.ans, correct:i.correct, ok:i.ok})),
@@ -996,34 +1044,40 @@ async function send(){
 
 /* ============ NỘP BÀI ============ */
 $('#submitBtn').addEventListener('click', () => {
-  if (S.done) return;
-  if (mr){ alert('Em đang ghi âm. Bấm ⏹ Dừng ghi âm trước rồi mới nộp bài nhé.'); return; }
+  if (S.submitted) return;
+  if (mr){ alert('Em đang ghi âm. Bấm ⏹ Dừng ghi âm trước nhé.'); return; }
+  const a = answeredList(), left = a.slice(0, -1).filter(x => !x).length;
+  const notes = [];
+  if (left) notes.push(`Còn ${left} câu chưa làm.`);
+  if (!S.rec) notes.push('Chưa ghi âm Ex 8 (chỉ nộp được ở lần này).');
   muteAway = true; // hộp xác nhận làm trang mất focus – không tính là rời trang
-  let go;
-  if (fixing()) go = confirm('Nộp lần 2 nhé? Nộp xong trang sẽ hiện đáp án và không sửa được nữa.');
-  else {
-    const a = answeredList(), left = a.slice(0, -1).filter(x => !x).length;
-    const notes = [];
-    if (left) notes.push(`Còn ${left} câu chưa làm.`);
-    if (!S.rec) notes.push('Em chưa ghi âm Exercise 8 (ghi âm chỉ nộp được ở lần 1).');
-    go = confirm((notes.length ? `${notes.join('\n')}\nEm vẫn nộp luôn hả?\n` : 'Nộp bài nhé?\n') + '(Nộp xong, câu nào sai em được sửa lại 1 lần.)');
-  }
+  const go = confirm(notes.length ? `${notes.join('\n')}\nNộp luôn?` : 'Nộp bài nhé?');
   releaseAway();
   if (!go) return;
   sel = null;
   document.querySelectorAll('audio').forEach(x => x.pause());
-  const now = new Date().toISOString();
-  if (fixing()){ S.done = true; S.submittedAt2 = now; }
-  else {
-    S.submitted = true; S.submittedAt = now; S.sid = makeSid();
-    S.r1 = snap(grade());
-    if (!S.r1.items.some(i => i.ok === false)) S.done = true; // đúng hết thì không cần lần 2
-  }
+  S.submitted = true; S.submittedAt = new Date().toISOString(); S.sid = makeSid();
+  S.r1 = snap(grade());
+  if (!S.r1.items.some(i => i.ok === false)) S.done = true; // đúng hết thì không cần lần 2
   save();
   render();
   window.scrollTo({top:0, behavior:'smooth'});
   send();
 });
+function submit2(){
+  if (!retrying()) return;
+  muteAway = true;
+  const go = confirm('Nộp lần 2? Nộp xong sẽ hiện đáp án.');
+  releaseAway();
+  if (!go) return;
+  sel = null;
+  document.querySelectorAll('audio').forEach(x => x.pause());
+  S.done = true; S.submittedAt2 = new Date().toISOString();
+  save();
+  render();
+  window.scrollTo({top:0, behavior:'smooth'});
+  send();
+}
 
 /* ============ TÊN HỌC SINH ============ */
 function renderWho(){
@@ -1033,7 +1087,7 @@ function renderWho(){
   const b = $('#editName'); if (b) b.onclick = () => { $('#work').hidden = true; $('#bar').hidden = true; $('#start').hidden = false; $('#inName').focus(); };
 }
 function showWork(){
-  $('#start').hidden = true; $('#work').hidden = false; $('#bar').hidden = false;
+  $('#start').hidden = true; $('#work').hidden = false; $('#bar').hidden = fixing();
   renderWho(); progress();
 }
 $('#inName').value = S.name; $('#inCls').value = S.cls;
@@ -1053,7 +1107,7 @@ $('#startBtn').addEventListener('click', () => {
 // Tính 1 lần khi em chuyển tab/ứng dụng, thu nhỏ cửa sổ hoặc tải lại trang (chỉ trong lúc đang làm bài).
 // Đếm riêng cho lần 1 (leaves) và lúc sửa bài lần 2 (leaves2).
 let away = false, muteAway = false;
-const tracking = () => !!S.startedAt && !S.done && !$('#work').hidden;
+const tracking = () => !!S.startedAt && !S.done && (!S.submitted || !!S.retrying) && !$('#work').hidden;
 function goAway(){
   if (muteAway || away || !tracking()) return;
   away = true;
