@@ -386,7 +386,7 @@ function syncSchedule_() {
   const ddmm = s => s.slice(8, 10) + '/' + s.slice(5, 7);
   const title = 'Lịch dạy tuần ' + ddmm(data.mon) + ' – ' + ddmm(data.sun);
 
-  // Ghi vào 1 bài cố định (loại "schedule"); chưa có thì tạo trong pack "Việc cần làm"
+  // Ghi vào 1 bài cố định (loại "schedule"); chưa có thì tạo trên bảng Ghi chú
   const props = PropertiesService.getScriptProperties();
   const t = load_('ITEMS', ITEM_COLS);
   let it = t.rows.find(r => r.id === props.getProperty('SCHEDULE_ITEM_ID') && !r.deleted && r.type === 'schedule');
