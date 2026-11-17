@@ -104,7 +104,7 @@ Nếu hộp thoại báo *không tìm thấy file* (ví dụ cô đã đổi tê
 Mỗi lớp được nhắc **1 lần/tuần, khoảng 20:00**, vào **ngày làm bài tập**. Đó là ngày nghỉ cách xa ngày học nhất, web app tự tính theo Lịch (VD lớp học T2 và T5 thì làm bài T7). Muốn chọn ngày khác: **Học sinh → ✏️ Sửa lớp → Ngày làm BT**.
 
 **Làm 1 lần:**
-1. **Học sinh → ✏️ Sửa lớp**: dán **Link bài tập** của lớp (link cố định, trang tự mở bài tuần mới).
+1. **Học sinh → ✏️ Sửa lớp**: dán **Link bài tập** của lớp (link cố định, trang tự mở bài tuần mới). Lớp **chưa có link thì không được nhắc** (không hiện thẻ ở Trang chủ, nằm ở dòng "Không nhắc" trong màn 📣 Nhắc BT).
 2. Em nào không tự làm mà cô nhắn qua phụ huynh: bấm tên em → **✏️ Sửa** → điền *Phụ huynh*, *SĐT/Zalo* và tick **📣 Nhắc bài tập qua phụ huynh**.
 3. Mở **Học sinh → 📣 Nhắc BT** → phần **Cài nhắc hẹn Zalo**. Với mỗi nhóm Zalo lớp:
    - mở nhóm → **⋯ / ＋ → Nhắc hẹn**;
