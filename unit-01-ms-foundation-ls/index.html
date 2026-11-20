@@ -179,24 +179,97 @@ ol.items{list-style:none;padding:0;margin:0}
 .rt-hide{display:none!important}
 body.retrying #summaryBox,body.retrying #whoBar,body.retrying .how{display:none}
 [hidden]{display:none!important}
+
+/* ===== Tràn màn hình + nút về trang chủ to ===== */
+:root{--stick:12px; --brand-dark:#0d5e4c}
+main{max-width:none;padding:0 clamp(12px,3vw,48px) 130px}
+.bar-in{max-width:none}
+body{font-size:18px}
+.how{font-size:16px}
+.hero{position:relative;padding-top:68px;overflow:hidden}
+.pack{position:absolute;left:clamp(12px,3vw,48px);top:14px;margin:0;font-size:18px;font-weight:800;padding:10px 20px;border-radius:14px;
+  background:#fff;color:var(--brand-dark);opacity:1;box-shadow:0 4px 0 rgba(0,0,0,.18);text-decoration:none;z-index:2}
+.pack:hover{background:#fff7d6;opacity:1}
+.pack:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.18)}
+
+/* ===== Giao diện kiểu game, màu tươi sáng (giống B2 First) ===== */
+body{background:
+  radial-gradient(circle at 8% 12%,rgba(255,214,102,.35) 0 90px,transparent 91px),
+  radial-gradient(circle at 92% 30%,rgba(140,220,255,.35) 0 120px,transparent 121px),
+  radial-gradient(circle at 15% 70%,rgba(180,240,190,.35) 0 110px,transparent 111px),
+  radial-gradient(circle at 88% 85%,rgba(255,170,200,.3) 0 100px,transparent 101px),
+  linear-gradient(180deg,#e3f9ff 0%,#effff3 50%,#fff7e3 100%) fixed}
+.hero{background:linear-gradient(120deg,#12c2c4 0%,#28a7f0 48%,#8f6cf6 100%)}
+.hero::before,.hero::after{content:"✦";position:absolute;color:rgba(255,255,255,.55);font-size:46px;top:12px;right:8%;animation:twk 2.4s infinite}
+.hero::after{content:"★";font-size:34px;top:auto;bottom:34px;right:auto;left:7%;animation-delay:1.2s}
+@keyframes twk{50%{opacity:.25;transform:scale(.8) rotate(20deg)}}
+.hero h1{text-shadow:0 3px 0 rgba(0,0,0,.15)}
+.card{border:2px solid #fff;box-shadow:0 6px 0 rgba(20,90,120,.08),0 8px 22px rgba(20,60,90,.08)}
+.btn{box-shadow:0 4px 0 var(--brand-dark)}
+.btn.orange{background:linear-gradient(180deg,#ffa057,#ff7a2e);box-shadow:0 4px 0 #c9561a}
+.badge{background:linear-gradient(90deg,#ff7a2e,#ff4f8b);border-radius:999px;padding:3px 12px}
+.start h2{color:#5a3fd6}
+
+/* ===== Khung từ đứng song song cạnh bài, dính theo khi cuộn ===== */
+.dz{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,26%);gap:18px;align-items:start}
+.dz-work{min-width:0}
+.dz:has(.bank[hidden]){grid-template-columns:minmax(0,1fr)}
+.dz-side{position:sticky;top:calc(var(--stick) + var(--lh,0px));z-index:5;max-height:calc(100vh - var(--stick) - var(--lh,0px) - 90px);overflow-y:auto;overscroll-behavior:contain;border-radius:16px}
+.dz-side .bank{position:static;margin:0;flex-direction:column;align-items:stretch;box-shadow:0 6px 18px rgba(18,122,138,.18)}
+.dz-side .bank-h{font-size:13.5px;font-weight:700;color:var(--muted);line-height:1.35}
+.dz-side .chip{white-space:normal;border-radius:12px}
+.dz .pics{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+.dz .match .slot{min-width:0;flex-basis:100%}
+@media (max-width:700px){
+  .dz{grid-template-columns:minmax(0,1fr) 37%;gap:8px}
+  .dz-side .bank{padding:8px 6px;gap:6px}
+  .dz-side .bank-h{font-size:12px}
+  .dz-side .chip{font-size:14px;padding:6px 6px}
+  .dz .pics{grid-template-columns:1fr}
+  .dz .drop{min-width:88px}
+}
+/* thanh audio của bài nghe dính đầu màn hình khi cuộn (dưới thanh ghim nếu có) */
+.ex .listen{position:sticky;top:var(--stick);z-index:7;box-shadow:0 6px 16px rgba(20,60,90,.16)}
+
+/* ===== Avatar ===== */
+.av{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#fff3c4;font-size:22px;object-fit:cover;vertical-align:middle;box-shadow:0 0 0 2px #fff,0 0 0 4px #ffd23f}
+.av.big{width:76px;height:76px;font-size:48px}
+.whoname{display:inline-flex;align-items:center;gap:8px}
+.avrow{display:flex;gap:14px;align-items:center}
+.avprev{flex:none}
+.avpick{display:flex;flex-wrap:wrap;gap:6px}
+.avb{font:inherit;font-size:26px;width:48px;height:48px;border-radius:14px;border:2.5px solid var(--line);background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;overflow:hidden}
+.avb.on{border-color:#ff8a3d;background:#fff0e0;transform:scale(1.08);box-shadow:0 3px 0 #ffb27a}
+.avb .avimg{width:100%;height:100%;object-fit:cover}
+.muted{color:var(--muted)} .small{font-size:14px}
+@media (max-width:520px){.avrow{flex-direction:column;align-items:flex-start}.avb{width:42px;height:42px;font-size:23px}}
+
+/* ===== Meme sau lần nộp 1 ===== */
+.meme{width:160px;max-width:42vw;height:auto;border-radius:14px;box-shadow:0 3px 10px rgba(0,0,0,.18);flex:none}
+.summary.retry{border-color:var(--accent);background:#fffaf5}
+.summary.retry .score{color:var(--accent)}
 </style>
 </head>
 <body>
 <header class="hero">
-  <a class="pack" href="../">← Homework · IELTS Foundation · Pack 1</a>
-  <h1>Unit 1 · MS Foundation</h1>
-  <p>Daily routines · Bài tập về nhà Exercise 1 – 8 · nghe, ghép tranh, xếp câu, ghi âm</p>
+  <a class="pack" href="../">← All lessons</a>
+  <h1>🚀 Unit 1 · MS Foundation</h1>
+  <p>Daily routines · Exercises 1–7 · listen, match, order, speak</p>
 </header>
 
 <main>
   <!-- Màn hình nhập tên -->
   <section class="card start" id="start">
-    <h2>👋 Chào em!</h2>
-    <p style="margin:0;color:var(--muted)">Điền tên, lớp rồi bấm <b>Bắt đầu</b>. Nhớ đeo tai nghe 🎧</p>
-    <div class="field"><label for="inName">Họ và tên</label><input id="inName" autocomplete="name" placeholder="VD: Nguyễn Minh Anh"></div>
-    <div class="field"><label for="inCls">Lớp</label><input id="inCls" placeholder="VD: 7A"></div>
+    <h2>👋 Hi! What’s your name?</h2>
+    <p style="margin:0;color:var(--muted)">Type your name and class, then tap <b>Start</b>. Use headphones 🎧</p>
+    <div class="field"><label for="inName">Full name</label><input id="inName" autocomplete="name" placeholder="e.g. Nguyễn Minh Anh"></div>
+    <div class="field"><label for="inCls">Class</label><input id="inCls" placeholder="e.g. 7A"></div>
+    <div class="field"><label>Choose your avatar</label>
+      <div class="avrow"><div id="avPrev" class="avprev"></div><div class="avpick" id="avPick"></div></div>
+      <div class="muted small">📷 = a photo from your device</div>
+      <input type="file" id="avFile" accept="image/*" hidden></div>
     <div class="err-msg" id="startErr"></div>
-    <button class="btn" id="startBtn" type="button">Bắt đầu làm bài →</button>
+    <button class="btn" id="startBtn" type="button">Start →</button>
   </section>
 
   <div id="work" hidden>
@@ -207,63 +280,59 @@ body.retrying #summaryBox,body.retrying #whoBar,body.retrying .how{display:none}
     <!-- Ex 1 -->
     <section class="card ex" id="ex1">
       <div class="ex-head"><span class="badge">Ex 1</span><h2>Match the activities with the pictures. Use the phrases in the box.</h2></div>
-      <p class="how">👉 Kéo cụm từ vào ô dưới mỗi tranh. Hoặc chạm vào cụm từ, rồi chạm vào ô. Đặt nhầm thì chạm vào cụm từ đó để gỡ ra.</p>
-      <div class="bank" id="bank1"></div>
-      <div class="pics" id="list1"></div>
+      <p class="how">👉 Drag a phrase under each picture (or tap a phrase, then tap a box). Tap a placed phrase to take it back.</p>
+      <div class="dz"><div class="dz-work"><div class="pics" id="list1"></div></div><aside class="dz-side"><div class="bank" id="bank1"></div></aside></div>
     </section>
 
     <!-- Ex 2 -->
     <section class="card ex" id="ex2">
       <div class="ex-head"><span class="badge">Ex 2</span><h2>Listen to five people talking about doing activities. Complete the sentences with the words in the box.</h2></div>
-      <p class="how">👉 Bấm ▶ nghe từng câu (nghe lại bao nhiêu lần cũng được), rồi kéo từ vào chỗ trống.</p>
-      <div class="bank" id="bank2"></div>
-      <ol class="items" id="list2"></ol>
+      <p class="how">👉 Tap ▶ to listen to each sentence (as many times as you like), then drag a word into the gap.</p>
+      <div class="dz"><div class="dz-work"><ol class="items" id="list2"></ol></div><aside class="dz-side"><div class="bank" id="bank2"></div></aside></div>
     </section>
 
     <!-- Ex 3 -->
     <section class="card ex" id="ex3">
       <div class="ex-head"><span class="badge">Ex 3</span><h2>Listen to five people talking about things they do every day. Complete the sentences with the verbs in the box.</h2></div>
-      <p class="how">👉 Bấm ▶ nghe từng câu, rồi kéo động từ vào chỗ trống.</p>
-      <div class="bank" id="bank3"></div>
-      <ol class="items" id="list3"></ol>
+      <p class="how">👉 Tap ▶ to listen, then drag a verb into the gap.</p>
+      <div class="dz"><div class="dz-work"><ol class="items" id="list3"></ol></div><aside class="dz-side"><div class="bank" id="bank3"></div></aside></div>
     </section>
 
     <!-- Ex 4 -->
     <section class="card ex" id="ex4">
       <div class="ex-head"><span class="badge">Ex 4</span><h2>Listen to Sanjay talking to a friend, Tom, about his flatmates’ daily routines. Match each person to the activity.</h2></div>
       <div class="listen"><div class="lt">🎧 Sanjay &amp; Tom</div><audio class="player" controls preload="none" src="audio/ex4.mp3"></audio></div>
-      <p class="how">👉 Nghe đoạn hội thoại, rồi kéo hoạt động vào đúng người.</p>
-      <div class="bank" id="bank4"></div>
-      <ol class="items" id="list4"></ol>
-      <details class="script" id="script4" hidden><summary>📜 Lời thoại (transcript)</summary><div id="scriptBody4"></div></details>
+      <p class="how">👉 Listen, then drag each activity to the right person.</p>
+      <div class="dz"><div class="dz-work"><ol class="items" id="list4"></ol></div><aside class="dz-side"><div class="bank" id="bank4"></div></aside></div>
+      <details class="script" id="script4" hidden><summary>📜 Transcript</summary><div id="scriptBody4"></div></details>
     </section>
 
     <!-- Ex 5 -->
     <section class="card ex" id="ex5">
       <div class="ex-head"><span class="badge">Ex 5</span><h2>Listen to Mary talking about what her family does every day. Choose the correct answers.</h2></div>
       <div class="listen"><div class="lt">🎧 Mary’s family</div><audio class="player" controls preload="none" src="audio/ex5.mp3"></audio></div>
-      <p class="how">👉 Nghe Mary kể, rồi chọn 1 đáp án đúng cho mỗi câu.</p>
+      <p class="how">👉 Listen to Mary and choose the correct answer.</p>
       <ol class="items" id="list5"></ol>
-      <details class="script" id="script5" hidden><summary>📜 Lời thoại (transcript)</summary><div id="scriptBody5"></div></details>
+      <details class="script" id="script5" hidden><summary>📜 Transcript</summary><div id="scriptBody5"></div></details>
     </section>
 
     <!-- Ex 7 -->
     <section class="card ex" id="ex7">
-      <div class="ex-head"><span class="badge">Ex 7</span><h2>Put the words in the correct order to complete the sentences.</h2></div>
-      <p class="how">👉 Chạm lần lượt vào các từ theo đúng thứ tự để xếp thành câu. Chạm vào từ đã xếp để bỏ ra, bấm <b>↺</b> để xếp lại từ đầu.</p>
+      <div class="ex-head"><span class="badge">Ex 6</span><h2>Put the words in the correct order to complete the sentences.</h2></div>
+      <p class="how">👉 Tap the words in the right order. Tap a word to take it back, or tap <b>↺</b> to start again.</p>
       <ol class="items wo" id="list7"></ol>
     </section>
 
     <!-- Ex 8 -->
     <section class="card ex" id="ex8">
-      <div class="ex-head"><span class="badge">Ex 8</span><h2>Describe what people in your family do every day.</h2></div>
+      <div class="ex-head"><span class="badge">Ex 7</span><h2>Describe what people in your family do every day.</h2></div>
       <div class="prompt">
         Look at the ideas below. Spend a few minutes thinking about what to say. Record your answer. Play to hear your answer.
         <div style="margin-top:6px"><b>Talk about:</b></div>
         <ul><li>what they do</li><li>who they do it with</li><li>where they do it</li><li>how often they do it.</li></ul>
-        <div style="font-size:14.5px;color:var(--muted)">💡 Gợi ý: <i>My mum usually gets up at six o’clock. She often goes to the market with my grandma…</i></div>
+        <div style="font-size:14.5px;color:var(--muted)">💡 Example: <i>My mum usually gets up at six o’clock. She often goes to the market with my grandma…</i></div>
       </div>
-      <p class="how">👉 Nghĩ trước 1–2 phút, rồi bấm <b>🎙 Bắt đầu ghi âm</b>. Ghi tối đa 3 phút. Ghi xong em nghe lại được, chưa ưng thì thu lại. Bản ghi cuối cùng sẽ được gửi cho cô khi em nộp bài.</p>
+      <p class="how">👉 Think for 1–2 minutes, then tap <b>🎙 Start recording</b> (max 3 minutes). Listen back and record again if you like. Your last recording is sent when you submit.</p>
       <div class="rec" id="rec"></div>
     </section>
   </div>
@@ -271,8 +340,8 @@ body.retrying #summaryBox,body.retrying #whoBar,body.retrying .how{display:none}
 
 <div class="bar" id="bar" hidden>
   <div class="bar-in">
-    <div class="prog"><div class="t" id="progT">Đã làm 0/0 câu</div><div class="track"><div class="fill" id="progF"></div></div></div>
-    <button class="btn orange" id="submitBtn" type="button">Nộp bài ✔</button>
+    <div class="prog"><div class="t" id="progT">Done 0/0</div><div class="track"><div class="fill" id="progF"></div></div></div>
+    <button class="btn orange" id="submitBtn" type="button">Submit ✔</button>
   </div>
 </div>
 
@@ -284,7 +353,7 @@ body.retrying #summaryBox,body.retrying #whoBar,body.retrying .how{display:none}
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyAom9bBpL0ms0VD7_bz5w691011llkFzttYSjKDyRyMCjLLeUZ4EZGGJLtLMFWuiV4sA/exec';
 const STORE_KEY = 'btvn-unit01-ms-foundation-ls-v1';
 const UNIT = 'Unit 1 MS Foundation';
-const TITLE = 'MS-Foundation-LS – Unit 1 (Ex 1–8)';
+const TITLE = 'MS-Foundation-LS – Unit 1 (Ex 1–7)';
 const REC_MAX = 180; // giây ghi âm tối đa
 
 // ĐÁP ÁN EXERCISE 2: điền 1 trong các từ always / never / often / sometimes / usually cho câu 1 → 5.
@@ -303,12 +372,13 @@ const EX1 = {
   bank: ['drive to work', 'go to the gym', 'have dinner', 'play chess', 'read in bed', 'use a computer'],
   mean: {'drive to work':'lái xe đi làm', 'go to the gym':'đi tập gym', 'have dinner':'ăn tối', 'play chess':'chơi cờ vua', 'read in bed':'đọc sách trên giường', 'use a computer':'dùng máy tính'},
   items: [
-    {id:'1', img:'img/ex1-1.jpg', a:'go to the gym', alt:'Người đàn ông tập thể dục với ghế và tạ', tip:'Anh ấy đang tập với ghế và tạ ở phòng tập: <b>go to the gym</b>.'},
-    {id:'2', img:'img/ex1-2.jpg', a:'play chess', alt:'Chàng trai ngồi suy nghĩ trước bàn cờ', tip:'Anh ấy ngồi trước bàn cờ: <b>play chess</b>.'},
-    {id:'3', img:'img/ex1-3.jpg', a:'read in bed', alt:'Người đàn ông nằm trên giường đọc sách', tip:'Anh ấy nằm trên giường đọc sách: <b>read in bed</b>.'},
-    {id:'4', img:'img/ex1-4.jpg', a:'use a computer', alt:'Chàng trai ngồi gõ máy tính xách tay', tip:'Anh ấy đang gõ laptop: <b>use a computer</b>.'},
-    {id:'5', img:'img/ex1-5.jpg', a:'drive to work', alt:'Cô gái mặc áo sơ mi đang lái ô tô', tip:'Cô ấy mặc đồ công sở và đang lái xe: <b>drive to work</b>.'},
-    {id:'6', img:'img/ex1-6.jpg', a:'have dinner', alt:'Gia đình ngồi ăn cơm quanh bàn', tip:'Cả nhà ngồi quanh bàn ăn: <b>have dinner</b>.'},
+    // hint = gợi ý lúc làm lại câu sai (KHÔNG chứa đáp án hay nghĩa của đáp án)
+    {id:'1', img:'img/ex1-1.jpg', a:'go to the gym', alt:'Người đàn ông tập thể dục với ghế và tạ', tip:'Anh ấy đang tập với ghế và tạ ở phòng tập: <b>go to the gym</b>.', hint:'Nhìn kỹ tranh: anh ấy đang làm gì với ghế và tạ?'},
+    {id:'2', img:'img/ex1-2.jpg', a:'play chess', alt:'Chàng trai ngồi suy nghĩ trước bàn cờ', tip:'Anh ấy ngồi trước bàn cờ: <b>play chess</b>.', hint:'Nhìn kỹ tranh: trên bàn trước mặt anh ấy có gì?'},
+    {id:'3', img:'img/ex1-3.jpg', a:'read in bed', alt:'Người đàn ông nằm trên giường đọc sách', tip:'Anh ấy nằm trên giường đọc sách: <b>read in bed</b>.', hint:'Nhìn kỹ tranh: anh ấy đang ở đâu, tay cầm gì?'},
+    {id:'4', img:'img/ex1-4.jpg', a:'use a computer', alt:'Chàng trai ngồi gõ máy tính xách tay', tip:'Anh ấy đang gõ laptop: <b>use a computer</b>.', hint:'Nhìn kỹ tranh: anh ấy đang gõ trên thiết bị gì?'},
+    {id:'5', img:'img/ex1-5.jpg', a:'drive to work', alt:'Cô gái mặc áo sơ mi đang lái ô tô', tip:'Cô ấy mặc đồ công sở và đang lái xe: <b>drive to work</b>.', hint:'Nhìn kỹ tranh: cô ấy đang ngồi ở đâu, mặc đồ để đi đâu?'},
+    {id:'6', img:'img/ex1-6.jpg', a:'have dinner', alt:'Gia đình ngồi ăn cơm quanh bàn', tip:'Cả nhà ngồi quanh bàn ăn: <b>have dinner</b>.', hint:'Nhìn kỹ tranh: cả nhà đang ngồi quanh bàn làm gì?'},
   ]
 };
 
@@ -328,11 +398,11 @@ const EX3 = {
   bank: ['drives', 'makes', 'moves', 'play', 'reads'],
   mean: {drives:'lái xe, chở', makes:'làm, nấu', moves:'chuyển, di chuyển', play:'chơi', reads:'đọc'},
   items: [
-    {id:'1', t:'Every morning he ___ his children to school.', audio:'audio/ex3-1.mp3', a:'drives', tip:'Every morning he <b>drives</b> his children to school. (<i>drive … to school</i> = chở … đến trường)'},
-    {id:'2', t:'When she’s at the office she ___ her emails immediately.', audio:'audio/ex3-2.mp3', a:'reads', tip:'She <b>reads</b> her emails immediately. (<i>read emails</i> = đọc email)'},
-    {id:'3', t:'Every day she ___ computers from the storeroom to the shop.', audio:'audio/ex3-3.mp3', a:'moves', tip:'She <b>moves</b> computers from the storeroom to the shop. (<i>move</i> = chuyển đồ từ kho ra cửa hàng)'},
-    {id:'4', t:'Most evenings she ___ dinner.', audio:'audio/ex3-4.mp3', a:'makes', tip:'Most evenings she <b>makes</b> dinner. (<i>make dinner</i> = nấu bữa tối)'},
-    {id:'5', t:'Every lunchtime they ___ basketball.', audio:'audio/ex3-5.mp3', a:'play', tip:'Every lunchtime they <b>play</b> basketball. “They” là số nhiều nên <b>play</b> không thêm s.'},
+    {id:'1', t:'Every morning he ___ his children to school.', audio:'audio/ex3-1.mp3', a:'drives', tip:'Every morning he <b>drives</b> his children to school. (<i>drive … to school</i> = chở … đến trường)', hint:'Nghe lại, chú ý động từ ngay sau “he”. Anh ấy đưa con đến trường bằng cách nào?'},
+    {id:'2', t:'When she’s at the office she ___ her emails immediately.', audio:'audio/ex3-2.mp3', a:'reads', tip:'She <b>reads</b> her emails immediately. (<i>read emails</i> = đọc email)', hint:'Nghe lại, chú ý động từ ngay sau “she”. Đến văn phòng, việc đầu tiên cô ấy làm với email là gì?'},
+    {id:'3', t:'Every day she ___ computers from the storeroom to the shop.', audio:'audio/ex3-3.mp3', a:'moves', tip:'She <b>moves</b> computers from the storeroom to the shop. (<i>move</i> = chuyển đồ từ kho ra cửa hàng)', hint:'Nghe lại, chú ý động từ ngay sau “she”. Để ý cụm “from … to …”.'},
+    {id:'4', t:'Most evenings she ___ dinner.', audio:'audio/ex3-4.mp3', a:'makes', tip:'Most evenings she <b>makes</b> dinner. (<i>make dinner</i> = nấu bữa tối)', hint:'Nghe lại, chú ý động từ ngay sau “she”. Cô ấy làm gì với bữa tối?'},
+    {id:'5', t:'Every lunchtime they ___ basketball.', audio:'audio/ex3-5.mp3', a:'play', tip:'Every lunchtime they <b>play</b> basketball. “They” là số nhiều nên <b>play</b> không thêm s.', hint:'Nghe lại, chú ý động từ ngay sau “they”. “They” là số nhiều: động từ có thêm s không?'},
   ]
 };
 
@@ -417,8 +487,11 @@ const SECTIONS = [
   {id:'3', title:'Ex 3 Listening – verbs'},
   {id:'4', title:'Ex 4 Listening – flatmates'},
   {id:'5', title:'Ex 5 Listening – Mary’s family'},
-  {id:'7', title:'Ex 7 Word order'},
+  {id:'7', title:'Ex 6 Word order'},
 ];
+// Đánh số liên tục 1–7 (sách bỏ Ex 6): mã nội bộ vẫn là 7, 8 để bài đã lưu không bị lỗi; ra ngoài (màn hình, mail) đổi thành 6, 7
+const SEC_OUT = {'7':'6', '8':'7'};
+const secOut = id => SEC_OUT[id] || id;
 const CFG = {1:EX1, 2:EX2, 3:EX3, 4:EX4};
 const DRAG = [1, 2, 3, 4];
 
@@ -463,23 +536,34 @@ function focusWrong(on){
   });
 }
 // Thanh ghim đầu màn hình (sau lần 1)
+// Khung từ / thanh audio dính ngay DƯỚI thanh ghim (không bị che): --stick = chiều cao thanh ghim; --lh = chiều cao thanh audio của bài
+function stick(){
+  const tb = $('#topbar');
+  document.documentElement.style.setProperty('--stick', (tb.hidden ? 12 : tb.offsetHeight + 16) + 'px');
+  document.querySelectorAll('section.ex').forEach(sec => {
+    const l = sec.querySelector('.listen');
+    sec.style.setProperty('--lh', l && l.offsetParent ? l.offsetHeight + 10 + 'px' : '0px');
+  });
+}
+window.addEventListener('resize', stick);
 function renderTop(){
   const tb = $('#topbar');
-  if (!fixing()){ tb.hidden = true; return; }
+  if (!fixing()){ tb.hidden = true; stick(); return; }
   tb.hidden = false;
   if (!retrying()){
-    tb.innerHTML = `<div class="tt">Lần 1: ${S.r1.score}/${S.r1.total} · ❌ Sai ${wrongKeys().length} câu</div><button class="btn orange" type="button" id="retryBtn">✏️ Làm lại câu sai</button>`;
+    tb.innerHTML = `<div class="tt">Try 1: ${S.r1.score}/${S.r1.total} · ❌ ${wrongKeys().length} wrong</div><button class="btn orange" type="button" id="retryBtn">✏️ Fix wrong answers</button>`;
     $('#retryBtn').onclick = startRetry;
   } else {
-    tb.innerHTML = `<div class="tt" id="topT"></div><button class="btn orange" type="button" id="submit2Btn">Nộp lần 2 ✔</button>`;
+    tb.innerHTML = `<div class="tt" id="topT"></div><button class="btn orange" type="button" id="submit2Btn">Submit again ✔</button>`;
     $('#submit2Btn').onclick = submit2;
     topProgress();
   }
+  requestAnimationFrame(stick);
 }
 function topProgress(){
   const el = $('#topT'); if (!el) return;
   const R = grade(), w = wrongKeys(), changed = R.items.filter(i => w.includes(i.key) && i.ans !== S.r1.ans[i.key]).length;
-  el.textContent = `✏️ Đã sửa ${changed}/${w.length} câu`;
+  el.textContent = `✏️ Fixed ${changed}/${w.length}`;
 }
 function startRetry(){
   S.retrying = true; S.retryAt = new Date().toISOString(); save();
@@ -487,6 +571,7 @@ function startRetry(){
 }
 const curAns = k => { const r = grade().map[k]; return r ? r.ans : ''; };
 const makeSid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const NOT_DONE = 'Not done yet.';
 const durSec = (a, b) => a && b ? Math.max(0, Math.round((new Date(b) - new Date(a)) / 1000)) : null;
 // Che những chỗ in đậm / in nghiêng (đáp án, cụm từ chứa đáp án) trong lời giải → thành gợi ý
 const maskAll = html => String(html || '').replace(/<(b|i)>[\s\S]*?<\/\1>/g, '<$1>…</$1>');
@@ -496,7 +581,7 @@ function hintOf(ex, it, msgs){
   else if (ex === 4) h = `Nghe lại đoạn Sanjay nói về <b>${esc(it.who)}</b>.`;
   else if (ex === 5){ const q = (it.why.match(/“[^”]*”/) || [''])[0]; h = q ? 'Nghe lại đoạn này: ' + maskAll(q) : 'Nghe lại đoạn nói về câu này.'; }
   else if (ex === 7) h = it.id === '2' ? 'Câu hỏi: trợ động từ <b>do</b> đứng đầu, trạng từ tần suất đứng trước động từ chính.' : it.why.split(':')[0] + '.';
-  else h = maskAll(it.tip);
+  else h = it.hint || maskAll(it.tip);
   return (msgs.length ? `<ul>${msgs.map(m => `<li>${m}</li>`).join('')}</ul>` : '') + `<div class="why">💡 ${h}</div>`;
 }
 function snap(R){
@@ -575,8 +660,8 @@ function renderWO(id){
   const chip = i => `<span class="chip" data-i="${i}">${esc(it.words[i])}</span>`;
   const rest = it.words.map((_, i) => i).filter(i => !picked.includes(i));
   $('#wo-' + id).innerHTML =
-    `<div class="wo-ans${st}">${picked.length ? picked.map(chip).join('') : '<span class="ph">Chạm vào từ bên dưới để xếp câu…</span>'}<span class="end">${it.end}</span></div>` +
-    (ed ? `<div class="wo-bank">${rest.map(chip).join('')}${picked.length ? '<button type="button" class="wo-reset" aria-label="Xếp lại từ đầu">↺ xếp lại</button>' : ''}</div>` : '') +
+    `<div class="wo-ans${st}">${picked.length ? picked.map(chip).join('') : '<span class="ph">Tap the words below…</span>'}<span class="end">${it.end}</span></div>` +
+    (ed ? `<div class="wo-bank">${rest.map(chip).join('')}${picked.length ? '<button type="button" class="wo-reset" aria-label="Start again">↺ again</button>' : ''}</div>` : '') +
     `<div class="fb" id="fb-7-${id}"></div>`;
   if (r) paintFb('fb-7-' + id, [r]);
   else if (fixing()) paintFb('fb-7-' + id, [{key:k, ok:r1ok(k)}], fixFbHtml);
@@ -587,9 +672,9 @@ function renderDrag(ex){
   const free = cfg.bank.filter(w => !used.has(w));
   const bank = $('#bank' + ex);
   bank.hidden = S.done || (fixing() && !cfg.items.some(it => editable(`${ex}-${it.id}`)));  // xem kết quả: không ô nào sửa được → ẩn
-  bank.innerHTML = free.length
+  bank.innerHTML = `<div class="bank-h">👆 Drag into a box, or tap then tap a box.</div>` + (free.length
     ? free.map(w => `<span class="chip${sel && sel.ex === ex && sel.w === w ? ' sel' : ''}" data-w="${esc(w)}">${esc(w)}</span>`).join('')
-    : `<span class="empty">${retrying() ? "👆 Chạm từ trong ô đỏ để bỏ ra, rồi xếp lại." : "Hết từ rồi 👍"}</span>`;
+    : `<span class="empty">${retrying() ? "👆 Tap a word in a red box to take it out, then try again." : "All used 👍"}</span>`);
   bank.querySelectorAll('.chip').forEach(c => bindChip(c, ex, c.dataset.w, null));
   $('#ex' + ex).classList.toggle('pickmode', !!(sel && sel.ex === ex));
   $('#ex' + ex).classList.toggle('locked', S.submitted && !retrying());
@@ -789,28 +874,28 @@ function renderRec(){
   const box = $('#rec');
   const msg = recMsg ? `<div class="msg${recErr ? ' err' : ''}">${recMsg}</div>` : '';
   if (mr){
-    box.innerHTML = `<div><span class="dot"></span><b>Đang ghi âm…</b></div>
+    box.innerHTML = `<div><span class="dot"></span><b>Recording…</b></div>
       <div class="tm" id="recTm">0:00 <span>/ ${clock(REC_MAX)}</span></div>
       <div class="track"><div id="recTrack"></div></div>
-      <button class="btn red" type="button" id="recStop">⏹ Dừng ghi âm</button>${msg}`;
+      <button class="btn red" type="button" id="recStop">⏹ Stop</button>${msg}`;
     $('#recStop').onclick = stopRec;
     recTick();
     return;
   }
   if (S.rec && recBlob){
-    box.innerHTML = `<div style="font-weight:800">${S.submitted ? '🎙 Bài ghi âm em đã nộp' : '✅ Đã ghi âm xong'} · ${clock(S.rec.dur)}</div>
+    box.innerHTML = `<div style="font-weight:800">${S.submitted ? '🎙 Your recording (submitted)' : '✅ Recorded'} · ${clock(S.rec.dur)}</div>
       <audio class="player" controls src="${recUrl}"></audio>
-      ${S.submitted ? '' : `<div class="row"><button class="btn ghost" type="button" id="recAgain">🎙 Thu lại</button></div>
-      <div class="msg">Nghe lại thấy ổn rồi thì kéo xuống bấm <b>Nộp bài</b> nhé.</div>`}${msg}`;
+      ${S.submitted ? '' : `<div class="row"><button class="btn ghost" type="button" id="recAgain">🎙 Record again</button></div>
+      <div class="msg">Happy with it? Tap <b>Submit</b> at the bottom.</div>`}${msg}`;
     const b = $('#recAgain'); if (b) b.onclick = startRec;
     return;
   }
   if (S.submitted){
-    box.innerHTML = `<div class="msg">${S.rec ? 'Bản ghi đã được gửi cho cô cùng bài làm.' : 'Em không nộp bài ghi âm.'}</div>`;
+    box.innerHTML = `<div class="msg">${S.rec ? 'Your recording was sent with your work.' : 'No recording was submitted.'}</div>`;
     return;
   }
-  box.innerHTML = `<button class="btn" type="button" id="recStart">🎙 Bắt đầu ghi âm</button>
-    <div class="msg">Trình duyệt sẽ hỏi quyền dùng micro, em bấm <b>Cho phép / Allow</b> nhé.</div>${msg}`;
+  box.innerHTML = `<button class="btn" type="button" id="recStart">🎙 Start recording</button>
+    <div class="msg">Your browser will ask to use the microphone. Tap <b>Allow</b>.</div>${msg}`;
   $('#recStart').onclick = startRec;
 }
 
@@ -838,13 +923,13 @@ function answeredList(){
 }
 function progress(){
   if (S.done && RES){
-    $('#progT').textContent = `Đã nộp${S.submittedAt2 ? ' lần 2' : ''} · ${RES.score}/${RES.total} câu đúng`;
+    $('#progT').textContent = `Submitted${S.submittedAt2 ? ' (try 2)' : ''} · ${RES.score}/${RES.total} correct`;
     $('#progF').style.width = (RES.total ? RES.score / RES.total * 100 : 0) + '%';
   } else if (fixing()){
     topProgress();
   } else {
     const a = answeredList(), done = a.filter(Boolean).length;
-    $('#progT').textContent = `Đã làm ${done}/${a.length} câu`;
+    $('#progT').textContent = `Done ${done}/${a.length}`;
     $('#progF').style.width = done / a.length * 100 + '%';
   }
 }
@@ -860,21 +945,21 @@ function grade(){
     const msgs = [];
     let ok, correct = it.a, why = it.tip;
     if (ex === 2){
-      if (!it.a){ ok = null; correct = '(cô chấm)'; why = 'Cô sẽ nghe lại và chấm câu này sau nhé.'; }
+      if (!it.a){ ok = null; correct = '(teacher marks)'; why = 'Your teacher will mark this later.'; }
       else {
         ok = w === it.a;
         why = `Nghe lại: “${esc(it.t.replace('___', it.a))}” · <b>${it.a}</b> = ${EX2.mean[it.a] || ''}.`;
       }
     } else ok = w === it.a;
     if (w && ok === false && meanOf[ex] && meanOf[ex][w]) msgs.push(`<b>${esc(w)}</b> nghĩa là “${meanOf[ex][w]}”, chưa hợp với ${ex === 1 ? 'tranh' : 'câu'} này.`);
-    const hm = !w && ok === false ? msgs.concat('Em chưa làm câu này.') : msgs;
+    const hm = !w && ok === false ? msgs.concat(NOT_DONE) : msgs;
     items.push({sec:String(ex), key:`${ex}-${it.id}`, fb:`fb-${ex}-${it.id}`, n:it.id, q, ans:w, correct, ok, msgs, why, hint:hintOf(ex, it, hm)});
   }));
 
   EX5.items.forEach(it => {
     const p = S.mc[it.id];
     items.push({sec:'5', key:'5-' + it.id, fb:'fb-5-' + it.id, n:it.id, q:it.q,
-      ans:p != null ? it.opts[p] : '', correct:it.opts[it.a], ok:p === it.a, msgs:[], why:it.why, hint:hintOf(5, it, p == null ? ['Em chưa làm câu này.'] : [])});
+      ans:p != null ? it.opts[p] : '', correct:it.opts[it.a], ok:p === it.a, msgs:[], why:it.why, hint:hintOf(5, it, p == null ? [NOT_DONE] : [])});
   });
 
   EX7.items.forEach(it => {
@@ -882,9 +967,9 @@ function grade(){
     const raw = picked.map(i => it.words[i]).join(' ');
     const full = picked.length === it.words.length;
     const ok = full && it.ans.map(normWords).includes(normWords(raw));
-    const msgs = picked.length && !full ? ['Em chưa xếp hết các từ.'] : !picked.length ? ['Em chưa làm câu này.'] : [];
+    const msgs = picked.length && !full ? ['Use all the words.'] : !picked.length ? [NOT_DONE] : [];
     items.push({sec:'7', key:'7-' + it.id, fb:'fb-7-' + it.id, n:it.id, q:it.words.join(' / '),
-      ans:raw ? raw + it.end : '', correct:it.show, ok, msgs:msgs.filter(m => m !== 'Em chưa làm câu này.'), why:it.why, hint:hintOf(7, it, msgs)});
+      ans:raw ? raw + it.end : '', correct:it.show, ok, msgs:msgs.filter(m => m !== NOT_DONE), why:it.why, hint:hintOf(7, it, msgs)});
   });
 
   const sections = SECTIONS.map(s => {
@@ -899,18 +984,18 @@ function grade(){
 /* ============ HIỂN THỊ KẾT QUẢ ============ */
 function fbHtml(i){
   const head = i.ok == null
-    ? `<div class="h">⏳ Em chọn: ${i.ans ? `<b>${esc(i.ans)}</b>` : 'chưa làm'}</div>`
+    ? `<div class="h">⏳ Your answer: ${i.ans ? `<b>${esc(i.ans)}</b>` : 'not done'}</div>`
     : i.ok
-      ? `<div class="h">✅ Đúng rồi!</div>`
-      : `<div class="h">❌ ${i.ans ? `<s>${esc(i.ans)}</s>` : 'Chưa làm'} → <b>${esc(i.correct)}</b></div>`;
+      ? `<div class="h">✅ Correct!</div>`
+      : `<div class="h">❌ ${i.ans ? `<s>${esc(i.ans)}</s>` : 'Not done'} → <b>${esc(i.correct)}</b></div>`;
   const errs = i.ok === false && i.msgs.length ? `<ul>${i.msgs.map(m => `<li>${m}</li>`).join('')}</ul>` : '';
   return `${head}${errs}<div class="why">💡 ${i.why}</div>`;
 }
 // Sau lần 1: chỉ báo đúng/sai; khi làm lại mới có gợi ý. Chưa hiện đáp án.
 function fixFbHtml(i){
-  return i.ok == null ? '<div class="h">⏳ Cô chấm sau.</div>'
-    : i.ok ? '<div class="h">✅ Đúng</div>'
-    : `<div class="h">❌ Sai</div>${retrying() ? S.r1.hint[i.key] || '' : ''}`;
+  return i.ok == null ? '<div class="h">⏳ Teacher marks later.</div>'
+    : i.ok ? '<div class="h">✅ Correct</div>'
+    : `<div class="h">❌ Wrong</div>${retrying() ? S.r1.hint[i.key] || '' : ''}`;
 }
 function paintFb(id, arr, fn = fbHtml){
   const el = document.getElementById(id); if (!el) return;
@@ -945,30 +1030,48 @@ function showFinal(){
 }
 function render(){ if (S.done) showFinal(); else if (fixing()) showFix(); }
 
+// Meme cảm xúc của cô sau lần nộp 1: ../img/meme/<mức>-<số>.gif (chung bộ với B2 First). MEMES = số ảnh mỗi mức.
+// Chọn ngẫu nhiên, ưu tiên ảnh em chưa gặp ở bài khác; giữ cố định khi mở lại trang.
+const MEMES = {wow:7, good:8, ok:8, oops:6};
+const SEEN_KEY = 'ielts-memes-seen';
+function memeOf(r){
+  const pct = r.total ? r.score / r.total : 1;
+  const tier = pct === 1 ? 'wow' : pct >= .8 ? 'good' : pct >= .5 ? 'ok' : 'oops';
+  if (!S.meme || !S.meme.startsWith(tier + '-')){
+    const all = Array.from({length:MEMES[tier]}, (_, i) => tier + '-' + (i + 1));
+    let seen = []; try { seen = JSON.parse(localStorage.getItem(SEEN_KEY)) || []; } catch (e) {}
+    let pool = all.filter(m => !seen.includes(m));
+    if (!pool.length){ seen = seen.filter(m => !m.startsWith(tier + '-')); pool = all; }
+    S.meme = pool[Math.floor(Math.random() * pool.length)];
+    seen.push(S.meme); try { localStorage.setItem(SEEN_KEY, JSON.stringify(seen)); } catch (e) {}
+    save();
+  }
+  return `<img class="meme" src="../img/meme/${S.meme}.gif" alt="">`;
+}
 function renderSummary(){
   const secTags = R => R.sections.map(s => s.pending && !s.total
-      ? `<span class="sec wait">Ex ${s.id}: cô chấm</span>`
-      : `<span class="sec${s.score === s.total && !s.pending ? ' full' : ''}">Ex ${s.id}: ${s.score}/${s.total}${s.pending ? ' +⏳' : ''}</span>`).join('') +
-    `<span class="sec${S.rec ? ' full' : ''}">Ex 8: ${S.rec ? '🎙 ' + clock(S.rec.dur) : 'chưa ghi âm'}</span>`;
+      ? `<span class="sec wait">Ex ${secOut(s.id)}: teacher marks</span>`
+      : `<span class="sec${s.score === s.total && !s.pending ? ' full' : ''}">Ex ${secOut(s.id)}: ${s.score}/${s.total}${s.pending ? ' +⏳' : ''}</span>`).join('') +
+    `<span class="sec${S.rec ? ' full' : ''}">Ex 7: ${S.rec ? '🎙 ' + clock(S.rec.dur) : 'no recording'}</span>`;
   let html;
   if (fixing()){
+    // sau lần 1: meme + điểm, không giải thích
     const r = S.r1;
-    html = `<div class="card summary">
+    html = `<div class="card summary retry">${memeOf(r)}
       <div class="score">${r.score}<span>/${r.total}</span></div>
-      <div style="flex:1;min-width:220px">
+      <div style="flex:1;min-width:160px">
         <div class="secs">${secTags(r)}</div>
-        <div style="font-size:14.5px;color:var(--muted)">Ô đỏ = câu sai.</div>
         <div class="status" id="sendStatus"></div>
       </div></div>`;
   } else {
     const pct = RES.total ? RES.score / RES.total : 0, two = S.r1 && S.submittedAt2;
-    html = `<div class="card summary">
+    html = `<div class="card summary">${!two && S.r1 ? memeOf(S.r1) : ''}
       <div class="score">${RES.score}<span>/${RES.total}</span></div>
-      <div style="flex:1;min-width:220px">
-        <div style="font-weight:800;font-size:18px">${RES.score === RES.total ? '🎉 Đúng hết, giỏi quá!' : pct >= .8 ? '👏 Giỏi lắm!' : pct >= .5 ? '💪 Khá rồi!' : '📚 Cố lên nhé!'}</div>
-        ${two ? `<div style="font-weight:700">Lần 1: ${S.r1.score}/${S.r1.total} → Lần 2: ${RES.score}/${RES.total}</div>` : ''}
+      <div style="flex:1;min-width:160px">
+        <div style="font-weight:800;font-size:18px">${RES.score === RES.total ? '🎉 All correct!' : pct >= .8 ? '👏 Great job!' : pct >= .5 ? '💪 Good try!' : '📚 Keep going!'}</div>
+        ${two ? `<div style="font-weight:700">Try 1: ${S.r1.score}/${S.r1.total} → Try 2: ${RES.score}/${RES.total}</div>` : ''}
         <div class="secs">${secTags(RES)}</div>
-        <div style="font-size:14.5px;color:var(--muted)">Xem đáp án bên dưới. Lời thoại ở cuối Ex 4, Ex 5.</div>
+        <div style="font-size:14.5px;color:var(--muted)">Answers are below 👇 Transcripts: end of Ex 4 and Ex 5.</div>
         <div class="status" id="sendStatus"></div>
       </div></div>`;
   }
@@ -984,8 +1087,8 @@ function updateStatus(){
   const allSent = S.sent && (!S.submittedAt2 || S.sent2);
   const st = allSent ? 'ok' : sendState;
   el.className = 'status ' + (st || '');
-  if (st === 'ok') el.innerHTML = fixing() ? '✅ Cô đã nhận bài lần 1.' : S.submittedAt2 ? '✅ Cô đã nhận được bài lần 2!' : '✅ Cô đã nhận được bài!';
-  else if (st === 'sending') el.innerHTML = S.rec && !S.sent ? '⏳ Đang gửi bài và file ghi âm cho cô… (có thể mất vài chục giây)' : '⏳ Đang gửi bài cho cô…';
+  if (st === 'ok') el.innerHTML = fixing() ? '✅ Sent to your teacher (try 1).' : S.submittedAt2 ? '✅ Sent to your teacher (try 2)!' : '✅ Sent to your teacher!';
+  else if (st === 'sending') el.innerHTML = S.rec && !S.sent ? '⏳ Sending your work and recording… (this may take a few seconds)' : '⏳ Sending…';
   else if (st === 'warn') el.innerHTML = '⚠️ Trang chưa được cài địa chỉ gửi bài (SCRIPT_URL), nên bài chưa được gửi cho cô.';
   else if (st === 'err') el.innerHTML = `⚠️ Chưa gửi được bài${sendErr ? ` (${esc(sendErr)})` : ''}. Em kiểm tra mạng rồi bấm: <button class="btn" type="button" id="resendBtn" style="padding:6px 14px;font-size:14px;margin-left:4px">Gửi lại</button>`;
   else el.innerHTML = '';
@@ -1000,13 +1103,16 @@ function blobToB64(b){
   });
 }
 function base(){ return {app:'btvn', unit:UNIT, title:TITLE, name:S.name, cls:S.cls, sid:S.sid || ''}; }
+// Mail dùng số bài mới (Ex 7 sách → Ex 6), kể cả bài lần 1 đã lưu từ trước khi đổi số
+const outItems = arr => arr.map(i => Object.assign({}, i, {sec:secOut(i.sec)}));
+const outSecs = arr => arr.map(s => Object.assign({}, s, {id:secOut(s.id), title:String(s.title).replace(/^Ex 7 /, 'Ex 6 ')}));
 async function payload1(){
   const r = S.r1 || snap(grade());
   const p = Object.assign(base(), {attempt:1, canRetry:!!S.r1 && r.items.some(i => i.ok === false),
     submittedAt:S.submittedAt, startedAt:S.startedAt || null, leaves:S.leaves || 0, timeTakenSec:durSec(S.startedAt, S.submittedAt),
-    score:r.score, total:r.total, sections:r.sections, items:r.items, wantsAudio:true, audio:null});
+    score:r.score, total:r.total, sections:outSecs(r.sections), items:outItems(r.items), wantsAudio:true, audio:null});
   if (S.rec && recBlob){
-    p.audio = {b64:await blobToB64(recBlob), mime:S.rec.mime, ext:S.rec.ext, dur:S.rec.dur, label:'Exercise 8 – Speaking: my family’s daily routines'};
+    p.audio = {b64:await blobToB64(recBlob), mime:S.rec.mime, ext:S.rec.ext, dur:S.rec.dur, label:'Exercise 7 – Speaking: my family’s daily routines'};
   }
   return p;
 }
@@ -1015,9 +1121,9 @@ function payload2(){
   return Object.assign(base(), {attempt:2,
     submittedAt:S.submittedAt2, startedAt:S.retryAt || S.submittedAt, leaves:S.leaves2 || 0, timeTakenSec:durSec(S.retryAt || S.submittedAt, S.submittedAt2),
     score:R.score, total:R.total,
-    sections:R.sections.map(s => ({id:s.id, title:s.title, score:s.score, total:s.total, pending:s.pending && !s.total})),
-    items:R.items.map(i => ({sec:i.sec, n:i.n, q:i.q, ans:i.ans, correct:i.correct, ok:i.ok})),
-    first:{score:r.score, total:r.total, sections:r.sections, items:r.items,
+    sections:outSecs(R.sections.map(s => ({id:s.id, title:s.title, score:s.score, total:s.total, pending:s.pending && !s.total}))),
+    items:outItems(R.items.map(i => ({sec:i.sec, n:i.n, q:i.q, ans:i.ans, correct:i.correct, ok:i.ok}))),
+    first:{score:r.score, total:r.total, sections:outSecs(r.sections), items:outItems(r.items),
       startedAt:S.startedAt || null, submittedAt:S.submittedAt, timeTakenSec:durSec(S.startedAt, S.submittedAt), leaves:S.leaves || 0}});
 }
 async function post(p){
@@ -1045,11 +1151,11 @@ async function send(){
 /* ============ NỘP BÀI ============ */
 $('#submitBtn').addEventListener('click', () => {
   if (S.submitted) return;
-  if (mr){ alert('Em đang ghi âm. Bấm ⏹ Dừng ghi âm trước nhé.'); return; }
+  if (mr){ alert('Em đang ghi âm. Bấm ⏹ Stop trước nhé.'); return; }
   const a = answeredList(), left = a.slice(0, -1).filter(x => !x).length;
   const notes = [];
   if (left) notes.push(`Còn ${left} câu chưa làm.`);
-  if (!S.rec) notes.push('Chưa ghi âm Ex 8 (chỉ nộp được ở lần này).');
+  if (!S.rec) notes.push('Chưa ghi âm Ex 7 (chỉ nộp được ở lần này).');
   muteAway = true; // hộp xác nhận làm trang mất focus – không tính là rời trang
   const go = confirm(notes.length ? `${notes.join('\n')}\nNộp luôn?` : 'Nộp bài nhé?');
   releaseAway();
@@ -1080,25 +1186,55 @@ function submit2(){
 }
 
 /* ============ TÊN HỌC SINH ============ */
+/* ============ AVATAR (emoji hoặc ảnh trong máy; chỉ lưu trên máy này, không gửi đi) ============ */
+const ME_KEY = 'ielts-me';
+const AVATARS = ['🦊', '🐼', '🐯', '🦁', '🐸', '🐵', '🦄', '🐙', '🐧', '🐨', '🐰', '🐲', '🦖', '🦋', '🐳', '🤖'];
+const meGet = () => { try { return JSON.parse(localStorage.getItem(ME_KEY)) || {}; } catch (e) { return {}; } };
+const avHtml = (av, c = 'av') => /^data:image\//.test(av || '') ? `<img class="${c}" src="${av}" alt="">` : `<span class="${c}">${esc(av || '🙂')}</span>`;
+let AV = meGet().av || AVATARS[Math.floor(Math.random() * AVATARS.length)];
+function loadAvatarFile(f, done){
+  if (!f || !/^image\//.test(f.type)) return;
+  const r = new FileReader();
+  r.onload = () => { const im = new Image(); im.onload = () => {
+    const s = Math.min(im.width, im.height), c = document.createElement('canvas'); c.width = c.height = 160;
+    c.getContext('2d').drawImage(im, (im.width - s) / 2, (im.height - s) / 2, s, s, 0, 0, 160, 160);
+    done(c.toDataURL('image/jpeg', 0.82)); }; im.src = r.result; };
+  r.readAsDataURL(f);
+}
+function paintAvPick(){
+  const up = /^data:/.test(AV);
+  $('#avPick').innerHTML = AVATARS.map(x => `<button type="button" class="avb${x === AV ? ' on' : ''}" data-av="${x}">${x}</button>`).join('') +
+    `<button type="button" class="avb${up ? ' on' : ''}" id="avUp" title="Photo from your device">${up ? avHtml(AV, 'avimg') : '📷'}</button>`;
+  $('#avPrev').innerHTML = avHtml(AV, 'av big');
+}
+$('#avPick').addEventListener('click', e => {
+  const b = e.target.closest('.avb'); if (!b) return;
+  if (b.id === 'avUp'){ $('#avFile').click(); return; }
+  AV = b.dataset.av; paintAvPick();
+});
+$('#avFile').addEventListener('change', e => loadAvatarFile(e.target.files[0], d => { AV = d; paintAvPick(); }));
+paintAvPick();
+
 function renderWho(){
   const t = d => new Date(d).toLocaleString('vi-VN');
-  $('#whoBar').innerHTML = `<span>👤 <b>${esc(S.name)}</b> · Lớp <b>${esc(S.cls)}</b></span>` +
-    (S.submitted ? `<span style="color:var(--muted);font-size:14px">Nộp${S.r1 ? ' lần 1' : ''} lúc ${t(S.submittedAt)}${S.submittedAt2 ? ` · lần 2 lúc ${t(S.submittedAt2)}` : ''}</span>` : `<button class="linkbtn" type="button" id="editName">Sửa tên / lớp</button>`);
+  $('#whoBar').innerHTML = `<span class="whoname">${avHtml(AV)} <b>${esc(S.name)}</b> · Class <b>${esc(S.cls)}</b></span>` +
+    (S.submitted ? `<span style="color:var(--muted);font-size:14px">Submitted${S.r1 ? ' (try 1)' : ''} ${t(S.submittedAt)}${S.submittedAt2 ? ` · try 2 ${t(S.submittedAt2)}` : ''}</span>` : `<button class="linkbtn" type="button" id="editName">Edit name / class</button>`);
   const b = $('#editName'); if (b) b.onclick = () => { $('#work').hidden = true; $('#bar').hidden = true; $('#start').hidden = false; $('#inName').focus(); };
 }
 function showWork(){
   $('#start').hidden = true; $('#work').hidden = false; $('#bar').hidden = fixing();
-  renderWho(); progress();
+  renderWho(); progress(); requestAnimationFrame(stick);
 }
 $('#inName').value = S.name; $('#inCls').value = S.cls;
 $('#startBtn').addEventListener('click', () => {
   const n = $('#inName').value.trim(), c = $('#inCls').value.trim();
-  if (n.length < 2){ $('#startErr').textContent = 'Em hãy nhập họ và tên.'; return; }
-  if (!c){ $('#startErr').textContent = 'Em hãy nhập lớp.'; return; }
+  if (n.length < 2){ $('#startErr').textContent = 'Please type your full name.'; return; }
+  if (!c){ $('#startErr').textContent = 'Please type your class.'; return; }
   $('#startErr').textContent = '';
   S.name = n.slice(0, 80); S.cls = c.slice(0, 30);
   if (!S.startedAt) S.startedAt = new Date().toISOString();
   save();
+  try { localStorage.setItem(ME_KEY, JSON.stringify(Object.assign(meGet(), {av:AV}))); } catch (e) {}
   showWork(); window.scrollTo({top:0});
 });
 ['inName', 'inCls'].forEach(id => $('#' + id).addEventListener('keydown', e => { if (e.key === 'Enter') $('#startBtn').click(); }));
