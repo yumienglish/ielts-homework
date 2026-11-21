@@ -52,7 +52,7 @@ function doGet(e) {
     catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
   }
   if (p.action === 'wallet') {
-    try { const acc = verifyToken_(p.token); return json_(acc ? wallet_(acc, p.style) : { ok: false, auth: true, error: 'Em đăng nhập lại nhé' }); }
+    try { const acc = verifyToken_(p.token); return json_(acc ? wallet_(acc, p.style) : { ok: false, auth: true, error: 'Please log in again' }); }
     catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
   }
   return ContentService.createTextOutput('BTVN: máy chủ nhận bài đang hoạt động ✅');
@@ -83,7 +83,7 @@ function doPost(e) {
     validate_(d);
     if (d.token) { // đã đăng nhập → tên/lớp lấy từ tài khoản, không lấy chữ em gõ
       const acc = verifyToken_(d.token);
-      if (!acc) return json_({ ok: false, auth: true, error: 'Phiên đăng nhập đã hết, em đăng nhập lại nhé' });
+      if (!acc) return json_({ ok: false, auth: true, error: 'Your session has expired, please log in again' });
       d.name = acc.fullName || acc.name;
       d.cls = acc.cls || d.cls;
       d.account = acc.user;
@@ -314,16 +314,16 @@ function register_(d) {
   const full = String(d.full || '').replace(/\s+/g, ' ').trim().slice(0, 80);
   const cls = clsCode_(d.cls) || String(d.cls || '').trim().toUpperCase().slice(0, 30); // "ket 01" → KET01
   if (nick.length < 3 || nick.length > 20 || !/^[\p{L}\p{N} ._-]+$/u.test(nick) || user.length < 3)
-    return { ok: false, field: 'nick', error: 'Nickname dài 3–20 chữ, chỉ gồm chữ, số, dấu cách nhé' };
-  if (full.split(' ').length < 2 || !/^[\p{L} .'-]+$/u.test(full)) return { ok: false, field: 'full', error: 'Em nhập đủ họ và tên thật nhé (VD: Nguyễn Minh Anh)' };
-  if (!cls) return { ok: false, field: 'cls', error: 'Em nhập lớp nhé (VD: KET01)' };
-  if (pin.length !== 4 || String(d.pin).replace(/\D/g, '').length !== 4) return { ok: false, field: 'pin', error: 'PIN có đúng 4 số nhé' };
+    return { ok: false, field: 'nick', error: 'Nickname: 3–20 characters, letters, numbers and spaces only' };
+  if (full.split(' ').length < 2 || !/^[\p{L} .'-]+$/u.test(full)) return { ok: false, field: 'full', error: 'Please enter your full real name (e.g. Nguyễn Minh Anh)' };
+  if (!cls) return { ok: false, field: 'cls', error: 'Please enter your class (e.g. KET01)' };
+  if (pin.length !== 4 || String(d.pin).replace(/\D/g, '').length !== 4) return { ok: false, field: 'pin', error: 'Your PIN must have exactly 4 digits' };
   const cache = CacheService.getScriptCache();
   const hk = 'reg:' + Utilities.formatDate(new Date(), TIMEZONE, 'yyyyMMddHH');
   const cnt = Number(cache.get(hk) || 0);
-  if (cnt >= MAX_REG_PER_HOUR) return { ok: false, error: 'Nhiều bạn đang tạo tài khoản quá, em thử lại sau ít phút nhé' };
+  if (cnt >= MAX_REG_PER_HOUR) return { ok: false, error: 'Too many sign-ups right now, please try again in a few minutes' };
   const accs = accounts_();
-  if (accs[user]) return { ok: false, field: 'nick', error: 'Nickname này có bạn dùng rồi, em chọn tên khác nhé' };
+  if (accs[user]) return { ok: false, field: 'nick', error: 'That nickname is taken, please choose another one' };
   let hs = rosterMatch_(full, cls);
   if (hs && Object.keys(accs).some(u => accs[u].active && accs[u].hs === hs)) hs = ''; // em đó đã có tài khoản → chờ cô xem
   const sh = accSheet_();
@@ -363,15 +363,15 @@ function profile_(acc) {
 
 function login_(user, pin) {
   user = normUser_(user); pin = normPin_(pin);
-  if (!user || pin.length !== 4) return { ok: false, error: 'Em nhập nickname và 4 số PIN nhé' };
+  if (!user || pin.length !== 4) return { ok: false, error: 'Please enter your nickname and 4-digit PIN' };
   const cache = CacheService.getScriptCache();
   const key = 'fail:' + user;
   const fails = Number(cache.get(key) || 0);
-  if (fails >= MAX_FAILS) return { ok: false, locked: true, error: 'Sai nhiều lần quá, em đợi 15 phút rồi thử lại nhé' };
+  if (fails >= MAX_FAILS) return { ok: false, locked: true, error: 'Too many wrong tries. Please wait 15 minutes and try again' };
   const acc = accounts_()[user];
   if (!acc || !acc.active || acc.pin !== pin) {
     cache.put(key, String(fails + 1), LOCK_SEC);
-    return { ok: false, error: acc && acc.active ? 'Sai mã PIN rồi. Quên PIN thì em nhắn cô nhé' : 'Chưa có nickname này. Em kiểm tra lại, hoặc bấm "Tạo tài khoản" nhé' };
+    return { ok: false, error: acc && acc.active ? 'Wrong PIN. Forgot it? Message your teacher' : 'Nickname not found. Check it, or tap "Sign up"' };
   }
   cache.remove(key);
   return { ok: true, token: makeToken_(acc), me: profile_(acc) };
@@ -380,10 +380,10 @@ function login_(user, pin) {
 /** Avatar để hiện trên bảng: emoji ngắn, hoặc đường dẫn ảnh trong yumienglish.github.io (VD /KET/img/ui/av-3.webp). */
 function setAvatar_(tok, av) {
   const acc = verifyToken_(tok);
-  if (!acc) return { ok: false, auth: true, error: 'Phiên đăng nhập đã hết' };
+  if (!acc) return { ok: false, auth: true, error: 'Your session has expired' };
   av = String(av || '').trim();
   const ok = /^\/[\w-]+(\/[\w.-]+)+\.(webp|png|jpe?g|svg)$/i.test(av) || (av.length > 0 && av.length <= 12 && !/[<>"'&\s]/.test(av));
-  if (!ok) return { ok: false, error: 'Avatar không hợp lệ' };
+  if (!ok) return { ok: false, error: 'Invalid avatar' };
   if (/^[a-z0-9]+:{/.test(acc.avatar)) return { ok: true, kept: true }; // đã có nhân vật (tủ đồ) → không ghi đè bằng avatar cũ của trang
   accSheet_().getRange(acc.row, 6).setValue(av);
   CacheService.getScriptCache().remove('board');
@@ -452,7 +452,7 @@ function boardData_() {
 /** Bảng xếp hạng cho học sinh đã đăng nhập: không lộ tên đăng nhập của bạn khác. */
 function board_(tok) {
   const acc = verifyToken_(tok);
-  if (!acc) return { ok: false, auth: true, error: 'Em đăng nhập để xem bảng xếp hạng nhé' };
+  if (!acc) return { ok: false, auth: true, error: 'Please log in to see the leaderboard' };
   const data = boardData_();
   const strip = arr => arr.map(o => ({ rank: o.rank, name: o.name, cls: o.cls, avatar: o.avatar, xp: o.xp, n: o.n, me: o.user === acc.user || undefined }));
   return { ok: true, updated: data.updated, me: profile_(acc), week: strip(data.week), month: strip(data.month), all: strip(data.all) };
@@ -626,6 +626,8 @@ const WALLET_HEAD = ['Thời gian', 'Tài khoản', 'Loại', 'Xu (+/−)', 'Mó
 const CHEST_PRICE = 600, GAME_COINS = 5, GAME_PER_DAY = 3, SHOP_SLOTS = 8;
 const AV_CATALOG = { teen: {
   body: ['body', 0, 'free'],
+  bm: ['body', 0, 'free'],
+  bf: ['body', 0, 'free'],
   h1: ['hair', 0, 'free'],
   h2: ['hair', 0, 'free'],
   h3: ['hair', 0, 'free'],
@@ -759,16 +761,16 @@ function wallet_(acc, style) {
 function needAcc_(d) { const acc = verifyToken_(d.token); if (!acc) throw new Error('AUTH'); return acc; }
 const shopWrap_ = fn => d => {
   try { return fn(d); }
-  catch (e) { return String(e.message) === 'AUTH' ? { ok: false, auth: true, error: 'Em đăng nhập lại nhé' } : { ok: false, error: String(e && e.message || e) }; }
+  catch (e) { return String(e.message) === 'AUTH' ? { ok: false, auth: true, error: 'Please log in again' } : { ok: false, error: String(e && e.message || e) }; }
 };
 const SHOP_ACTIONS = {
   buy: shopWrap_(d => {
     const acc = needAcc_(d), style = String(d.style || 'teen'), cat = AV_CATALOG[style] || {}, id = String(d.item || '');
-    const it = cat[id]; if (!it || it[2] !== 'shop') return { ok: false, error: 'Món này không bán ở shop' };
-    if (shopOf_(style).items.indexOf(id) < 0) return { ok: false, error: 'Món này hết bán tuần này rồi, đợi tuần sau nhé' };
+    const it = cat[id]; if (!it || it[2] !== 'shop') return { ok: false, error: 'This item isn’t sold in the shop' };
+    if (shopOf_(style).items.indexOf(id) < 0) return { ok: false, error: 'This item isn’t in this week’s shop. Check again next week!' };
     const w = walletState_(acc);
-    if (w.owned.indexOf(id) >= 0) return { ok: false, error: 'Em có món này rồi' };
-    if (w.coins < it[1]) return { ok: false, error: 'Chưa đủ xu, em làm thêm bài nhé 💪' };
+    if (w.owned.indexOf(id) >= 0) return { ok: false, error: 'You already have this item' };
+    if (w.coins < it[1]) return { ok: false, error: 'Not enough coins yet. Do more homework to earn some! 💪' };
     addLedger_(acc.user, 'mua', -it[1], id, style);
     return Object.assign({ bought: id }, wallet_(acc, style));
   }),
@@ -776,9 +778,9 @@ const SHOP_ACTIONS = {
     const acc = needAcc_(d), style = String(d.style || 'teen'), cat = AV_CATALOG[style] || {};
     const w = walletState_(acc);
     const pool = Object.keys(cat).filter(id => cat[id][2] === 'chest' && w.owned.indexOf(id) < 0);
-    if (!pool.length) return { ok: false, error: 'Em đã có hết đồ trong rương Exquisite rồi! 👑' };
+    if (!pool.length) return { ok: false, error: 'You already have every Exquisite item! 👑' };
     const free = w.freeChests > 0 && d.pay !== 'coins';
-    if (!free && w.coins < CHEST_PRICE) return { ok: false, error: 'Chưa đủ ' + CHEST_PRICE + ' xu để mở rương' };
+    if (!free && w.coins < CHEST_PRICE) return { ok: false, error: 'You need ' + CHEST_PRICE + ' coins to open a chest' };
     const id = pool[Math.floor(Math.random() * pool.length)];
     addLedger_(acc.user, free ? 'rương-tặng' : 'rương', free ? 0 : -CHEST_PRICE, id, style);
     return Object.assign({ got: id }, wallet_(acc, style));
@@ -793,7 +795,7 @@ const SHOP_ACTIONS = {
       if (it[2] === 'free' || owned.indexOf(id) >= 0) clean[slot] = id;
     });
     const s = style + ':' + JSON.stringify(clean);
-    if (s.length > 480) return { ok: false, error: 'Quá nhiều món' };
+    if (s.length > 480) return { ok: false, error: 'Too many items' };
     accSheet_().getRange(acc.row, 6).setValue(s);
     CacheService.getScriptCache().remove('board');
     return { ok: true, outfit: s };
