@@ -52,7 +52,7 @@ function doGet(e) {
     catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
   }
   if (p.action === 'wallet') {
-    try { const acc = verifyToken_(p.token); return json_(acc ? wallet_(acc, p.style) : { ok: false, auth: true, error: 'Please log in again' }); }
+    try { const acc = verifyToken_(p.token); return json_(acc ? wallet_(acc, p.style, p.g) : { ok: false, auth: true, error: 'Please log in again' }); }
     catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
   }
   return ContentService.createTextOutput('BTVN: máy chủ nhận bài đang hoạt động ✅');
@@ -625,38 +625,66 @@ const WALLET_SHEET = 'Vi';
 const WALLET_HEAD = ['Thời gian', 'Tài khoản', 'Loại', 'Xu (+/−)', 'Món', 'Ghi chú'];
 const CHEST_PRICE = 600, GAME_COINS = 5, GAME_PER_DAY = 3, SHOP_SLOTS = 8;
 const AV_CATALOG = { teen: {
-  body: ['body', 0, 'free'],
-  bm: ['body', 0, 'free'],
-  bf: ['body', 0, 'free'],
-  h1: ['hair', 0, 'free'],
-  h2: ['hair', 0, 'free'],
-  h3: ['hair', 0, 'free'],
-  h4: ['hair', 180, 'shop'],
-  h5: ['hair', 200, 'shop'],
-  f1: ['face', 0, 'free'],
-  f2: ['face', 0, 'free'],
-  f3: ['face', 150, 'shop'],
-  t1: ['top', 0, 'free'],
-  t2: ['top', 260, 'shop'],
-  t3: ['top', 220, 'shop'],
-  b1: ['bottom', 0, 'free'],
-  b2: ['bottom', 200, 'shop'],
-  d1: ['dress', 320, 'shop'],
-  st1: ['set', 450, 'shop'],
-  s1: ['shoes', 0, 'free'],
-  s2: ['shoes', 240, 'shop'],
-  c1: ['hat', 160, 'shop'],
-  g1: ['glasses', 140, 'shop'],
-  bg1: ['bag', 180, 'shop'],
-  hd1: ['hand', 120, 'shop'],
-  p1: ['pet', 380, 'shop'],
-  pa1: ['petacc', 150, 'shop'],
-  w1: ['wings', 0, 'chest'],
-  st2: ['set', 0, 'chest'],
-  c2: ['hat', 0, 'chest'],
-  p2: ['pet', 0, 'chest'],
-  hd2: ['hand', 0, 'chest'],
-  pa2: ['petacc', 0, 'chest']
+  'bm': ['body', 0, 'free', 'm', '', 0],
+  'bf': ['body', 0, 'free', 'f', '', 0],
+  'body': ['body', 0, 'free', '', '', 1],
+  'mh1': ['hair', 0, 'free', 'm', '', 0],
+  'mh2': ['hair', 0, 'free', 'm', '', 0],
+  'mh3': ['hair', 180, 'shop', 'm', '', 0],
+  'mh4': ['hair', 200, 'shop', 'm', '2026-11-23', 0],
+  'mt1': ['top', 0, 'free', 'm', '', 0],
+  'mt2': ['top', 260, 'shop', 'm', '', 0],
+  'mt3': ['top', 220, 'shop', 'm', '2026-11-23', 0],
+  'mb1': ['bottom', 0, 'free', 'm', '', 0],
+  'mb2': ['bottom', 200, 'shop', 'm', '', 0],
+  'ms1': ['shoes', 0, 'free', 'm', '', 0],
+  'ms2': ['shoes', 240, 'shop', 'm', '', 0],
+  'mset1': ['set', 450, 'shop', 'm', '', 0],
+  'mhat1': ['hat', 160, 'shop', 'm', '2026-11-30', 0],
+  'mset2': ['set', 0, 'chest', 'm', '', 0],
+  'fh1': ['hair', 0, 'free', 'f', '', 0],
+  'fh2': ['hair', 0, 'free', 'f', '', 0],
+  'fh3': ['hair', 200, 'shop', 'f', '', 0],
+  'ft1': ['top', 0, 'free', 'f', '', 0],
+  'ft2': ['top', 260, 'shop', 'f', '', 0],
+  'fb1': ['bottom', 0, 'free', 'f', '', 0],
+  'fd1': ['dress', 320, 'shop', 'f', '', 0],
+  'fset1': ['set', 450, 'shop', 'f', '', 0],
+  'fs1': ['shoes', 0, 'free', 'f', '', 0],
+  'fs2': ['shoes', 240, 'shop', 'f', '2026-11-30', 0],
+  'fhat1': ['hat', 160, 'shop', 'f', '2026-11-23', 0],
+  'fbag1': ['bag', 180, 'shop', 'f', '2026-11-23', 0],
+  'fhat2': ['hat', 0, 'chest', 'f', '', 0],
+  'fset2': ['set', 0, 'chest', 'f', '', 0],
+  'f1': ['face', 0, 'free', '', '', 0],
+  'f2': ['face', 0, 'free', '', '', 0],
+  'f3': ['face', 150, 'shop', '', '', 0],
+  'h1': ['hair', 0, 'free', '', '', 1],
+  'h2': ['hair', 0, 'free', '', '', 1],
+  'h3': ['hair', 0, 'free', '', '', 1],
+  'h4': ['hair', 180, 'shop', '', '', 1],
+  'h5': ['hair', 200, 'shop', '', '', 1],
+  't1': ['top', 0, 'free', '', '', 1],
+  't2': ['top', 260, 'shop', '', '', 1],
+  't3': ['top', 220, 'shop', '', '', 1],
+  'b1': ['bottom', 0, 'free', '', '', 1],
+  'b2': ['bottom', 200, 'shop', '', '', 1],
+  'd1': ['dress', 320, 'shop', '', '', 1],
+  'st1': ['set', 450, 'shop', '', '', 1],
+  's1': ['shoes', 0, 'free', '', '', 1],
+  's2': ['shoes', 240, 'shop', '', '', 1],
+  'c1': ['hat', 160, 'shop', '', '', 1],
+  'g1': ['glasses', 140, 'shop', '', '', 0],
+  'bg1': ['bag', 180, 'shop', '', '', 1],
+  'hd1': ['hand', 120, 'shop', '', '', 0],
+  'p1': ['pet', 380, 'shop', '', '', 0],
+  'pa1': ['petacc', 150, 'shop', '', '', 0],
+  'w1': ['wings', 0, 'chest', '', '', 0],
+  'st2': ['set', 0, 'chest', '', '', 1],
+  'c2': ['hat', 0, 'chest', '', '', 1],
+  'p2': ['pet', 0, 'chest', '', '', 0],
+  'hd2': ['hand', 0, 'chest', '', '', 0],
+  'pa2': ['petacc', 0, 'chest', '', '', 0]
 } };
 const AV_SLOTS = ['body', 'hair', 'face', 'top', 'bottom', 'dress', 'set', 'shoes', 'wings', 'hat', 'glasses', 'bag', 'hand', 'pet', 'petacc'];
 
@@ -728,15 +756,22 @@ function ledger_(user) {
 function addLedger_(user, type, coins, item, note) {
   walletSheet_().appendRow([new Date(), user, type, coins, item || '', note || '']);
 }
-/** Shop tuần này: chọn SHOP_SLOTS món "shop" theo tuần (ai cũng thấy giống nhau, đổi mỗi thứ Hai). */
-function shopOf_(style) {
+/* AV_CATALOG: id → [ô, giá, nguồn free|shop|chest, giới 'm'|'f'|'' (dùng chung), ngày mở bán 'yyyy-MM-dd' (trống = có ngay), ẩn 1/0] */
+const itG_ = it => it[3] || '';
+const itOn_ = it => !it[5] && (!it[4] || it[4] <= Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd')); // đã mở bán + không ẩn
+const fitG_ = (it, g) => !itG_(it) || !g || itG_(it) === g; // hợp giới tính nhân vật
+/** Shop cố định: mọi món "shop" đã tới ngày mở bán (hàng mới về mỗi thứ Hai), lọc theo giới tính. fresh = mở bán tuần này. */
+function shopOf_(style, g) {
   const cat = AV_CATALOG[style] || {};
-  const pool = Object.keys(cat).filter(id => cat[id][2] === 'shop').sort();
   const wk = mondayKey_(new Date());
-  let seed = 0; for (const ch of style + wk) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
-  const rnd = () => { seed = (Math.imul(seed, 1103515245) + 12345) >>> 0; return seed / 4294967296; };
-  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); const t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
-  return { week: wk, items: pool.slice(0, SHOP_SLOTS) };
+  const items = Object.keys(cat).filter(id => cat[id][2] === 'shop' && itOn_(cat[id]) && fitG_(cat[id], g));
+  return { week: wk, items: items, fresh: items.filter(id => cat[id][4] && cat[id][4] >= wk) };
+}
+/** Giới tính theo nhân vật đã lưu ("teen:{body:'bm'}") hoặc client gửi lên. */
+function genderOf_(acc, style, g) {
+  if (g === 'm' || g === 'f') return g;
+  const m = /"body":"(\w+)"/.exec(String(acc.avatar || '')); const it = m && (AV_CATALOG[style] || {})[m[1]];
+  return it ? itG_(it) : '';
 }
 function walletState_(acc) {
   const st = statsAll_()[acc.user] || { coins: 0, lessons: 0, perfect: 0, streak: 0 };
@@ -752,10 +787,10 @@ function walletState_(acc) {
     gamesToday: led.filter(r => r.type === 'mini game' && Utilities.formatDate(r.at, TIMEZONE, 'yyyy-MM-dd') === today).length
   };
 }
-function wallet_(acc, style) {
+function wallet_(acc, style, g) {
   style = AV_CATALOG[style] ? style : 'teen';
-  const sh = shopOf_(style);
-  return Object.assign({ ok: true, style: style, outfit: acc.avatar, shop: sh.items, shopWeek: sh.week, chestPrice: CHEST_PRICE,
+  const sh = shopOf_(style, genderOf_(acc, style, g));
+  return Object.assign({ ok: true, style: style, outfit: acc.avatar, shop: sh.items, fresh: sh.fresh, shopWeek: sh.week, chestPrice: CHEST_PRICE,
     gamesMax: GAME_PER_DAY, gameCoins: GAME_COINS }, walletState_(acc));
 }
 function needAcc_(d) { const acc = verifyToken_(d.token); if (!acc) throw new Error('AUTH'); return acc; }
@@ -767,31 +802,33 @@ const SHOP_ACTIONS = {
   buy: shopWrap_(d => {
     const acc = needAcc_(d), style = String(d.style || 'teen'), cat = AV_CATALOG[style] || {}, id = String(d.item || '');
     const it = cat[id]; if (!it || it[2] !== 'shop') return { ok: false, error: 'This item isn’t sold in the shop' };
-    if (shopOf_(style).items.indexOf(id) < 0) return { ok: false, error: 'This item isn’t in this week’s shop. Check again next week!' };
+    if (!itOn_(it)) return { ok: false, error: 'This item isn’t in the shop yet. New items arrive every Monday!' };
     const w = walletState_(acc);
     if (w.owned.indexOf(id) >= 0) return { ok: false, error: 'You already have this item' };
     if (w.coins < it[1]) return { ok: false, error: 'Not enough coins yet. Do more homework to earn some! 💪' };
     addLedger_(acc.user, 'mua', -it[1], id, style);
-    return Object.assign({ bought: id }, wallet_(acc, style));
+    return Object.assign({ bought: id }, wallet_(acc, style, d.g));
   }),
   chest: shopWrap_(d => {
     const acc = needAcc_(d), style = String(d.style || 'teen'), cat = AV_CATALOG[style] || {};
     const w = walletState_(acc);
-    const pool = Object.keys(cat).filter(id => cat[id][2] === 'chest' && w.owned.indexOf(id) < 0);
+    const g = genderOf_(acc, style, d.g);
+    const pool = Object.keys(cat).filter(id => cat[id][2] === 'chest' && itOn_(cat[id]) && fitG_(cat[id], g) && w.owned.indexOf(id) < 0);
     if (!pool.length) return { ok: false, error: 'You already have every Exquisite item! 👑' };
     const free = w.freeChests > 0 && d.pay !== 'coins';
     if (!free && w.coins < CHEST_PRICE) return { ok: false, error: 'You need ' + CHEST_PRICE + ' coins to open a chest' };
     const id = pool[Math.floor(Math.random() * pool.length)];
     addLedger_(acc.user, free ? 'rương-tặng' : 'rương', free ? 0 : -CHEST_PRICE, id, style);
-    return Object.assign({ got: id }, wallet_(acc, style));
+    return Object.assign({ got: id }, wallet_(acc, style, d.g));
   }),
   outfit: shopWrap_(d => {
     const acc = needAcc_(d), style = String(d.style || 'teen'), cat = AV_CATALOG[style] || {};
     const o = d.outfit && typeof d.outfit === 'object' ? d.outfit : {};
     const owned = walletState_(acc).owned, clean = {};
+    const body = cat[String(o.body || '')], g = body ? itG_(body) : ''; // giới tính theo thân nhân vật
     Object.keys(o).forEach(slot => {
       const id = String(o[slot] || ''); if (!id || AV_SLOTS.indexOf(slot) < 0) return;
-      const it = cat[id]; if (!it || it[0] !== slot) return;
+      const it = cat[id]; if (!it || it[0] !== slot || !fitG_(it, g)) return; // không mặc đồ khác giới
       if (it[2] === 'free' || owned.indexOf(id) >= 0) clean[slot] = id;
     });
     const s = style + ':' + JSON.stringify(clean);
