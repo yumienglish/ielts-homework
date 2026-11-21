@@ -48,9 +48,9 @@ const YA = window.YumiAuth && YumiAuth.ready() ? YumiAuth : null;
 const YA_OPTS = { mascot: '📚', title: 'IELTS Homework 📚', sub: 'Log in to do your homework ✍️',
   theme: { bg: 'linear-gradient(160deg,#dff3ee,#fff8ef 55%,#ffe9d6)', card: '#fff', text: '#2b2d42', acc: '#14866d', acc2: '#2bb39a',
     font: 'Nunito,system-ui,sans-serif', head: 'Nunito,system-ui,sans-serif' } };
-function yaSync() { // name + class come from the account
-  const m = YA && YA.me(); if (!m) return;
-  ME = { name: String(m.fullName || m.name).slice(0, 60), cls: String(m.cls || '-').slice(0, 20) }; LS.set('spk10.me', ME);
+function yaSync() { // Speaking.gs không đọc tài khoản → giữ HỌ TÊN THẬT em gõ (để cô biết là ai); chỉ điền sẵn lớp
+  const m = YA && YA.me(); if (!m || ME.cls) return;
+  ME = { name: ME.name, cls: String(m.cls || '').slice(0, 20) }; LS.set('spk10.me', ME);
 }
 function yaUI() { // 🏆 + Log out in the header
   if (!YA || !YA.me() || document.querySelector('.hero .yarow')) return;
@@ -194,9 +194,9 @@ let ROUTE = 0;       // 0 = overview, n = week
 let editingMe = false;
 
 function whoHtml() {
-  if (ME.name && ME.cls && (!editingMe || YA)) {
-    return `<section class="card who" id="who"><div>👋 Hi <b>${esc(ME.name)}</b> · Class <b>${esc(ME.cls)}</b></div>
-      ${YA ? '' : '<button class="linkbtn" type="button" data-act="editme">Change</button>'}</section>`;
+  if (ME.name && ME.cls && !editingMe) { // đăng nhập → chào bằng nickname; tên thật chỉ gửi cô
+    return `<section class="card who" id="who"><div>👋 Hi <b>${esc(YA && YA.me() ? YA.me().name : ME.name)}</b> · Class <b>${esc(ME.cls)}</b></div>
+      <button class="linkbtn" type="button" data-act="editme">Change</button></section>`;
   }
   return `<section class="card" id="who"><h3 style="margin:0 0 2px">👋 Before you start</h3>
     <div class="muted small">Your name and class are sent to your teacher with your recordings.</div>
