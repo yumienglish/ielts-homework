@@ -366,6 +366,10 @@ function renameStudent(oldName, newName) {
     const al = String(st.alias || '').split(/[,;\n]/).map(function (x) { return x.trim(); }).filter(function (x) { return x && norm_(x) !== norm_(newName); });
     if (al.map(norm_).indexOf(norm_(oldName)) < 0 && norm_(oldName) !== norm_(newName)) al.push(oldName);
     writeTable_(ss, 'HocSinh', [{ op: 'put', key: newName, row: { alias: al.join(', ') } }], tz);
+    try { // tài khoản đăng nhập của em đi theo tên mới
+      const ash = btvnFile_(ss, tz).getSheetByName('TaiKhoan');
+      if (ash) accRead_(ash).forEach(function (a) { if (a.hs === oldName) { ash.getRange(a.row, 8).setValue(newName); counts.TaiKhoan = (counts.TaiKhoan || 0) + 1; } });
+    } catch (e) {}
   } finally { lock.releaseLock(); }
   const d = getAll(); d.renamed = counts; return d;
 }
@@ -376,6 +380,78 @@ function ignoreQueue(ref) {
   return getAll();
 }
 
+// ===================== TÀI KHOẢN HỌC SINH (đăng nhập trang BTVN + bảng xếp hạng) =====================
+// Tab "TaiKhoan" nằm trong FILE BÀI NỘP BTVN (Code.gs đọc tab này để kiểm tra đăng nhập). Thứ tự cột phải khớp ACC_HEAD trong Code.gs.
+// Web app: Học sinh → 🔑 Tài khoản. "Mã HS" = Tên gọi trong tab HocSinh (để bài nộp tự vào đúng em).
+const ACC_HEAD = ['Tên đăng nhập', 'PIN', 'Họ tên', 'Tên hiển thị', 'Lớp', 'Avatar', 'Hoạt động', 'Mã HS'];
+function btvnFile_(ss, tz) {
+  const set = {}; readTable_(ss, 'CaiDat', tz).forEach(function (r) { set[r.key] = String(r.value || '').trim(); });
+  const id = sheetId_(set['Link file bài nộp BTVN']) || findByTitle_('BTVN – Bài nộp của học sinh');
+  if (!id) throw new Error('Chưa tìm thấy file bài nộp BTVN – dán link file vào tab CaiDat ("Link file bài nộp BTVN").');
+  return SpreadsheetApp.openById(id);
+}
+function accTab_(f) {
+  let sh = f.getSheetByName('TaiKhoan');
+  if (!sh) {
+    sh = f.insertSheet('TaiKhoan');
+    sh.getRange(1, 1, 1, ACC_HEAD.length).setValues([ACC_HEAD]).setFontWeight('bold').setBackground('#ffe3ec');
+    sh.setFrozenRows(1); sh.getRange('B:B').setNumberFormat('@');
+  }
+  return sh;
+}
+function accUser_(s) { return norm_(s).replace(/ /g, '').slice(0, 30); }
+function accRead_(sh) {
+  const n = sh.getLastRow() - 1; if (n < 1) return [];
+  return sh.getRange(2, 1, n, ACC_HEAD.length).getValues().map(function (r, i) {
+    const act = r[6];
+    const p = String(r[1] == null ? '' : r[1]).replace(/\D/g, '');
+    return { row: i + 2, user: accUser_(r[0]), pin: p ? p.padStart(4, '0') : '', full: String(r[2] || ''),
+      name: String(r[3] || ''), cls: String(r[4] || ''), avatar: String(r[5] || ''),
+      active: !(act === false || /^(false|không|khong|0|tắt|tat)$/i.test(String(act).trim())), hs: String(r[7] || '') };
+  }).filter(function (a) { return a.user; });
+}
+/** Web app: danh sách tài khoản (cần quyền sửa – có PIN). */
+function getAccounts() {
+  const ss = SpreadsheetApp.getActive(); if (!canEdit_(ss)) throw new Error('Bạn chỉ có quyền xem.');
+  return accRead_(accTab_(btvnFile_(ss, ss.getSpreadsheetTimeZone()))).map(function (a) { delete a.row; return a; });
+}
+/** Web app: thêm / sửa tài khoản. list = [{user, pin?, full, name, cls, active, hs}] — tìm theo tên đăng nhập, không có thì thêm dòng. */
+function saveAccounts(list) {
+  const ss = SpreadsheetApp.getActive(); if (!canEdit_(ss)) throw new Error('Bạn chỉ có quyền xem.');
+  const lock = LockService.getScriptLock(); lock.waitLock(30000);
+  try {
+    const sh = accTab_(btvnFile_(ss, ss.getSpreadsheetTimeZone()));
+    const cur = {}; accRead_(sh).forEach(function (a) { cur[a.user] = a; });
+    const add = [];
+    (list || []).slice(0, 300).forEach(function (x) {
+      const user = accUser_(x.user); if (!user) return;
+      const pin = String(x.pin || '').replace(/\D/g, '');
+      const a = cur[user];
+      const row = [user, pin.length === 4 ? pin : (a ? a.pin : ''), String(x.full || '').slice(0, 80), String(x.name || '').slice(0, 40),
+        String(x.cls || '').slice(0, 30), a ? a.avatar : '', x.active !== false, String(x.hs || '').slice(0, 80)];
+      if (row[1].length !== 4) throw new Error('Thiếu PIN 4 số cho ' + user);
+      if (a) { sh.getRange(a.row, 2).setNumberFormat('@'); sh.getRange(a.row, 1, 1, ACC_HEAD.length).setValues([row]); }
+      else { add.push(row); cur[user] = { user: user }; }
+    });
+    if (add.length) {
+      const r0 = sh.getLastRow() + 1;
+      sh.getRange(r0, 2, add.length, 1).setNumberFormat('@');
+      sh.getRange(r0, 1, add.length, ACC_HEAD.length).setValues(add);
+    }
+  } finally { lock.releaseLock(); }
+  return getAccounts();
+}
+/** Tài khoản → học sinh (theo Mã HS) để ghép bài nộp có cột "Tài khoản". */
+function accStudents_(fileId, students) {
+  const out = {};
+  try {
+    const sh = SpreadsheetApp.openById(fileId).getSheetByName('TaiKhoan'); if (!sh) return out;
+    const byName = {}; students.forEach(function (s) { if (s.name) byName[s.name] = s; });
+    accRead_(sh).forEach(function (a) { if (a.hs && byName[a.hs]) out[a.user] = byName[a.hs]; });
+  } catch (e) {}
+  return out;
+}
+
 function importSubmissions_(opts) {
   opts = opts || {};
   const lock = LockService.getScriptLock();
@@ -384,7 +460,8 @@ function importSubmissions_(opts) {
     const ss = SpreadsheetApp.getActive(); const tz = ss.getSpreadsheetTimeZone();
     ensureSheet_(ss, 'Diem'); ensureSheet_(ss, 'ChoGhepTen');
     const set = {}; readTable_(ss, 'CaiDat', tz).forEach(function (r) { set[r.key] = String(r.value || '').trim(); });
-    const match = matcher_(readTable_(ss, 'HocSinh', tz));
+    const hsRows = readTable_(ss, 'HocSinh', tz);
+    const match = matcher_(hsRows); let accSt = {};
     const inDiem = {}; readTable_(ss, 'Diem', tz).forEach(function (r) { if (r.ref) inDiem[r.ref] = r; });
     const inQueue = {}; readTable_(ss, 'ChoGhepTen', tz).forEach(function (r) { if (r.ref) inQueue[r.ref] = r; });
     const found = {}; const msgs = []; let nAdd = 0, nQ = 0, nUpd = 0;
@@ -398,6 +475,7 @@ function importSubmissions_(opts) {
       }
       let rows;
       try { rows = readSource_(id, tz); } catch (e) { msgs.push('• ' + src.label + ': không mở được file (' + e.message + ').'); return; }
+      if (src.parse === parseBtvn_) accSt = accStudents_(id, hsRows); // em đăng nhập → ghép theo tài khoản
       // bản sau ghi đè bản trước (Speaking gửi nhiều đợt trong 1 tuần → 1 dòng điểm)
       rows.forEach(function (o) { const rec = src.parse(o, tz); if (rec) { rec.row.src = src.label; found[rec.ref] = rec; } });
     });
@@ -406,7 +484,7 @@ function importSubmissions_(opts) {
       const rec = found[ref];
       if (inDiem[ref]) { if (rec.updatable && String(inDiem[ref].note) !== rec.row.note) { putD.push({ op: 'put', key: ref, row: { note: rec.row.note } }); nUpd++; } return; }
       if (inQueue[ref]) return;
-      const st = match(rec.typedName, rec.typedCls);
+      const st = (rec.account && accSt[rec.account]) || match(rec.typedName, rec.typedCls);
       if (st) { putD.push({ op: 'put', key: ref, row: diemRow_(rec.row, st, ref) }); nAdd++; }
       else {
         putQ.push({ op: 'put', key: ref, row: { ref: ref, src: rec.row.src, date: rec.row.date, typedName: rec.typedName, typedCls: rec.typedCls,
@@ -467,7 +545,7 @@ function parseBtvn_(o, tz) {
   const wrong = txt_(o, 'Câu sai'); const leaves = parseInt(txt_(o, 'Số lần rời trang'), 10) || 0; const rec = txt_(o, 'Ghi âm');
   const note = [wrong && wrong !== '—' ? 'Câu sai: ' + wrong : '', pending ? 'Còn phần cô chấm' : '', leaves ? 'Rời trang ' + leaves + ' lần' : '',
     /^Có/.test(rec) ? 'Có ghi âm (xem email)' : rec === 'Không ghi âm' ? 'Không nộp ghi âm' : ''].filter(String).join(' · ');
-  return { ref: 'BTVN|' + w.key + '|' + norm_(name), typedName: name, typedCls: txt_(o, 'Lớp'),
+  return { ref: 'BTVN|' + w.key + '|' + norm_(name), typedName: name, typedCls: txt_(o, 'Lớp'), account: accUser_(txt_(o, 'Tài khoản')),
     row: { date: w.date, type: 'HW', test: txt_(o, 'Bài'), score: score, max: total, pct: tt ? Math.round(sc / tt * 100) + '%' : '', ta: 'Online', note: note, res: '' } };
 }
 function parseSpeaking_(o, tz) {

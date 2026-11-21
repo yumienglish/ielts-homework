@@ -1213,7 +1213,7 @@ function viewGiaoAn(cls, focus) {
 function viewHS(name) {
   setTab('hs', 'Học sinh');
   if (!name) {
-    let h = `<div class="addbar"><button class="btn sm" id="addSt">➕ Thêm học sinh</button><button class="btn sm mint" id="addCl">➕ Thêm lớp</button><a class="btn sm ghost" href="#nhac">📣 Nhắc BT</a></div><div style="margin-top:12px">${subsCard()}</div><input type="text" id="q" placeholder="🔍 Tìm tên học sinh…" style="margin:0 0 14px">`;
+    let h = `<div class="addbar"><button class="btn sm" id="addSt">➕ Thêm học sinh</button><button class="btn sm mint" id="addCl">➕ Thêm lớp</button><a class="btn sm ghost" href="#nhac">📣 Nhắc BT</a>${READONLY ? '' : '<button class="btn sm ghost" id="accBtn" type="button">🔑 Tài khoản</button>'}</div><div style="margin-top:12px">${subsCard()}</div><input type="text" id="q" placeholder="🔍 Tìm tên học sinh…" style="margin:0 0 14px">`;
     h += CLASSES.map(c => { const ss = studentsOf(c);
       return `<div class="card" data-cls="${c}"><div class="clshead">${cp(c)}<span class="small muted grow" style="text-align:right">${esc(CLASS_CFG[c].book)}</span><button class="iconb" data-ec="${c}">✏️ Sửa lớp</button></div><div class="stlist">${ss.length ? '' : '<div class="small muted" style="padding:8px 2px">Chưa có học sinh</div>'}${ss.map(s => {
         const a = attOf(s.name); const sc = scoresOf(s.name);
@@ -1223,6 +1223,7 @@ function viewHS(name) {
       V.querySelectorAll('.stlist a').forEach(a => a.style.display = a.dataset.n.includes(q) ? '' : 'none');
       V.querySelectorAll('[data-cls]').forEach(c => c.style.display = !q || [...c.querySelectorAll('.stlist a')].some(a => a.style.display !== 'none') ? '' : 'none'); });
     $('#addSt').addEventListener('click', () => stModal()); $('#addCl').addEventListener('click', () => classModal());
+    if ($('#accBtn')) $('#accBtn').addEventListener('click', accModal);
     V.querySelectorAll('[data-ec]').forEach(b => b.addEventListener('click', () => classModal(b.dataset.ec)));
     bindSubs();
     return;
@@ -1581,6 +1582,76 @@ function luckyModal(name) {
   };
   M.onclick = e => { if (e.target === M) close(); };
   draw(); M.hidden = false;
+}
+// ================= TÀI KHOẢN HỌC SINH (đăng nhập trang BTVN + bảng xếp hạng) =================
+// Tab TaiKhoan nằm trong file bài nộp BTVN (Code.gs kiểm tra đăng nhập). PIN chỉ cô thấy → gửi riêng từng em / phụ huynh.
+const accUserOf = n => nrm(baseName(n)).replace(/[^a-z0-9]/g, '').slice(0, 30);
+const accDisplay = n => baseName(n).replace(/\s*\d+$/, '').trim() || baseName(n);
+function newPin() { // 4 số ngẫu nhiên, tránh mã dễ đoán (1111, 1234, 4321…)
+  for (;;) {
+    const a = new Uint32Array(1); (window.crypto || window.msCrypto).getRandomValues(a);
+    const p = String(a[0] % 10000).padStart(4, '0'); const d = p.split('').map(Number);
+    const step = d[1] - d[0];
+    if (new Set(d).size === 1 || (Math.abs(step) === 1 && d[2] - d[1] === step && d[3] - d[2] === step)) continue;
+    return p;
+  }
+}
+function accModal() {
+  const M = $('#modal'); const close = () => { M.hidden = true; M.innerHTML = ''; };
+  let ACC = null, busy = false, err = '';
+  const studs = () => CLASSES.flatMap(c => studentsOf(c));
+  const accOf = s => (ACC || []).find(a => a.hs === s.name) || null;
+  const fresh = s => ({ full: fullName(s.name) || s.name, name: accDisplay(s.name), cls: s.cls, hs: s.name });
+  const stale = (s, a) => a.cls !== s.cls || a.full !== (fullName(s.name) || s.name);
+  const msg = (s, a) => { const link = S(clsRow(s.cls).hwLink);
+    return `🌟 Tài khoản làm bài tập của ${a.name}:\n👤 Tên đăng nhập: ${a.user}\n🔑 Mã PIN: ${a.pin}\n\n` +
+      `Mở link bài tập${link ? ':\n👉 ' + link + '\n' : ' cô gửi, '}nhập 2 thông tin trên rồi bấm "Let's go 🚀". Máy sẽ nhớ, lần sau không cần nhập lại.\n` +
+      `Em giữ kín mã PIN, đừng cho bạn khác biết nhé! 🤫`; };
+  function server(list, ok) {
+    if (!list.length) return; busy = true; draw();
+    google.script.run.withSuccessHandler(r => { ACC = r; busy = false; draw(); if (ok) toast(ok); })
+      .withFailureHandler(e => { busy = false; err = String(e && e.message || e); draw(); }).saveAccounts(list);
+  }
+  function draw() {
+    if (M.hidden) return;
+    let h = `<div class="sheet"><div class="row between"><h3 style="font-size:20px">🔑 Tài khoản học sinh</h3><button class="iconb" id="acX" type="button">✕</button></div>
+      <div class="small muted">Các em đăng nhập trên trang bài tập (tên đăng nhập + PIN) để bài nộp đúng tên và lên 🏆 bảng xếp hạng. Bấm <b>⧉ Zalo</b> rồi gửi riêng cho từng em hoặc phụ huynh.</div>`;
+    if (err) h += `<div class="alert warn" style="margin-top:10px">${esc(err)}</div>`;
+    if (!ACC) h += `<div class="card empty" style="margin-top:12px"><span class="big stk">⏳</span>Đang tải tài khoản…</div>`;
+    else {
+      const miss = studs().filter(s => !accOf(s)); const old = studs().filter(s => { const a = accOf(s); return a && stale(s, a); });
+      h += `<div class="row wrapf" style="gap:8px;margin:12px 0">${miss.length ? `<button class="btn sm" id="acAll" type="button" ${busy ? 'disabled' : ''}>➕ Tạo cho ${miss.length} em chưa có</button>` : '<span class="small muted">✅ Em nào cũng có tài khoản</span>'}
+        ${old.length ? `<button class="btn sm ghost" id="acSync" type="button" ${busy ? 'disabled' : ''}>🔄 Cập nhật lớp / họ tên (${old.length})</button>` : ''}${busy ? '<span class="small muted">⏳ Đang lưu…</span>' : ''}</div>`;
+      h += CLASSES.map(c => `<div class="card" style="padding:10px 12px;margin-bottom:10px"><div class="clshead">${cp(c)}</div>${studentsOf(c).map(s => { const a = accOf(s);
+        return `<div class="qrow" data-s="${esc(s.name)}"><div class="row between wrapf" style="gap:6px"><b>${esc(s.display)}</b>${a
+          ? `<span class="small"><code>${esc(a.user)}</code> · PIN <b style="letter-spacing:2px">${esc(a.pin)}</b>${a.active ? '' : ' <span class="badge b-bad">đã tắt</span>'}${stale(s, a) ? ' <span class="badge b-bad">lệch lớp/họ tên</span>' : ''}</span>`
+          : '<span class="small muted">chưa có tài khoản</span>'}</div>
+          <div class="row wrapf" style="gap:6px;margin-top:6px">${a
+            ? `<button class="btn sm mint" data-acz type="button">⧉ Zalo</button><button class="btn sm ghost" data-acp type="button" ${busy ? 'disabled' : ''}>🔁 Đổi PIN</button><button class="btn sm ghost" data-aca type="button" ${busy ? 'disabled' : ''}>${a.active ? '⏸ Tắt' : '▶ Bật'}</button>`
+            : `<button class="btn sm" data-acn type="button" ${busy ? 'disabled' : ''}>➕ Tạo</button>`}</div></div>`; }).join('') || '<div class="small muted">Chưa có học sinh</div>'}</div>`).join('');
+      const orphan = ACC.filter(a => !studs().some(s => s.name === a.hs));
+      if (orphan.length) h += `<div class="card" style="padding:10px 12px"><div class="small muted" style="margin-bottom:6px">Tài khoản không khớp học sinh nào đang học (em đã nghỉ / đổi tên):</div>${orphan.map(a =>
+        `<div class="row between wrapf qrow" data-u="${esc(a.user)}" style="gap:6px"><span><b>${esc(a.name || a.user)}</b> <span class="small muted">· ${esc(a.user)} · ${esc(a.cls)}</span></span>${a.active ? `<button class="btn sm ghost" data-aco type="button" ${busy ? 'disabled' : ''}>⏸ Tắt</button>` : '<span class="badge">đã tắt</span>'}</div>`).join('')}</div>`;
+    }
+    M.innerHTML = h + '</div>';
+    $('#acX').onclick = close;
+    if (!ACC) return;
+    const taken = () => new Set(ACC.map(a => a.user));
+    const mk = (s, used) => { const base = accUserOf(s.name) || 'hocsinh'; let u = base, i = 2; while (used.has(u)) u = base + i++; used.add(u);
+      return { user: u, pin: newPin(), active: true, ...fresh(s) }; };
+    const all = $('#acAll'); if (all) all.onclick = () => { const used = taken(); server(studs().filter(s => !accOf(s)).map(s => mk(s, used)), 'Đã tạo tài khoản 🔑'); };
+    const sy = $('#acSync'); if (sy) sy.onclick = () => server(studs().filter(s => { const a = accOf(s); return a && stale(s, a); }).map(s => ({ ...accOf(s), ...fresh(s) })), 'Đã cập nhật');
+    M.querySelectorAll('.qrow[data-s]').forEach(r => { const s = byName(r.dataset.s); const a = s && accOf(s); if (!s) return;
+      const b = sel => r.querySelector(sel);
+      if (b('[data-acn]')) b('[data-acn]').onclick = () => server([mk(s, taken())], 'Đã tạo tài khoản cho ' + s.display);
+      if (b('[data-acz]')) b('[data-acz]').onclick = () => copyText(msg(s, a), '📋 Đã chép – gửi riêng cho ' + s.display);
+      if (b('[data-acp]')) b('[data-acp]').onclick = () => { if (confirm('Đổi PIN của ' + s.display + '? Máy đang đăng nhập bằng PIN cũ sẽ phải đăng nhập lại.')) server([{ ...a, ...fresh(s), pin: newPin() }], 'Đã đổi PIN – nhớ gửi PIN mới cho em'); };
+      if (b('[data-aca]')) b('[data-aca]').onclick = () => server([{ ...a, ...fresh(s), active: !a.active }], a.active ? 'Đã tắt tài khoản' : 'Đã bật lại tài khoản'); });
+    M.querySelectorAll('.qrow[data-u] [data-aco]').forEach(btn => { const a = ACC.find(x => x.user === btn.closest('.qrow').dataset.u);
+      btn.onclick = () => server([{ ...a, active: false }], 'Đã tắt tài khoản'); });
+  }
+  M.hidden = false; M.onclick = e => { if (e.target === M) close(); }; draw();
+  google.script.run.withSuccessHandler(r => { ACC = r; draw(); }).withFailureHandler(e => { err = 'Không tải được tài khoản: ' + (e && e.message || e); ACC = []; draw(); }).getAccounts();
 }
 function nameKeys(x) { // các cách gọi 1 em: tên gọi, bỏ số ("An 5" → "an"), tên trong ngoặc, tên khác
   const n = x.name; const out = [n, n.replace(/\s*\d+$/, ''), baseName(n), baseName(n).replace(/\s*\d+$/, ''), ...((n.match(/\(([^)]+)\)/) || [])[1] ? [n.match(/\(([^)]+)\)/)[1]] : []),

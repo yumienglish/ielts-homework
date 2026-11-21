@@ -14,7 +14,12 @@ const TIMEZONE = 'Asia/Ho_Chi_Minh';
 // Cột mới luôn thêm ở CUỐI để các dòng cũ không bị lệch
 const HEAD = ['Thời gian nộp', 'Họ tên', 'Lớp', 'Bài', 'Điểm', 'Tổng', 'Phần 1', 'Phần 2', 'Phần 3', 'Phần 4', 'Phần 5', 'Câu sai', 'Chi tiết (JSON)',
               'Bắt đầu lúc', 'Thời gian làm bài', 'Số lần rời trang', 'Phần 6', 'Ghi âm',
-              'Mã lần nộp', 'Điểm lần 2', 'Câu sai lần 2', 'Nộp lần 2 lúc', 'Thời gian làm lần 2', 'Rời trang lần 2'];
+              'Mã lần nộp', 'Điểm lần 2', 'Câu sai lần 2', 'Nộp lần 2 lúc', 'Thời gian làm lần 2', 'Rời trang lần 2', 'Tài khoản'];
+// Tài khoản học sinh (đăng nhập tên + PIN). Cô tạo trong web quản lý lớp hoặc gõ thẳng vào tab này.
+const ACC_SHEET = 'TaiKhoan';
+const ACC_HEAD = ['Tên đăng nhập', 'PIN', 'Họ tên', 'Tên hiển thị', 'Lớp', 'Avatar', 'Hoạt động', 'Mã HS'];
+const TOKEN_DAYS = 180;
+const MAX_FAILS = 5, LOCK_SEC = 15 * 60, BOARD_CACHE_SEC = 600;
 const MAX_AUDIO_B64 = 20 * 1024 * 1024; // ~15MB file ghi âm, tính tổng mọi file (giới hạn đính kèm Gmail là 25MB)
 
 function fmtTime_(iso) {
@@ -35,17 +40,40 @@ function setup() {
   Logger.log('Sheet: ' + ss.getUrl());
 }
 
-function doGet() {
+function doGet(e) {
+  const p = (e && e.parameter) || {};
+  if (p.action === 'board') {
+    try { return json_(board_(p.token)); }
+    catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
+  }
   return ContentService.createTextOutput('BTVN: máy chủ nhận bài đang hoạt động ✅');
 }
 
 function doPost(e) {
+  let d;
+  try { d = JSON.parse(e.postData.contents); } catch (_) { return json_({ ok: false, error: 'Dữ liệu không hợp lệ' }); }
+  if (d && d.app === 'a1pet') { // A1 KID: trứng thú cưng đã nở → mail báo cô (hàm petHatched_ ở cuối file)
+    try { petHatched_(d); return json_({ ok: true }); }
+    catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
+  }
+  if (d && d.action === 'login') {
+    try { return json_(login_(d.user, d.pin)); }
+    catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
+  }
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(20000);
-    const d = JSON.parse(e.postData.contents);
+    if (d && d.action === 'avatar') return json_(setAvatar_(d.token, d.avatar));
     validate_(d);
+    if (d.token) { // đã đăng nhập → tên/lớp lấy từ tài khoản, không lấy chữ em gõ
+      const acc = verifyToken_(d.token);
+      if (!acc) return json_({ ok: false, auth: true, error: 'Phiên đăng nhập đã hết, em đăng nhập lại nhé' });
+      d.name = acc.fullName || acc.name;
+      d.cls = acc.cls || d.cls;
+      d.account = acc.user;
+    }
     const sheetUrl = logToSheet_(d);
+    if (d.account) CacheService.getScriptCache().remove('board');
     if (d.attempt === 2) sendMail2_(d, sheetUrl); else sendMail_(d, sheetUrl);
     return json_({ ok: true });
   } catch (err) {
@@ -188,7 +216,175 @@ function appendFirst_(sh, d) {
     : d.audio ? 'Có (' + fmtClock_(d.audio.dur) + ') – file đính kèm trong email' : (d.wantsAudio ? 'Không ghi âm' : '');
   const second = d.sid && !d.canRetry ? 'Không cần (đúng hết)' : '';
   sh.appendRow([when, d.name, d.cls, d.title, d.score, d.total].concat(secs.slice(0, 5), [wrongList_(d.items), JSON.stringify(d.items),
-    d.startedAt ? new Date(d.startedAt) : '—', fmtDur_(d.timeTakenSec), d.leaves, secs[5], rec, d.sid || '', second]));
+    d.startedAt ? new Date(d.startedAt) : '—', fmtDur_(d.timeTakenSec), d.leaves, secs[5], rec, d.sid || '', second, '', '', '', '', d.account || '']));
+}
+
+/* ================= TÀI KHOẢN + BẢNG XẾP HẠNG ================= */
+
+/** Bỏ dấu, chữ thường, chỉ giữ chữ + số: "Phương 10" → "phuong10". */
+function normUser_(s) {
+  return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd')
+    .toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 30);
+}
+function normPin_(p) {
+  const s = String(p == null ? '' : p).replace(/\D/g, '');
+  return s ? s.padStart(4, '0') : '';
+}
+function accSheet_() {
+  const { ss } = getSheet_();
+  let sh = ss.getSheetByName(ACC_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(ACC_SHEET);
+    sh.getRange(1, 1, 1, ACC_HEAD.length).setValues([ACC_HEAD]).setFontWeight('bold').setBackground('#ffe3ec');
+    sh.setFrozenRows(1);
+    sh.getRange('B:B').setNumberFormat('@'); // PIN giữ số 0 đầu
+  }
+  return sh;
+}
+/** Đọc tab TaiKhoan → { user: {...} } */
+function accounts_() {
+  const sh = accSheet_();
+  const n = sh.getLastRow() - 1;
+  const out = {};
+  if (n < 1) return out;
+  sh.getRange(2, 1, n, ACC_HEAD.length).getValues().forEach((r, i) => {
+    const user = normUser_(r[0]);
+    if (!user) return;
+    const act = r[6];
+    out[user] = {
+      user: user, pin: normPin_(r[1]), fullName: String(r[2] || '').trim(),
+      name: String(r[3] || r[2] || r[0]).trim(), cls: String(r[4] || '').trim(), avatar: String(r[5] || ''),
+      active: !(act === false || /^(false|không|khong|0|tắt|tat)$/i.test(String(act).trim())), row: i + 2
+    };
+  });
+  return out;
+}
+function secret_() {
+  const props = PropertiesService.getScriptProperties();
+  let s = props.getProperty('AUTH_SECRET');
+  if (!s) { s = Utilities.getUuid() + Utilities.getUuid(); props.setProperty('AUTH_SECRET', s); }
+  return s;
+}
+function sign_(text) {
+  return Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(text, secret_())).replace(/=+$/, '').slice(0, 32);
+}
+/** Token = user.hạn.chữ-ký. Chữ ký gồm cả PIN → cô đổi PIN thì phiên cũ tự hết hiệu lực. */
+function makeToken_(acc) {
+  const exp = Math.floor(Date.now() / 1000) + TOKEN_DAYS * 86400;
+  return acc.user + '.' + exp + '.' + sign_(acc.user + '.' + exp + '.' + acc.pin);
+}
+function verifyToken_(tok) {
+  const m = /^([a-z0-9]{1,30})\.(\d{9,11})\.([\w-]{20,40})$/.exec(String(tok || ''));
+  if (!m || Number(m[2]) * 1000 < Date.now()) return null;
+  const acc = accounts_()[m[1]];
+  if (!acc || !acc.active || !acc.pin) return null;
+  return sign_(m[1] + '.' + m[2] + '.' + acc.pin) === m[3] ? acc : null;
+}
+function profile_(acc) {
+  return { user: acc.user, name: acc.name, fullName: acc.fullName, cls: acc.cls, avatar: acc.avatar };
+}
+
+function login_(user, pin) {
+  user = normUser_(user); pin = normPin_(pin);
+  if (!user || pin.length !== 4) return { ok: false, error: 'Em nhập tên đăng nhập và 4 số PIN nhé' };
+  const cache = CacheService.getScriptCache();
+  const key = 'fail:' + user;
+  const fails = Number(cache.get(key) || 0);
+  if (fails >= MAX_FAILS) return { ok: false, locked: true, error: 'Sai nhiều lần quá, em đợi 15 phút rồi thử lại nhé' };
+  const acc = accounts_()[user];
+  if (!acc || !acc.active || acc.pin !== pin) {
+    cache.put(key, String(fails + 1), LOCK_SEC);
+    return { ok: false, error: acc && acc.active ? 'Sai mã PIN rồi, em hỏi cô nhé' : 'Không có tên đăng nhập này, em hỏi cô nhé' };
+  }
+  cache.remove(key);
+  return { ok: true, token: makeToken_(acc), me: profile_(acc) };
+}
+
+/** Avatar để hiện trên bảng: emoji ngắn, hoặc đường dẫn ảnh trong yumienglish.github.io (VD /KET/img/ui/av-3.webp). */
+function setAvatar_(tok, av) {
+  const acc = verifyToken_(tok);
+  if (!acc) return { ok: false, auth: true, error: 'Phiên đăng nhập đã hết' };
+  av = String(av || '').trim();
+  const ok = /^\/[\w-]+(\/[\w.-]+)+\.(webp|png|jpe?g|svg)$/i.test(av) || (av.length > 0 && av.length <= 12 && !/[<>"'&\s]/.test(av));
+  if (!ok) return { ok: false, error: 'Avatar không hợp lệ' };
+  accSheet_().getRange(acc.row, 6).setValue(av);
+  CacheService.getScriptCache().remove('board');
+  return { ok: true };
+}
+
+/** XP 1 bài (giống PET Arena): % đúng lần 1 + sửa đúng lần 2 (≤50) + 20 không rời trang + 50 đúng hết lần 1. */
+function rowXp_(score, total, second, leaves) {
+  score = Number(score) || 0; total = Number(total) || 0;
+  if (total <= 0) return 0;
+  let xp = Math.round(score / total * 100);
+  const m = /(\d+)\s*\/\s*(\d+)/.exec(String(second || ''));
+  if (m && total > score) {
+    const s2 = Math.min(Number(m[1]), total);
+    if (s2 > score) xp += Math.round((s2 - score) / (total - score) * 50);
+  }
+  if (leaves === 0 || leaves === '0') xp += 20;
+  if (score >= total) xp += 50;
+  return xp;
+}
+
+/** Tính bảng (cache 10 phút, xoá khi có bài nộp mới). Trả về danh sách có user — chỉ dùng nội bộ. */
+function boardData_() {
+  const cache = CacheService.getScriptCache();
+  const hit = cache.get('board');
+  if (hit) return JSON.parse(hit);
+  const accs = accounts_();
+  const { sh } = getSheet_();
+  const now = new Date();
+  const today = Utilities.formatDate(now, TIMEZONE, 'yyyy-MM-dd');
+  const dow = Number(Utilities.formatDate(now, TIMEZONE, 'u')); // 1 = thứ Hai
+  const monday = Utilities.formatDate(new Date(now.getTime() - (dow - 1) * 86400000), TIMEZONE, 'yyyy-MM-dd');
+  const month = today.slice(0, 7);
+  const tally = { week: {}, month: {}, all: {} };
+  const col = name => HEAD.indexOf(name);
+  const C = { when: col('Thời gian nộp'), title: col('Bài'), score: col('Điểm'), total: col('Tổng'), leaves: col('Số lần rời trang'),
+    second: col('Điểm lần 2'), acc: col('Tài khoản') };
+  const n = sh.getLastRow() - 1;
+  const rows = n > 0 ? sh.getRange(2, 1, n, HEAD.length).getValues() : [];
+  const seen = {};
+  rows.forEach(r => {
+    const user = normUser_(r[C.acc]);
+    if (!user || !accs[user] || !accs[user].active) return;
+    const title = String(r[C.title] || '');
+    if (/LÀM LẠI/i.test(title)) return; // làm lại không cộng thêm
+    const k = user + '|' + title;
+    if (seen[k]) return; // mỗi bài chỉ tính lần nộp đầu
+    seen[k] = 1;
+    const xp = rowXp_(r[C.score], r[C.total], r[C.second], r[C.leaves]);
+    const when = r[C.when] instanceof Date ? r[C.when] : new Date(r[C.when]);
+    const ymd = isNaN(when) ? '' : Utilities.formatDate(when, TIMEZONE, 'yyyy-MM-dd');
+    const add = t => { const o = t[user] || (t[user] = { xp: 0, n: 0 }); o.xp += xp; o.n += 1; };
+    add(tally.all);
+    if (ymd.slice(0, 7) === month) add(tally.month);
+    if (ymd >= monday) add(tally.week);
+  });
+  const list = t => Object.keys(accs).filter(u => accs[u].active).map(u => ({
+    user: u, name: accs[u].name, cls: accs[u].cls, avatar: accs[u].avatar, xp: (t[u] || {}).xp || 0, n: (t[u] || {}).n || 0
+  })).sort((a, b) => b.xp - a.xp || b.n - a.n || a.name.localeCompare(b.name, 'vi'))
+    .map((o, i, arr) => Object.assign(o, { rank: i && arr[i - 1].xp === o.xp ? arr[i - 1].rank : i + 1 }));
+  const data = { updated: now.toISOString(), week: list(tally.week), month: list(tally.month), all: list(tally.all) };
+  try { cache.put('board', JSON.stringify(data), BOARD_CACHE_SEC); } catch (_) {}
+  return data;
+}
+
+/** Bảng xếp hạng cho học sinh đã đăng nhập: không lộ tên đăng nhập của bạn khác. */
+function board_(tok) {
+  const acc = verifyToken_(tok);
+  if (!acc) return { ok: false, auth: true, error: 'Em đăng nhập để xem bảng xếp hạng nhé' };
+  const data = boardData_();
+  const strip = arr => arr.map(o => ({ rank: o.rank, name: o.name, cls: o.cls, avatar: o.avatar, xp: o.xp, n: o.n, me: o.user === acc.user || undefined }));
+  return { ok: true, updated: data.updated, me: profile_(acc), week: strip(data.week), month: strip(data.month), all: strip(data.all) };
+}
+
+/** Chạy tay trong trình soạn thảo để thử: tạo tab TaiKhoan + in bảng XP ra Log. */
+function testBoard() {
+  accSheet_();
+  CacheService.getScriptCache().remove('board');
+  Logger.log(JSON.stringify(boardData_()).slice(0, 3000));
 }
 
 function sendMail_(d, sheetUrl) {
@@ -301,4 +497,41 @@ function sendMail2_(d, sheetUrl) {
   html += '<p style="margin-top:10px;color:#666;font-size:13px">✅ đúng ngay lần 1 · ❌→✅ sai lần 1, sửa đúng ở lần 2 · ❌❌ sai cả 2 lần · ⏳ cô chấm</p>' +
     '<p style="margin-top:16px"><a href="' + sheetUrl + '">📊 Mở bảng tổng hợp bài nộp (Google Sheet)</a></p></div>';
   MailApp.sendEmail({ to: TEACHER_EMAIL, subject: subject, htmlBody: html, name: 'Bài tập về nhà' });
+}
+
+/**
+ * A1 KID (Listening Trainer A1): học sinh chơi các trò ôn bài để "cho thú cưng ăn".
+ * Khi trứng nở, trang gửi { app:'a1pet', name, cls, pet, petName, food, fedDays, plays, startedAt, hatchedAt }
+ * → ghi 1 dòng vào trang tính "Thú cưng A1" + gửi mail báo giáo viên.
+ */
+function petHatched_(d) {
+  const str = (v, n) => String(v == null ? '' : v).slice(0, n);
+  const name = str(d.name, 80), cls = str(d.cls, 30), pet = str(d.pet, 20), petName = str(d.petName, 30), unit = str(d.unit, 40);
+  const food = Math.max(0, Number(d.food) || 0), days = Math.max(0, Number(d.fedDays) || 0);
+  const GN = { listen: 'Listen & Tap', spell: 'Spelling Bee', gram: 'Sentence Lab', review: 'Quick review' };
+  const plays = d.plays && typeof d.plays === 'object' ? Object.keys(d.plays).slice(0, 10)
+    .map(k => (GN[k] || str(k, 20)) + ': ' + Math.max(0, Number(d.plays[k]) || 0) + ' lượt') : [];
+  const vi = { Dragon: 'rồng', Unicorn: 'kỳ lân', Dino: 'khủng long' }[pet] || pet;
+  const { ss } = getSheet_();
+  let sh = ss.getSheetByName('Thú cưng A1');
+  if (!sh) {
+    sh = ss.insertSheet('Thú cưng A1');
+    sh.appendRow(['Trứng nở lúc', 'Họ tên', 'Lớp', 'Thú cưng', 'Tên em đặt', 'Số ngày cho ăn', 'Tổng thức ăn', 'Các trò đã chơi', 'Bắt đầu nuôi']);
+    sh.getRange(1, 1, 1, 9).setFontWeight('bold').setBackground('#fff1c4');
+    sh.setFrozenRows(1);
+  }
+  sh.appendRow([d.hatchedAt ? new Date(d.hatchedAt) : new Date(), name, cls, vi, petName, days, food, plays.join(', '),
+    d.startedAt ? new Date(d.startedAt) : '—']);
+  const row = (k, v) => '<tr><td style="padding:3px 14px 3px 0;color:#666">' + k + '</td><td style="padding:3px 0"><b>' + esc_(v) + '</b></td></tr>';
+  const html = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;max-width:640px">' +
+    '<h2 style="margin:0 0 8px;color:#d0631a">🐣 Trứng của ' + esc_(name) + ' đã nở!</h2>' +
+    '<p style="margin:0 0 10px">Em đã chăm chỉ chơi các trò ôn bài (ngoài bài cô giao) để ấp trứng. Cô khen em trên lớp nha! 🎉</p>' +
+    '<table style="border-collapse:collapse;font-size:14px">' +
+    row('Học sinh', name) + row('Lớp', cls) + row('Thú cưng', vi + (petName ? ' – tên "' + petName + '"' : '')) +
+    row('Số ngày cho ăn', days + ' ngày') + row('Tổng thức ăn', food + ' 🍎') +
+    row('Các trò đã chơi', plays.join(', ') || '—') +
+    row('Bắt đầu nuôi', fmtTime_(d.startedAt)) + row('Trứng nở lúc', fmtTime_(d.hatchedAt)) + '</table>' +
+    '<p style="margin:12px 0 0"><a href="' + ss.getUrl() + '">Xem bảng tổng hợp (trang tính "Thú cưng A1")</a></p></div>';
+  MailApp.sendEmail({ to: TEACHER_EMAIL, subject: '[' + (unit || 'A1 KID') + '] 🐣 ' + name + ' – ' + cls + ' – trứng ' + vi + ' đã nở!',
+    htmlBody: html, name: 'Bài tập về nhà' });
 }
