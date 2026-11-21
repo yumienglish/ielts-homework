@@ -51,6 +51,10 @@ function doGet(e) {
     try { return json_(board_(p.token)); }
     catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
   }
+  if (p.action === 'wallet') {
+    try { const acc = verifyToken_(p.token); return json_(acc ? wallet_(acc, p.style) : { ok: false, auth: true, error: 'Em đăng nhập lại nhé' }); }
+    catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
+  }
   return ContentService.createTextOutput('BTVN: máy chủ nhận bài đang hoạt động ✅');
 }
 
@@ -75,6 +79,7 @@ function doPost(e) {
   try {
     lock.waitLock(20000);
     if (d && d.action === 'avatar') return json_(setAvatar_(d.token, d.avatar));
+    if (d && SHOP_ACTIONS[d.action]) return json_(SHOP_ACTIONS[d.action](d)); // ví 🪙: mua đồ, mở rương, mặc đồ, mini game
     validate_(d);
     if (d.token) { // đã đăng nhập → tên/lớp lấy từ tài khoản, không lấy chữ em gõ
       const acc = verifyToken_(d.token);
@@ -84,7 +89,7 @@ function doPost(e) {
       d.account = acc.user;
     }
     const sheetUrl = logToSheet_(d);
-    if (d.account) CacheService.getScriptCache().remove('board');
+    if (d.account) CacheService.getScriptCache().removeAll(['board', 'stats']);
     if (d.attempt === 2) sendMail2_(d, sheetUrl); else sendMail_(d, sheetUrl);
     return json_({ ok: true });
   } catch (err) {
@@ -379,6 +384,7 @@ function setAvatar_(tok, av) {
   av = String(av || '').trim();
   const ok = /^\/[\w-]+(\/[\w.-]+)+\.(webp|png|jpe?g|svg)$/i.test(av) || (av.length > 0 && av.length <= 12 && !/[<>"'&\s]/.test(av));
   if (!ok) return { ok: false, error: 'Avatar không hợp lệ' };
+  if (/^[a-z0-9]+:{/.test(acc.avatar)) return { ok: true, kept: true }; // đã có nhân vật (tủ đồ) → không ghi đè bằng avatar cũ của trang
   accSheet_().getRange(acc.row, 6).setValue(av);
   CacheService.getScriptCache().remove('board');
   return { ok: true };
@@ -607,3 +613,196 @@ function petHatched_(d) {
   MailApp.sendEmail({ to: TEACHER_EMAIL, subject: '[' + (unit || 'A1 KID') + '] 🐣 ' + name + ' – ' + cls + ' – trứng ' + vi + ' đã nở!',
     htmlBody: html, name: 'Bài tập về nhà' });
 }
+
+/* ================= VÍ 🪙 + SHOP + RƯƠNG EXQUISITE (nhân vật đại diện) =================
+ * Xu do MÁY CHỦ tính từ bài nộp (không sửa được trên máy em) + sổ "Vi" (mua đồ, mở rương, mini game).
+ * Mỗi bài (lần nộp đầu, bỏ "LÀM LẠI"): 30 nộp bài + đến 50 theo % đúng lần 1 + 20 sửa đúng hết lần 2 + 10 không rời trang + 20 đúng hết.
+ * Chuỗi tuần (tuần liên tiếp có nộp bài): ×1 / ×1.2 / ×1.3 / ×1.4 / ×1.5. Mini game: +5/lượt, tối đa 3 lượt/ngày.
+ * Rương: 600 xu, hoặc được tặng (cứ 5 bài → 1 rương, cứ 3 bài đúng hết lần 1 → 1 rương). Rương luôn ra món em CHƯA có.
+ * AV_CATALOG = danh mục đồ từng bộ nhân vật (giữ khớp với yumi-portal/avatar/<bộ>/catalog.js): id → [ô, giá, nguồn free|shop|chest]
+ */
+const WALLET_SHEET = 'Vi';
+const WALLET_HEAD = ['Thời gian', 'Tài khoản', 'Loại', 'Xu (+/−)', 'Món', 'Ghi chú'];
+const CHEST_PRICE = 600, GAME_COINS = 5, GAME_PER_DAY = 3, SHOP_SLOTS = 8;
+const AV_CATALOG = { teen: {
+  body: ['body', 0, 'free'],
+  h1: ['hair', 0, 'free'],
+  h2: ['hair', 0, 'free'],
+  h3: ['hair', 0, 'free'],
+  h4: ['hair', 180, 'shop'],
+  h5: ['hair', 200, 'shop'],
+  f1: ['face', 0, 'free'],
+  f2: ['face', 0, 'free'],
+  f3: ['face', 150, 'shop'],
+  t1: ['top', 0, 'free'],
+  t2: ['top', 260, 'shop'],
+  t3: ['top', 220, 'shop'],
+  b1: ['bottom', 0, 'free'],
+  b2: ['bottom', 200, 'shop'],
+  d1: ['dress', 320, 'shop'],
+  st1: ['set', 450, 'shop'],
+  s1: ['shoes', 0, 'free'],
+  s2: ['shoes', 240, 'shop'],
+  c1: ['hat', 160, 'shop'],
+  g1: ['glasses', 140, 'shop'],
+  bg1: ['bag', 180, 'shop'],
+  hd1: ['hand', 120, 'shop'],
+  p1: ['pet', 380, 'shop'],
+  pa1: ['petacc', 150, 'shop'],
+  w1: ['wings', 0, 'chest'],
+  st2: ['set', 0, 'chest'],
+  c2: ['hat', 0, 'chest'],
+  p2: ['pet', 0, 'chest'],
+  hd2: ['hand', 0, 'chest'],
+  pa2: ['petacc', 0, 'chest']
+} };
+const AV_SLOTS = ['body', 'hair', 'face', 'top', 'bottom', 'dress', 'set', 'shoes', 'wings', 'hat', 'glasses', 'bag', 'hand', 'pet', 'petacc'];
+
+function lessonCoins_(score, total, second, leaves) {
+  score = Number(score) || 0; total = Number(total) || 0;
+  if (total <= 0) return 30;
+  let c = 30 + Math.round(score / total * 50);
+  const m = /(\d+)\s*\/\s*(\d+)/.exec(String(second || ''));
+  if (m && total > score && Number(m[1]) >= total) c += 20;
+  if (leaves === 0 || leaves === '0') c += 10;
+  if (score >= total) c += 20;
+  return c;
+}
+const streakMult_ = k => k <= 1 ? 1 : k === 2 ? 1.2 : k === 3 ? 1.3 : k === 4 ? 1.4 : 1.5;
+function mondayKey_(dt) { // thứ Hai của tuần (giờ VN) → 'yyyy-MM-dd'
+  const dow = Number(Utilities.formatDate(dt, TIMEZONE, 'u'));
+  return Utilities.formatDate(new Date(dt.getTime() - (dow - 1) * 86400000), TIMEZONE, 'yyyy-MM-dd');
+}
+const prevWeek_ = k => Utilities.formatDate(new Date(new Date(k + 'T12:00:00+07:00').getTime() - 7 * 86400000), TIMEZONE, 'yyyy-MM-dd');
+
+/** Thống kê từng tài khoản từ tab "Bài nộp": xu bài tập (đã nhân chuỗi), số bài, số bài đúng hết, chuỗi tuần hiện tại. Cache 10 phút. */
+function statsAll_() {
+  const cache = CacheService.getScriptCache();
+  const hit = cache.get('stats'); if (hit) return JSON.parse(hit);
+  const { sh } = getSheet_();
+  const col = n => HEAD.indexOf(n);
+  const C = { when: col('Thời gian nộp'), title: col('Bài'), score: col('Điểm'), total: col('Tổng'), leaves: col('Số lần rời trang'), second: col('Điểm lần 2'), acc: col('Tài khoản') };
+  const n = sh.getLastRow() - 1;
+  const rows = n > 0 ? sh.getRange(2, 1, n, HEAD.length).getValues() : [];
+  const per = {}, seen = {};
+  rows.forEach(r => {
+    const user = normUser_(r[C.acc]); if (!user) return;
+    const title = String(r[C.title] || ''); if (/LÀM LẠI/i.test(title)) return;
+    if (seen[user + '|' + title]) return; seen[user + '|' + title] = 1;
+    const when = r[C.when] instanceof Date ? r[C.when] : new Date(r[C.when]); if (isNaN(when)) return;
+    const u = per[user] || (per[user] = { lessons: [], weeks: {} });
+    const wk = mondayKey_(when);
+    u.weeks[wk] = 1;
+    u.lessons.push({ wk: wk, c: lessonCoins_(r[C.score], r[C.total], r[C.second], r[C.leaves]), perfect: Number(r[C.score]) >= Number(r[C.total]) && Number(r[C.total]) > 0 });
+  });
+  const thisWk = mondayKey_(new Date());
+  const out = {};
+  Object.keys(per).forEach(user => {
+    const u = per[user]; let coins = 0, perfect = 0;
+    const run = wk => { let k = 0; while (u.weeks[wk]) { k++; wk = prevWeek_(wk); } return k; };
+    u.lessons.forEach(l => { coins += Math.round(l.c * streakMult_(run(l.wk))); if (l.perfect) perfect++; });
+    const streak = run(thisWk) || run(prevWeek_(thisWk)); // tuần này chưa nộp vẫn giữ chuỗi tới hết tuần
+    out[user] = { coins: coins, lessons: u.lessons.length, perfect: perfect, streak: streak };
+  });
+  try { cache.put('stats', JSON.stringify(out), BOARD_CACHE_SEC); } catch (_) {}
+  return out;
+}
+
+function walletSheet_() {
+  const { ss } = getSheet_();
+  let sh = ss.getSheetByName(WALLET_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(WALLET_SHEET);
+    sh.getRange(1, 1, 1, WALLET_HEAD.length).setValues([WALLET_HEAD]).setFontWeight('bold').setBackground('#fff1c4');
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+function ledger_(user) {
+  const sh = walletSheet_(); const n = sh.getLastRow() - 1; if (n < 1) return [];
+  return sh.getRange(2, 1, n, WALLET_HEAD.length).getValues().filter(r => normUser_(r[1]) === user)
+    .map(r => ({ at: r[0] instanceof Date ? r[0] : new Date(r[0]), type: String(r[2]), coins: Number(r[3]) || 0, item: String(r[4] || '') }));
+}
+function addLedger_(user, type, coins, item, note) {
+  walletSheet_().appendRow([new Date(), user, type, coins, item || '', note || '']);
+}
+/** Shop tuần này: chọn SHOP_SLOTS món "shop" theo tuần (ai cũng thấy giống nhau, đổi mỗi thứ Hai). */
+function shopOf_(style) {
+  const cat = AV_CATALOG[style] || {};
+  const pool = Object.keys(cat).filter(id => cat[id][2] === 'shop').sort();
+  const wk = mondayKey_(new Date());
+  let seed = 0; for (const ch of style + wk) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
+  const rnd = () => { seed = (Math.imul(seed, 1103515245) + 12345) >>> 0; return seed / 4294967296; };
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); const t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
+  return { week: wk, items: pool.slice(0, SHOP_SLOTS) };
+}
+function walletState_(acc) {
+  const st = statsAll_()[acc.user] || { coins: 0, lessons: 0, perfect: 0, streak: 0 };
+  const led = ledger_(acc.user);
+  const today = Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd');
+  const extra = led.reduce((s, r) => s + r.coins, 0);
+  const owned = led.filter(r => r.item).map(r => r.item);
+  const chestsEarned = Math.floor(st.lessons / 5) + Math.floor(st.perfect / 3);
+  const chestsUsed = led.filter(r => r.type === 'rương-tặng').length;
+  return {
+    coins: st.coins + extra, hwCoins: st.coins, streak: st.streak, mult: streakMult_(st.streak),
+    lessons: st.lessons, perfect: st.perfect, owned: owned, freeChests: Math.max(0, chestsEarned - chestsUsed),
+    gamesToday: led.filter(r => r.type === 'mini game' && Utilities.formatDate(r.at, TIMEZONE, 'yyyy-MM-dd') === today).length
+  };
+}
+function wallet_(acc, style) {
+  style = AV_CATALOG[style] ? style : 'teen';
+  const sh = shopOf_(style);
+  return Object.assign({ ok: true, style: style, outfit: acc.avatar, shop: sh.items, shopWeek: sh.week, chestPrice: CHEST_PRICE,
+    gamesMax: GAME_PER_DAY, gameCoins: GAME_COINS }, walletState_(acc));
+}
+function needAcc_(d) { const acc = verifyToken_(d.token); if (!acc) throw new Error('AUTH'); return acc; }
+const shopWrap_ = fn => d => {
+  try { return fn(d); }
+  catch (e) { return String(e.message) === 'AUTH' ? { ok: false, auth: true, error: 'Em đăng nhập lại nhé' } : { ok: false, error: String(e && e.message || e) }; }
+};
+const SHOP_ACTIONS = {
+  buy: shopWrap_(d => {
+    const acc = needAcc_(d), style = String(d.style || 'teen'), cat = AV_CATALOG[style] || {}, id = String(d.item || '');
+    const it = cat[id]; if (!it || it[2] !== 'shop') return { ok: false, error: 'Món này không bán ở shop' };
+    if (shopOf_(style).items.indexOf(id) < 0) return { ok: false, error: 'Món này hết bán tuần này rồi, đợi tuần sau nhé' };
+    const w = walletState_(acc);
+    if (w.owned.indexOf(id) >= 0) return { ok: false, error: 'Em có món này rồi' };
+    if (w.coins < it[1]) return { ok: false, error: 'Chưa đủ xu, em làm thêm bài nhé 💪' };
+    addLedger_(acc.user, 'mua', -it[1], id, style);
+    return Object.assign({ bought: id }, wallet_(acc, style));
+  }),
+  chest: shopWrap_(d => {
+    const acc = needAcc_(d), style = String(d.style || 'teen'), cat = AV_CATALOG[style] || {};
+    const w = walletState_(acc);
+    const pool = Object.keys(cat).filter(id => cat[id][2] === 'chest' && w.owned.indexOf(id) < 0);
+    if (!pool.length) return { ok: false, error: 'Em đã có hết đồ trong rương Exquisite rồi! 👑' };
+    const free = w.freeChests > 0 && d.pay !== 'coins';
+    if (!free && w.coins < CHEST_PRICE) return { ok: false, error: 'Chưa đủ ' + CHEST_PRICE + ' xu để mở rương' };
+    const id = pool[Math.floor(Math.random() * pool.length)];
+    addLedger_(acc.user, free ? 'rương-tặng' : 'rương', free ? 0 : -CHEST_PRICE, id, style);
+    return Object.assign({ got: id }, wallet_(acc, style));
+  }),
+  outfit: shopWrap_(d => {
+    const acc = needAcc_(d), style = String(d.style || 'teen'), cat = AV_CATALOG[style] || {};
+    const o = d.outfit && typeof d.outfit === 'object' ? d.outfit : {};
+    const owned = walletState_(acc).owned, clean = {};
+    Object.keys(o).forEach(slot => {
+      const id = String(o[slot] || ''); if (!id || AV_SLOTS.indexOf(slot) < 0) return;
+      const it = cat[id]; if (!it || it[0] !== slot) return;
+      if (it[2] === 'free' || owned.indexOf(id) >= 0) clean[slot] = id;
+    });
+    const s = style + ':' + JSON.stringify(clean);
+    if (s.length > 480) return { ok: false, error: 'Quá nhiều món' };
+    accSheet_().getRange(acc.row, 6).setValue(s);
+    CacheService.getScriptCache().remove('board');
+    return { ok: true, outfit: s };
+  }),
+  game: shopWrap_(d => {
+    const acc = needAcc_(d);
+    const w = walletState_(acc);
+    if (w.gamesToday >= GAME_PER_DAY) return { ok: true, coins: w.coins, added: 0, capped: true };
+    addLedger_(acc.user, 'mini game', GAME_COINS, '', String(d.game || '').slice(0, 30));
+    return { ok: true, coins: w.coins + GAME_COINS, added: GAME_COINS, gamesToday: w.gamesToday + 1 };
+  })
+};
