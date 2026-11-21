@@ -248,8 +248,13 @@ body{background:
 .meme{width:160px;max-width:42vw;height:auto;border-radius:14px;box-shadow:0 3px 10px rgba(0,0,0,.18);flex:none}
 .summary.retry{border-color:var(--accent);background:#fffaf5}
 .summary.retry .score{color:var(--accent)}
+/* Tài khoản Yumi: nút 🏆 + Log out trên đầu trang (chỉ hiện khi đã đăng nhập) */
+.field[hidden]{display:none}
+.yarow{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:12px}
+.yarow .linkbtn{color:#fff;font-weight:700}
 </style>
 <script src="../zalo-guard.js?v=1"></script>
+<script src="/yumi-auth.js?v=1"></script>
 </head>
 <body>
 <header class="hero">
@@ -1128,8 +1133,10 @@ function payload2(){
       startedAt:S.startedAt || null, submittedAt:S.submittedAt, timeTakenSec:durSec(S.startedAt, S.submittedAt), leaves:S.leaves || 0}});
 }
 async function post(p){
+  const tk = window.YumiAuth && YumiAuth.token(); if (tk) p.token = tk; // đã đăng nhập → máy chủ ghi đúng tên + tính XP
   const r = await fetch(SCRIPT_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(p)});
   const j = await r.json();
+  if (!j.ok && j.auth && window.YumiAuth){ await YumiAuth.authFailed(YA_OPTS); return post(p); } // hết phiên → đăng nhập lại rồi gửi lại
   if (!j.ok) throw new Error(j.error || 'máy chủ báo lỗi');
 }
 async function send(){
@@ -1186,6 +1193,35 @@ function submit2(){
   send();
 }
 
+/* ============ TÀI KHOẢN YUMI (đăng nhập + bảng xếp hạng, script chung /yumi-auth.js) ============ */
+// YA = null khi công tắc chung chưa bật (hoặc script chung không tải được) → trang chạy như cũ, gõ tên.
+const YA = window.YumiAuth && YumiAuth.ready() ? YumiAuth : null;
+const YA_OPTS = { mascot: '📚', title: 'IELTS Homework 📚', sub: 'Log in to do your homework ✍️',
+  theme: { bg: 'linear-gradient(160deg,#dff3ee,#fff8ef 55%,#ffe9d6)', card: '#fff', text: '#2b2d42', acc: '#14866d', acc2: '#2bb39a',
+    font: 'Nunito,system-ui,sans-serif', head: 'Nunito,system-ui,sans-serif' } };
+function yaSync(){ // đã bắt đầu làm bài → tên + lớp theo tài khoản
+  const m = YA && YA.me(); if (!m || !S.name) return;
+  S.name = String(m.fullName || m.name).slice(0, 80); S.cls = String(m.cls || '-').slice(0, 30); save();
+}
+function yaAvatar(){ // gửi avatar emoji lên bảng xếp hạng (ảnh tự chụp thì không gửi)
+  if (YA && AV && !/^data:/.test(AV)) YA.setAvatar(AV);
+}
+function yaUI(){ // ẩn 2 ô tên/lớp, thêm nút 🏆 + Log out trên đầu trang
+  const m = YA && YA.me(); if (!m) return;
+  $('#inName').value = m.fullName || m.name; $('#inCls').value = m.cls || '-';
+  ['inName', 'inCls'].forEach(id => { $('#' + id).closest('.field').hidden = true; });
+  $('#start h2').textContent = `👋 Hi ${m.name}!`;
+  $('#start h2').nextElementSibling.innerHTML = 'Choose your avatar, then tap <b>Start</b>. Use headphones 🎧';
+  const row = document.createElement('div'); row.className = 'yarow';
+  row.appendChild(YA.trophy({ theme: YA_OPTS.theme }));
+  const out = document.createElement('button'); out.type = 'button'; out.className = 'linkbtn'; out.textContent = 'Log out';
+  out.onclick = () => YA.logout();
+  row.appendChild(out); $('.hero').appendChild(row);
+  if (!meGet().av && m.avatar && !/[\/.]/.test(m.avatar)){ AV = m.avatar; paintAvPick(); } // máy mới: lấy avatar của tài khoản
+  else if (meGet().av) yaAvatar();
+  YA.autoBoard({ theme: YA_OPTS.theme });
+}
+
 /* ============ TÊN HỌC SINH ============ */
 /* ============ AVATAR (emoji hoặc ảnh trong máy; chỉ lưu trên máy này, không gửi đi) ============ */
 const ME_KEY = 'ielts-me';
@@ -1212,6 +1248,7 @@ $('#avPick').addEventListener('click', e => {
   const b = e.target.closest('.avb'); if (!b) return;
   if (b.id === 'avUp'){ $('#avFile').click(); return; }
   AV = b.dataset.av; paintAvPick();
+  if (YA) yaAvatar();
 });
 $('#avFile').addEventListener('change', e => loadAvatarFile(e.target.files[0], d => { AV = d; paintAvPick(); }));
 paintAvPick();
@@ -1219,7 +1256,7 @@ paintAvPick();
 function renderWho(){
   const t = d => new Date(d).toLocaleString('vi-VN');
   $('#whoBar').innerHTML = `<span class="whoname">${avHtml(AV)} <b>${esc(S.name)}</b> · Class <b>${esc(S.cls)}</b></span>` +
-    (S.submitted ? `<span style="color:var(--muted);font-size:14px">Submitted${S.r1 ? ' (try 1)' : ''} ${t(S.submittedAt)}${S.submittedAt2 ? ` · try 2 ${t(S.submittedAt2)}` : ''}</span>` : `<button class="linkbtn" type="button" id="editName">Edit name / class</button>`);
+    (S.submitted ? `<span style="color:var(--muted);font-size:14px">Submitted${S.r1 ? ' (try 1)' : ''} ${t(S.submittedAt)}${S.submittedAt2 ? ` · try 2 ${t(S.submittedAt2)}` : ''}</span>` : YA ? '' : `<button class="linkbtn" type="button" id="editName">Edit name / class</button>`);
   const b = $('#editName'); if (b) b.onclick = () => { $('#work').hidden = true; $('#bar').hidden = true; $('#start').hidden = false; $('#inName').focus(); };
 }
 function showWork(){
@@ -1257,6 +1294,9 @@ window.addEventListener('blur', goAway);
 window.addEventListener('focus', comeBack);
 
 /* ============ KHỞI ĐỘNG ============ */
+function boot(){
+  if (YA && !YA.me()){ YA.require(YA_OPTS).then(() => { yaSync(); boot(); }); return; } // bắt đăng nhập trước
+  yaSync(); yaUI();
 build();
 renderRec();
 if (S.name) showWork();
@@ -1265,6 +1305,8 @@ loadRec().then(() => {
   if (S.submitted && (RES || fixing())) renderSummary();
   if (S.submitted && (!S.sent || (S.submittedAt2 && !S.sent2))) send(); // lần trước gửi chưa xong → gửi tiếp (sau khi nạp ghi âm)
 });
+}
+boot();
 </script>
 </body>
 </html>

@@ -41,6 +41,26 @@ const LS = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} },
 };
 let ME = LS.get('spk10.me', { name: '', cls: '' });
+
+/* ================= Yumi account (login + leaderboard, shared /yumi-auth.js) ================= */
+// YA = null while the global switch is off (or the shared script failed to load) → page works as before (type your name).
+const YA = window.YumiAuth && YumiAuth.ready() ? YumiAuth : null;
+const YA_OPTS = { mascot: '📚', title: 'IELTS Homework 📚', sub: 'Log in to do your homework ✍️',
+  theme: { bg: 'linear-gradient(160deg,#dff3ee,#fff8ef 55%,#ffe9d6)', card: '#fff', text: '#2b2d42', acc: '#14866d', acc2: '#2bb39a',
+    font: 'Nunito,system-ui,sans-serif', head: 'Nunito,system-ui,sans-serif' } };
+function yaSync() { // name + class come from the account
+  const m = YA && YA.me(); if (!m) return;
+  ME = { name: String(m.fullName || m.name).slice(0, 60), cls: String(m.cls || '-').slice(0, 20) }; LS.set('spk10.me', ME);
+}
+function yaUI() { // 🏆 + Log out in the header
+  if (!YA || !YA.me() || document.querySelector('.hero .yarow')) return;
+  const row = document.createElement('div'); row.className = 'yarow';
+  row.appendChild(YA.trophy({ theme: YA_OPTS.theme }));
+  const out = document.createElement('button'); out.type = 'button'; out.className = 'linkbtn'; out.textContent = 'Log out';
+  out.onclick = () => YA.logout();
+  row.appendChild(out); document.querySelector('.hero').appendChild(row);
+  YA.autoBoard({ theme: YA_OPTS.theme });
+}
 const META = LS.get('spk10.meta', {});     // key -> {dur, mime, ext, at, size, sent, sentAt, marks}
 const NOTES = LS.get('spk10.notes', {});   // key -> text (P2 keywords, reflections, new topics)
 const XSENT = LS.get('spk10.xsent', {});   // week -> signature of notes already sent
@@ -174,9 +194,9 @@ let ROUTE = 0;       // 0 = overview, n = week
 let editingMe = false;
 
 function whoHtml() {
-  if (ME.name && ME.cls && !editingMe) {
+  if (ME.name && ME.cls && (!editingMe || YA)) {
     return `<section class="card who" id="who"><div>👋 Hi <b>${esc(ME.name)}</b> · Class <b>${esc(ME.cls)}</b></div>
-      <button class="linkbtn" type="button" data-act="editme">Change</button></section>`;
+      ${YA ? '' : '<button class="linkbtn" type="button" data-act="editme">Change</button>'}</section>`;
   }
   return `<section class="card" id="who"><h3 style="margin:0 0 2px">👋 Before you start</h3>
     <div class="muted small">Your name and class are sent to your teacher with your recordings.</div>
@@ -643,6 +663,13 @@ function blobToB64(b) {
     fr.readAsDataURL(b);
   });
 }
+async function postJ(payload) {
+  const tk = window.YumiAuth && YumiAuth.token(); if (tk) payload.token = tk; // logged in → server can match the account
+  const r = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+  const j = await r.json();
+  if (!j.ok && j.auth && window.YumiAuth) { await YumiAuth.authFailed(YA_OPTS); yaSync(); return postJ(payload); } // session expired → log in again, resend
+  return j;
+}
 async function sendWeek() {
   const n = ROUTE;
   if (!n || sending) return;
@@ -697,8 +724,7 @@ async function sendWeek() {
         progress: { done: st2.done, total: st2.total }, batch: b + 1, batches: batches.length,
         items, extras: b === 0 ? extras : [],
       };
-      const r = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
-      const j = await r.json();
+      const j = await postJ(payload);
       if (!j.ok) throw new Error(j.error || 'server error');
       const now = new Date().toISOString();
       batches[b].forEach(k => { META[k].sent = true; META[k].sentAt = now; });
@@ -726,4 +752,9 @@ function route() {
   window.scrollTo(0, 0);
 }
 window.addEventListener('hashchange', route);
-route();
+function boot() {
+  if (YA && !YA.me()) { YA.require(YA_OPTS).then(() => { yaSync(); boot(); }); return; } // log in first
+  yaSync(); yaUI();
+  route();
+}
+boot();
