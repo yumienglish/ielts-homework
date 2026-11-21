@@ -18,7 +18,7 @@ const HEAD = ['Thời gian nộp', 'Họ tên', 'Lớp', 'Bài', 'Điểm', 'T�
 // Tài khoản học sinh (đăng nhập tên + PIN). Cô tạo trong web quản lý lớp hoặc gõ thẳng vào tab này.
 const ACC_SHEET = 'TaiKhoan';
 // Em tự tạo tài khoản: Tên hiển thị = nickname (hiện trên trang + bảng xếp hạng), Tên đăng nhập = nickname bỏ dấu,
-// Họ tên + Lớp = tên thật để cô đối chiếu. "Mã HS" = Tên gọi trong web quản lý lớp; có Mã HS mới lên bảng xếp hạng.
+// Họ tên + Lớp = tên thật để cô đối chiếu. "Mã HS" = Tên gọi trong web quản lý lớp (để cô biết nickname là em nào). Mọi tài khoản đang hoạt động đều lên bảng xếp hạng.
 const ACC_HEAD = ['Tên đăng nhập', 'PIN', 'Họ tên', 'Tên hiển thị', 'Lớp', 'Avatar', 'Hoạt động', 'Mã HS', 'Ngày tạo'];
 // Danh sách học sinh do web quản lý lớp chép sang (để tự ghép tài khoản lúc em đăng ký)
 const ROSTER_SHEET = 'DSHocSinh';
@@ -301,10 +301,8 @@ function rosterMatch_(full, cls) {
   }
   return '';
 }
-const weakPin_ = p => { const d = p.split('').map(Number), s = d[1] - d[0];
-  return new Set(d).size === 1 || (Math.abs(s) === 1 && d[2] - d[1] === s && d[3] - d[2] === s); };
 
-/** Em tự tạo tài khoản: nickname + PIN + họ tên thật + lớp. Khớp đúng 1 học sinh (chưa ai dùng) → lên bảng ngay, không thì chờ cô ghép. */
+/** Em tự tạo tài khoản: nickname + PIN + họ tên thật + lớp. Khớp đúng 1 học sinh (chưa ai dùng) → tự ghép; không thì chờ cô ghép (vẫn lên bảng bằng nickname). */
 function register_(d) {
   const nick = String(d.nick || '').replace(/\s+/g, ' ').trim();
   const user = normUser_(nick), pin = normPin_(d.pin);
@@ -315,7 +313,6 @@ function register_(d) {
   if (full.split(' ').length < 2 || !/^[\p{L} .'-]+$/u.test(full)) return { ok: false, field: 'full', error: 'Em nhập đủ họ và tên thật nhé (VD: Nguyễn Minh Anh)' };
   if (!cls) return { ok: false, field: 'cls', error: 'Em nhập lớp nhé (VD: KET01)' };
   if (pin.length !== 4 || String(d.pin).replace(/\D/g, '').length !== 4) return { ok: false, field: 'pin', error: 'PIN có đúng 4 số nhé' };
-  if (weakPin_(pin)) return { ok: false, field: 'pin', error: 'PIN này dễ đoán quá, em chọn 4 số khác nhé' };
   const cache = CacheService.getScriptCache();
   const hk = 'reg:' + Utilities.formatDate(new Date(), TIMEZONE, 'yyyyMMddHH');
   const cnt = Number(cache.get(hk) || 0);
@@ -423,7 +420,7 @@ function boardData_() {
   const seen = {};
   rows.forEach(r => {
     const user = normUser_(r[C.acc]);
-    if (!user || !accs[user] || !accs[user].active || !accs[user].hs) return;
+    if (!user || !accs[user] || !accs[user].active) return; // chờ ghép vẫn lên bảng (chỉ hiện nickname)
     const title = String(r[C.title] || '');
     if (/LÀM LẠI/i.test(title)) return; // làm lại không cộng thêm
     const k = user + '|' + title;
@@ -437,7 +434,7 @@ function boardData_() {
     if (ymd.slice(0, 7) === month) add(tally.month);
     if (ymd >= monday) add(tally.week);
   });
-  const list = t => Object.keys(accs).filter(u => accs[u].active && accs[u].hs).map(u => ({
+  const list = t => Object.keys(accs).filter(u => accs[u].active).map(u => ({
     user: u, name: accs[u].name, cls: accs[u].cls, avatar: accs[u].avatar, xp: (t[u] || {}).xp || 0, n: (t[u] || {}).n || 0
   })).sort((a, b) => b.xp - a.xp || b.n - a.n || a.name.localeCompare(b.name, 'vi'))
     .map((o, i, arr) => Object.assign(o, { rank: i && arr[i - 1].xp === o.xp ? arr[i - 1].rank : i + 1 }));
@@ -452,7 +449,7 @@ function board_(tok) {
   if (!acc) return { ok: false, auth: true, error: 'Em đăng nhập để xem bảng xếp hạng nhé' };
   const data = boardData_();
   const strip = arr => arr.map(o => ({ rank: o.rank, name: o.name, cls: o.cls, avatar: o.avatar, xp: o.xp, n: o.n, me: o.user === acc.user || undefined }));
-  return { ok: true, updated: data.updated, me: profile_(acc), pending: !acc.hs, week: strip(data.week), month: strip(data.month), all: strip(data.all) };
+  return { ok: true, updated: data.updated, me: profile_(acc), week: strip(data.week), month: strip(data.month), all: strip(data.all) };
 }
 
 /** Chạy tay trong trình soạn thảo để thử: tạo tab TaiKhoan + in bảng XP ra Log. */

@@ -1618,7 +1618,7 @@ function accModal() {
   function draw() {
     if (M.hidden) return;
     let h = `<div class="sheet"><div class="row between"><h3 style="font-size:20px">🔑 Tài khoản học sinh</h3><button class="iconb" id="acX" type="button">✕</button></div>
-      <div class="small muted">Các em <b>tự tạo</b> tài khoản trên trang bài tập: nickname (hiện trên 🏆 bảng xếp hạng) + PIN + họ tên thật + lớp. Họ tên khớp danh sách thì tự ghép, không khớp thì nằm ở <b>Chờ ghép</b>. Chỉ tài khoản đã ghép mới lên bảng xếp hạng.</div>`;
+      <div class="small muted">Các em <b>tự tạo</b> tài khoản trên trang bài tập: nickname (hiện trên 🏆 bảng xếp hạng) + PIN + họ tên thật + lớp. Các em lên bảng xếp hạng ngay bằng nickname. Họ tên khớp danh sách thì tự ghép; không khớp thì nằm ở <b>Chờ ghép</b> để cô chọn đúng em (bài nộp mới vào đúng điểm).</div>`;
     if (err) h += `<div class="alert warn" style="margin-top:10px">${esc(err)}</div>`;
     if (!ACC) { M.innerHTML = h + `<div class="card empty" style="margin-top:12px"><span class="big stk">⏳</span>Đang tải tài khoản…</div></div>`; $('#acX').onclick = close; return; }
     const wait = ACC.filter(a => a.active && !isStud(a.hs));
@@ -1647,10 +1647,10 @@ function accModal() {
       if (confirm('Đổi PIN của ' + a.name + '? Máy đang đăng nhập bằng PIN cũ sẽ phải đăng nhập lại.')) server([{ ...a, pin: newPin() }], 'Đã đổi PIN – bấm ⧉ Zalo để gửi PIN mới'); });
     M.querySelectorAll('[data-aca]').forEach(b => b.onclick = () => { const a = get(b.dataset.aca); server([{ ...a, active: !a.active }], a.active ? 'Đã tắt tài khoản' : 'Đã bật lại tài khoản'); });
     M.querySelectorAll('[data-acu]').forEach(b => b.onclick = () => { const a = get(b.dataset.acu);
-      if (confirm('Bỏ ghép ' + a.name + ' khỏi ' + a.hs + '? Tài khoản sẽ về mục Chờ ghép và rời bảng xếp hạng.')) server([{ ...a, hs: '-' }], 'Đã bỏ ghép'); });
+      if (confirm('Bỏ ghép ' + a.name + ' khỏi ' + a.hs + '? Tài khoản sẽ về mục Chờ ghép.')) server([{ ...a, hs: '-' }], 'Đã bỏ ghép'); });
     M.querySelectorAll('.qrow[data-u] [data-acm]').forEach(b => b.onclick = () => { const r = b.closest('.qrow'); const a = get(r.dataset.u); const n = r.querySelector('.qsel').value;
       if (!n) { toast('Chọn học sinh trước'); return; }
-      const st = byName(n); server([{ ...a, hs: n, cls: st ? st.cls : a.cls }], 'Đã ghép ' + a.name + ' → ' + n + ' 🏆'); });
+      const st = byName(n); server([{ ...a, hs: n, cls: st ? st.cls : a.cls }], 'Đã ghép ' + a.name + ' → ' + n); });
   }
   M.hidden = false; M.onclick = e => { if (e.target === M) close(); }; draw();
   google.script.run.withSuccessHandler(r => { ACC = r; draw(); }).withFailureHandler(e => { err = 'Không tải được tài khoản: ' + (e && e.message || e); ACC = []; draw(); }).getAccounts();
