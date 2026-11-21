@@ -17,7 +17,12 @@ const HEAD = ['Thời gian nộp', 'Họ tên', 'Lớp', 'Bài', 'Điểm', 'T�
               'Mã lần nộp', 'Điểm lần 2', 'Câu sai lần 2', 'Nộp lần 2 lúc', 'Thời gian làm lần 2', 'Rời trang lần 2', 'Tài khoản'];
 // Tài khoản học sinh (đăng nhập tên + PIN). Cô tạo trong web quản lý lớp hoặc gõ thẳng vào tab này.
 const ACC_SHEET = 'TaiKhoan';
-const ACC_HEAD = ['Tên đăng nhập', 'PIN', 'Họ tên', 'Tên hiển thị', 'Lớp', 'Avatar', 'Hoạt động', 'Mã HS'];
+// Em tự tạo tài khoản: Tên hiển thị = nickname (hiện trên trang + bảng xếp hạng), Tên đăng nhập = nickname bỏ dấu,
+// Họ tên + Lớp = tên thật để cô đối chiếu. "Mã HS" = Tên gọi trong web quản lý lớp; có Mã HS mới lên bảng xếp hạng.
+const ACC_HEAD = ['Tên đăng nhập', 'PIN', 'Họ tên', 'Tên hiển thị', 'Lớp', 'Avatar', 'Hoạt động', 'Mã HS', 'Ngày tạo'];
+// Danh sách học sinh do web quản lý lớp chép sang (để tự ghép tài khoản lúc em đăng ký)
+const ROSTER_SHEET = 'DSHocSinh';
+const MAX_REG_PER_HOUR = 40;
 const TOKEN_DAYS = 180;
 const MAX_FAILS = 5, LOCK_SEC = 15 * 60, BOARD_CACHE_SEC = 600;
 const MAX_AUDIO_B64 = 20 * 1024 * 1024; // ~15MB file ghi âm, tính tổng mọi file (giới hạn đính kèm Gmail là 25MB)
@@ -59,6 +64,12 @@ function doPost(e) {
   if (d && d.action === 'login') {
     try { return json_(login_(d.user, d.pin)); }
     catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
+  }
+  if (d && d.action === 'register') {
+    const lk = LockService.getScriptLock();
+    try { lk.waitLock(20000); return json_(register_(d)); }
+    catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
+    finally { try { lk.releaseLock(); } catch (_) {} }
   }
   const lock = LockService.getScriptLock();
   try {
@@ -238,6 +249,8 @@ function accSheet_() {
     sh.getRange(1, 1, 1, ACC_HEAD.length).setValues([ACC_HEAD]).setFontWeight('bold').setBackground('#ffe3ec');
     sh.setFrozenRows(1);
     sh.getRange('B:B').setNumberFormat('@'); // PIN giữ số 0 đầu
+  } else if (sh.getRange(1, 1, 1, ACC_HEAD.length).getValues()[0].join('|') !== ACC_HEAD.join('|')) {
+    sh.getRange(1, 1, 1, ACC_HEAD.length).setValues([ACC_HEAD]).setFontWeight('bold').setBackground('#ffe3ec'); // bảng cũ: thêm cột mới
   }
   return sh;
 }
@@ -254,10 +267,71 @@ function accounts_() {
     out[user] = {
       user: user, pin: normPin_(r[1]), fullName: String(r[2] || '').trim(),
       name: String(r[3] || r[2] || r[0]).trim(), cls: String(r[4] || '').trim(), avatar: String(r[5] || ''),
-      active: !(act === false || /^(false|không|khong|0|tắt|tat)$/i.test(String(act).trim())), row: i + 2
+      active: !(act === false || /^(false|không|khong|0|tắt|tat)$/i.test(String(act).trim())), row: i + 2,
+      hs: String(r[7] || '').trim().replace(/^-$/, '') // "-" = cô đã bỏ ghép → chưa lên bảng
     };
   });
   return out;
+}
+
+/* ---- tự ghép tài khoản mới với học sinh (theo họ tên thật + lớp), giống cách web quản lý ghép bài nộp ---- */
+function normName_(s) {
+  return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+function clsCode_(s) { const m = /([A-Za-z]{2,4})\s*-?\s*(\d{2,3})/.exec(String(s || '')); return m ? (m[1] + m[2]).toUpperCase() : ''; }
+/** → Tên gọi của học sinh khớp DUY NHẤT, hoặc '' */
+function rosterMatch_(full, cls) {
+  const { ss } = getSheet_();
+  const sh = ss.getSheetByName(ROSTER_SHEET);
+  if (!sh || sh.getLastRow() < 2) return '';
+  const n = normName_(full), c = clsCode_(cls);
+  if (!n) return '';
+  const list = sh.getRange(2, 1, sh.getLastRow() - 1, 4).getValues().filter(r => String(r[0]).trim()).map(r => {
+    const name = String(r[0]).trim(), plain = name.replace(/\(.*?\)/g, ' ');
+    const keys = [normName_(name), normName_(plain), normName_(r[1])].concat(String(r[3] || '').split(/[,;\n]/).map(normName_));
+    return { name: name, keys: keys.filter(String), cls: clsCode_(r[2]), given: normName_(plain).split(' ')[0] };
+  });
+  let cand = list.filter(x => x.keys.indexOf(n) >= 0);
+  if (cand.length > 1 && c) cand = cand.filter(x => x.cls === c);
+  if (cand.length === 1) return cand[0].name;
+  if (!cand.length && c) { // gõ họ tên đầy đủ nhưng danh sách chỉ có tên gọi → tìm tên riêng trong đúng lớp
+    const toks = n.split(' ');
+    const g = list.filter(x => x.cls === c && x.given && toks.indexOf(x.given) >= 0);
+    if (g.length === 1) return g[0].name;
+  }
+  return '';
+}
+const weakPin_ = p => { const d = p.split('').map(Number), s = d[1] - d[0];
+  return new Set(d).size === 1 || (Math.abs(s) === 1 && d[2] - d[1] === s && d[3] - d[2] === s); };
+
+/** Em tự tạo tài khoản: nickname + PIN + họ tên thật + lớp. Khớp đúng 1 học sinh (chưa ai dùng) → lên bảng ngay, không thì chờ cô ghép. */
+function register_(d) {
+  const nick = String(d.nick || '').replace(/\s+/g, ' ').trim();
+  const user = normUser_(nick), pin = normPin_(d.pin);
+  const full = String(d.full || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+  const cls = clsCode_(d.cls) || String(d.cls || '').trim().toUpperCase().slice(0, 30); // "ket 01" → KET01
+  if (nick.length < 3 || nick.length > 20 || !/^[\p{L}\p{N} ._-]+$/u.test(nick) || user.length < 3)
+    return { ok: false, field: 'nick', error: 'Nickname dài 3–20 chữ, chỉ gồm chữ, số, dấu cách nhé' };
+  if (full.split(' ').length < 2 || !/^[\p{L} .'-]+$/u.test(full)) return { ok: false, field: 'full', error: 'Em nhập đủ họ và tên thật nhé (VD: Nguyễn Minh Anh)' };
+  if (!cls) return { ok: false, field: 'cls', error: 'Em nhập lớp nhé (VD: KET01)' };
+  if (pin.length !== 4 || String(d.pin).replace(/\D/g, '').length !== 4) return { ok: false, field: 'pin', error: 'PIN có đúng 4 số nhé' };
+  if (weakPin_(pin)) return { ok: false, field: 'pin', error: 'PIN này dễ đoán quá, em chọn 4 số khác nhé' };
+  const cache = CacheService.getScriptCache();
+  const hk = 'reg:' + Utilities.formatDate(new Date(), TIMEZONE, 'yyyyMMddHH');
+  const cnt = Number(cache.get(hk) || 0);
+  if (cnt >= MAX_REG_PER_HOUR) return { ok: false, error: 'Nhiều bạn đang tạo tài khoản quá, em thử lại sau ít phút nhé' };
+  const accs = accounts_();
+  if (accs[user]) return { ok: false, field: 'nick', error: 'Nickname này có bạn dùng rồi, em chọn tên khác nhé' };
+  let hs = rosterMatch_(full, cls);
+  if (hs && Object.keys(accs).some(u => accs[u].active && accs[u].hs === hs)) hs = ''; // em đó đã có tài khoản → chờ cô xem
+  const sh = accSheet_();
+  const r = sh.getLastRow() + 1;
+  sh.getRange(r, 2).setNumberFormat('@');
+  sh.getRange(r, 1, 1, ACC_HEAD.length).setValues([[user, pin, full, nick, cls, '', true, hs, new Date()]]);
+  cache.put(hk, String(cnt + 1), 3600);
+  if (hs) cache.remove('board');
+  const acc = { user: user, pin: pin, fullName: full, name: nick, cls: cls, avatar: '', active: true, hs: hs, row: r };
+  return { ok: true, token: makeToken_(acc), me: profile_(acc) };
 }
 function secret_() {
   const props = PropertiesService.getScriptProperties();
@@ -280,13 +354,14 @@ function verifyToken_(tok) {
   if (!acc || !acc.active || !acc.pin) return null;
   return sign_(m[1] + '.' + m[2] + '.' + acc.pin) === m[3] ? acc : null;
 }
+/** Thông tin trả về trang: CHỈ nickname (tên thật chỉ cô thấy). approved = đã ghép với học sinh → có trên bảng. */
 function profile_(acc) {
-  return { user: acc.user, name: acc.name, fullName: acc.fullName, cls: acc.cls, avatar: acc.avatar };
+  return { user: acc.user, name: acc.name, cls: acc.cls, avatar: acc.avatar, approved: !!acc.hs };
 }
 
 function login_(user, pin) {
   user = normUser_(user); pin = normPin_(pin);
-  if (!user || pin.length !== 4) return { ok: false, error: 'Em nhập tên đăng nhập và 4 số PIN nhé' };
+  if (!user || pin.length !== 4) return { ok: false, error: 'Em nhập nickname và 4 số PIN nhé' };
   const cache = CacheService.getScriptCache();
   const key = 'fail:' + user;
   const fails = Number(cache.get(key) || 0);
@@ -294,7 +369,7 @@ function login_(user, pin) {
   const acc = accounts_()[user];
   if (!acc || !acc.active || acc.pin !== pin) {
     cache.put(key, String(fails + 1), LOCK_SEC);
-    return { ok: false, error: acc && acc.active ? 'Sai mã PIN rồi, em hỏi cô nhé' : 'Không có tên đăng nhập này, em hỏi cô nhé' };
+    return { ok: false, error: acc && acc.active ? 'Sai mã PIN rồi. Quên PIN thì em nhắn cô nhé' : 'Chưa có nickname này. Em kiểm tra lại, hoặc bấm "Tạo tài khoản" nhé' };
   }
   cache.remove(key);
   return { ok: true, token: makeToken_(acc), me: profile_(acc) };
@@ -348,7 +423,7 @@ function boardData_() {
   const seen = {};
   rows.forEach(r => {
     const user = normUser_(r[C.acc]);
-    if (!user || !accs[user] || !accs[user].active) return;
+    if (!user || !accs[user] || !accs[user].active || !accs[user].hs) return;
     const title = String(r[C.title] || '');
     if (/LÀM LẠI/i.test(title)) return; // làm lại không cộng thêm
     const k = user + '|' + title;
@@ -362,7 +437,7 @@ function boardData_() {
     if (ymd.slice(0, 7) === month) add(tally.month);
     if (ymd >= monday) add(tally.week);
   });
-  const list = t => Object.keys(accs).filter(u => accs[u].active).map(u => ({
+  const list = t => Object.keys(accs).filter(u => accs[u].active && accs[u].hs).map(u => ({
     user: u, name: accs[u].name, cls: accs[u].cls, avatar: accs[u].avatar, xp: (t[u] || {}).xp || 0, n: (t[u] || {}).n || 0
   })).sort((a, b) => b.xp - a.xp || b.n - a.n || a.name.localeCompare(b.name, 'vi'))
     .map((o, i, arr) => Object.assign(o, { rank: i && arr[i - 1].xp === o.xp ? arr[i - 1].rank : i + 1 }));
@@ -377,7 +452,7 @@ function board_(tok) {
   if (!acc) return { ok: false, auth: true, error: 'Em đăng nhập để xem bảng xếp hạng nhé' };
   const data = boardData_();
   const strip = arr => arr.map(o => ({ rank: o.rank, name: o.name, cls: o.cls, avatar: o.avatar, xp: o.xp, n: o.n, me: o.user === acc.user || undefined }));
-  return { ok: true, updated: data.updated, me: profile_(acc), week: strip(data.week), month: strip(data.month), all: strip(data.all) };
+  return { ok: true, updated: data.updated, me: profile_(acc), pending: !acc.hs, week: strip(data.week), month: strip(data.month), all: strip(data.all) };
 }
 
 /** Chạy tay trong trình soạn thảo để thử: tạo tab TaiKhoan + in bảng XP ra Log. */

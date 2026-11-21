@@ -383,7 +383,29 @@ function ignoreQueue(ref) {
 // ===================== TÀI KHOẢN HỌC SINH (đăng nhập trang BTVN + bảng xếp hạng) =====================
 // Tab "TaiKhoan" nằm trong FILE BÀI NỘP BTVN (Code.gs đọc tab này để kiểm tra đăng nhập). Thứ tự cột phải khớp ACC_HEAD trong Code.gs.
 // Web app: Học sinh → 🔑 Tài khoản. "Mã HS" = Tên gọi trong tab HocSinh (để bài nộp tự vào đúng em).
-const ACC_HEAD = ['Tên đăng nhập', 'PIN', 'Họ tên', 'Tên hiển thị', 'Lớp', 'Avatar', 'Hoạt động', 'Mã HS'];
+// Các em TỰ tạo tài khoản trên trang bài tập (nickname + PIN + họ tên thật + lớp). Cô chỉ duyệt: ghép với học sinh, đổi PIN, tắt.
+const ACC_HEAD = ['Tên đăng nhập', 'PIN', 'Họ tên', 'Tên hiển thị', 'Lớp', 'Avatar', 'Hoạt động', 'Mã HS', 'Ngày tạo'];
+/** Chép danh sách học sinh đang học sang tab DSHocSinh của file BTVN → Code.gs tự ghép lúc em tạo tài khoản. */
+function syncRoster_(f, hsRows) {
+  let sh = f.getSheetByName('DSHocSinh');
+  if (!sh) { sh = f.insertSheet('DSHocSinh'); sh.setFrozenRows(1); }
+  const rows = [['Tên gọi', 'Họ tên', 'Lớp', 'Tên khác']].concat(hsRows.filter(function (s) { return s.name && !/nghỉ|ngừng/i.test(s.status || ''); })
+    .map(function (s) { return [s.name, s.full || '', s.cls || '', s.alias || '']; }));
+  sh.clearContents();
+  sh.getRange(1, 1, rows.length, 4).setNumberFormat('@').setValues(rows);
+  sh.getRange(1, 1, 1, 4).setFontWeight('bold');
+}
+/** Tài khoản chưa ghép mà nay khớp đúng 1 học sinh (chưa có tài khoản khác) → ghép luôn. Trả về số tài khoản vừa ghép. */
+function autoMatchAccounts_(sh, hsRows) {
+  const list = accRead_(sh); const match = matcher_(hsRows); let n = 0;
+  const used = {}; list.forEach(function (a) { if (a.hs && a.active) used[a.hs] = 1; });
+  list.forEach(function (a) {
+    if (a.hs || !a.active) return;
+    const st = match(a.full, a.cls);
+    if (st && !used[st.name]) { sh.getRange(a.row, 8).setValue(st.name); used[st.name] = 1; n++; }
+  });
+  return n;
+}
 function btvnFile_(ss, tz) {
   const set = {}; readTable_(ss, 'CaiDat', tz).forEach(function (r) { set[r.key] = String(r.value || '').trim(); });
   const id = sheetId_(set['Link file bài nộp BTVN']) || findByTitle_('BTVN – Bài nộp của học sinh');
@@ -407,13 +429,17 @@ function accRead_(sh) {
     const p = String(r[1] == null ? '' : r[1]).replace(/\D/g, '');
     return { row: i + 2, user: accUser_(r[0]), pin: p ? p.padStart(4, '0') : '', full: String(r[2] || ''),
       name: String(r[3] || ''), cls: String(r[4] || ''), avatar: String(r[5] || ''),
-      active: !(act === false || /^(false|không|khong|0|tắt|tat)$/i.test(String(act).trim())), hs: String(r[7] || '') };
+      active: !(act === false || /^(false|không|khong|0|tắt|tat)$/i.test(String(act).trim())), hs: String(r[7] || ''),
+      created: r[8] instanceof Date ? Utilities.formatDate(r[8], 'Asia/Ho_Chi_Minh', 'yyyy-MM-dd') : String(r[8] || '') };
   }).filter(function (a) { return a.user; });
 }
 /** Web app: danh sách tài khoản (cần quyền sửa – có PIN). */
 function getAccounts() {
   const ss = SpreadsheetApp.getActive(); if (!canEdit_(ss)) throw new Error('Bạn chỉ có quyền xem.');
-  return accRead_(accTab_(btvnFile_(ss, ss.getSpreadsheetTimeZone()))).map(function (a) { delete a.row; return a; });
+  const tz = ss.getSpreadsheetTimeZone(); const f = btvnFile_(ss, tz); const sh = accTab_(f);
+  const hsRows = readTable_(ss, 'HocSinh', tz);
+  try { syncRoster_(f, hsRows); autoMatchAccounts_(sh, hsRows); } catch (e) {}
+  return accRead_(sh).map(function (a) { delete a.row; return a; });
 }
 /** Web app: thêm / sửa tài khoản. list = [{user, pin?, full, name, cls, active, hs}] — tìm theo tên đăng nhập, không có thì thêm dòng. */
 function saveAccounts(list) {
@@ -428,7 +454,7 @@ function saveAccounts(list) {
       const pin = String(x.pin || '').replace(/\D/g, '');
       const a = cur[user];
       const row = [user, pin.length === 4 ? pin : (a ? a.pin : ''), String(x.full || '').slice(0, 80), String(x.name || '').slice(0, 40),
-        String(x.cls || '').slice(0, 30), a ? a.avatar : '', x.active !== false, String(x.hs || '').slice(0, 80)];
+        String(x.cls || '').slice(0, 30), a ? a.avatar : '', x.active !== false, String(x.hs || '').slice(0, 80), a && a.created ? a.created : new Date()];
       if (row[1].length !== 4) throw new Error('Thiếu PIN 4 số cho ' + user);
       if (a) { sh.getRange(a.row, 2).setNumberFormat('@'); sh.getRange(a.row, 1, 1, ACC_HEAD.length).setValues([row]); }
       else { add.push(row); cur[user] = { user: user }; }
@@ -475,7 +501,10 @@ function importSubmissions_(opts) {
       }
       let rows;
       try { rows = readSource_(id, tz); } catch (e) { msgs.push('• ' + src.label + ': không mở được file (' + e.message + ').'); return; }
-      if (src.parse === parseBtvn_) accSt = accStudents_(id, hsRows); // em đăng nhập → ghép theo tài khoản
+      if (src.parse === parseBtvn_) { // em đăng nhập → ghép theo tài khoản; chép danh sách HS để tự ghép tài khoản mới
+        try { const bf = SpreadsheetApp.openById(id); syncRoster_(bf, hsRows); if (bf.getSheetByName('TaiKhoan')) autoMatchAccounts_(bf.getSheetByName('TaiKhoan'), hsRows); } catch (e) {}
+        accSt = accStudents_(id, hsRows);
+      }
       // bản sau ghi đè bản trước (Speaking gửi nhiều đợt trong 1 tuần → 1 dòng điểm)
       rows.forEach(function (o) { const rec = src.parse(o, tz); if (rec) { rec.row.src = src.label; found[rec.ref] = rec; } });
     });
