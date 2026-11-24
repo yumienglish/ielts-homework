@@ -393,7 +393,7 @@ function siteOf_(acc) {
   if (n > 0) sh.getRange(2, 1, n, HEAD.length).getValues().forEach(r => {
     if (normUser_(r[24]) !== acc.user || !(Number(r[4]) > 0)) return; const s = of(String(r[3] || '')); if (s) cnt[s] = (cnt[s] || 0) + 1; });
   let best = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a])[0] || '';
-  if (!best) { const rows = progRows_(acc.user); best = Object.keys(rows).filter(g => Object.keys(rows[g].data).some(k => /"(r1|submitted)"/.test(rows[g].data[k])))[0] || ''; }
+  if (!best) { const rows = progRows_(acc.user); best = Object.keys(rows).filter(g => Object.keys(rows[g].data).some(k => /"r1":\{|"submitted":true/.test(rows[g].data[k])) /* đã nộp thật ("r1":null = mới mở bài) */)[0] || ''; }
   if (best) { accSheet_().getRange(acc.row, 11).setValue(best); acc.site = best; }
   return best;
 }
