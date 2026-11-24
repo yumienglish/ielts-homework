@@ -19,7 +19,7 @@ const HEAD = ['Thời gian nộp', 'Họ tên', 'Lớp', 'Bài', 'Điểm', 'T�
 const ACC_SHEET = 'TaiKhoan';
 // Em tự tạo tài khoản: Tên hiển thị = nickname (hiện trên trang + bảng xếp hạng), Tên đăng nhập = nickname bỏ dấu,
 // Họ tên + Lớp = tên thật để cô đối chiếu. "Mã HS" = Tên gọi trong web quản lý lớp (để cô biết nickname là em nào). Mọi tài khoản đang hoạt động đều lên bảng xếp hạng.
-const ACC_HEAD = ['Tên đăng nhập', 'PIN', 'Họ tên', 'Tên hiển thị', 'Lớp', 'Avatar', 'Hoạt động', 'Mã HS', 'Ngày tạo'];
+const ACC_HEAD = ['Tên đăng nhập', 'PIN', 'Họ tên', 'Tên hiển thị', 'Lớp', 'Avatar', 'Hoạt động', 'Mã HS', 'Ngày tạo', 'Nhân vật'];
 // Danh sách học sinh do web quản lý lớp chép sang (để tự ghép tài khoản lúc em đăng ký)
 const ROSTER_SHEET = 'DSHocSinh';
 const MAX_REG_PER_HOUR = 40;
@@ -55,6 +55,10 @@ function doGet(e) {
     try { return json_(homeProfile_(p.token, p.pid)); }
     catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
   }
+  if (p.action === 'progress') {
+    try { return json_(progGet_(p.token)); }
+    catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
+  }
   if (p.action === 'wallet') {
     try { const acc = verifyToken_(p.token); return json_(acc ? wallet_(acc, p.style, p.g) : { ok: false, auth: true, error: 'Please log in again' }); }
     catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
@@ -79,6 +83,7 @@ function doPost(e) {
     catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
     finally { try { lk.releaseLock(); } catch (_) {} }
   }
+  if (d && d.action === 'progress') return json_(SHOP_ACTIONS.progress(d)); // tiến độ: mỗi em 1 dòng riêng → không chờ khoá chung (không làm chậm nộp bài)
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(20000);
@@ -277,7 +282,8 @@ function accounts_() {
       user: user, pin: normPin_(r[1]), fullName: String(r[2] || '').trim(),
       name: String(r[3] || r[2] || r[0]).trim(), cls: String(r[4] || '').trim(), avatar: String(r[5] || ''),
       active: !(act === false || /^(false|không|khong|0|tắt|tat)$/i.test(String(act).trim())), row: i + 2,
-      hs: String(r[7] || '').trim().replace(/^-$/, '') // "-" = cô đã bỏ ghép → chưa lên bảng
+      hs: String(r[7] || '').trim().replace(/^-$/, ''), // "-" = cô đã bỏ ghép → chưa lên bảng
+      outfits: outfitsOf_(r[9], r[5]) // nhân vật từng bộ {teen: 'teen:{..}', ket: 'ket:{..}'}
     };
   });
   return out;
@@ -333,10 +339,10 @@ function register_(d) {
   const sh = accSheet_();
   const r = sh.getLastRow() + 1;
   sh.getRange(r, 2).setNumberFormat('@');
-  sh.getRange(r, 1, 1, ACC_HEAD.length).setValues([[user, pin, full, nick, cls, '', true, hs, new Date()]]);
+  sh.getRange(r, 1, 1, ACC_HEAD.length).setValues([[user, pin, full, nick, cls, '', true, hs, new Date(), '']]);
   cache.put(hk, String(cnt + 1), 3600);
   if (hs) cache.remove('board');
-  const acc = { user: user, pin: pin, fullName: full, name: nick, cls: cls, avatar: '', active: true, hs: hs, row: r };
+  const acc = { user: user, pin: pin, fullName: full, name: nick, cls: cls, avatar: '', outfits: {}, active: true, hs: hs, row: r };
   return { ok: true, token: makeToken_(acc), me: profile_(acc) };
 }
 function secret_() {
@@ -362,7 +368,16 @@ function verifyToken_(tok) {
 }
 /** Thông tin trả về trang: CHỈ nickname (tên thật chỉ cô thấy). approved = đã ghép với học sinh → có trên bảng. */
 function profile_(acc) {
-  return { user: acc.user, name: acc.name, cls: acc.cls, avatar: acc.avatar, approved: !!acc.hs };
+  return { user: acc.user, name: acc.name, cls: acc.cls, avatar: acc.avatar, outfits: acc.outfits || {}, approved: !!acc.hs };
+}
+/** Cột "Nhân vật" (JSON {bộ: chuỗi}) + avatar hiện tại nếu là nhân vật tủ đồ → mỗi bộ giữ nhân vật riêng. */
+function outfitsOf_(cell, avatar) {
+  let m = {}; try { m = JSON.parse(String(cell || '') || '{}') || {}; } catch (_) { m = {}; }
+  const out = {};
+  Object.keys(m).forEach(k => { if (/^[a-z0-9]+$/.test(k) && typeof m[k] === 'string' && m[k].indexOf(k + ':{') === 0) out[k] = m[k]; });
+  const cur = /^([a-z0-9]+):\{/.exec(String(avatar || ''));
+  if (cur && !out[cur[1]]) out[cur[1]] = String(avatar);
+  return out;
 }
 
 function login_(user, pin) {
@@ -495,6 +510,52 @@ function socialOf_(owner, viewer, accs) {
   return { counts: counts, mine: mine, comments: comments, own: owner === viewer };
 }
 function ownerByPid_(pid, accs) { return Object.keys(accs).filter(u => accs[u].active && pid_(u) === String(pid || ''))[0] || ''; }
+
+/* ================= TIẾN ĐỘ THEO TÀI KHOẢN =================
+ * Tab "TienDo": Tài khoản | Trang | Cập nhật | Dữ liệu… (JSON {khoá localStorage: chuỗi}, dài thì cắt sang các ô bên phải)
+ * → đổi máy / dùng chung máy vẫn giữ sao, màn đã qua, bài đang làm. Cô không cần sửa tab này.
+ */
+const PROG_SHEET = 'TienDo', PROG_CHUNK = 45000, PROG_MAXCH = 12;
+const PROG_KEYS = { ket: /^ket-/, pet: /^pet-/, b2: /^b2-/, a1: /^(a1kid-|btvn-listening-trainer-a1-)/, ielts: /^(btvn-(?!listening-trainer-a1)|ielts-)/ };
+function progSheet_() {
+  const { ss } = getSheet_();
+  let sh = ss.getSheetByName(PROG_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(PROG_SHEET);
+    sh.getRange(1, 1, 1, 4).setValues([['Tài khoản', 'Trang', 'Cập nhật', 'Dữ liệu']]).setFontWeight('bold').setBackground('#e3f6ff');
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+/** Các dòng tiến độ của 1 em: {nhóm: {row, at, data}} */
+function progRows_(user) {
+  const sh = progSheet_(), last = sh.getLastRow(), out = {};
+  if (last < 2 || !user) return out;
+  sh.getRange(2, 1, last - 1, 1).createTextFinder(user).matchEntireCell(true).findAll().forEach(c => {
+    const r = c.getRow(), v = sh.getRange(r, 1, 1, 3 + PROG_MAXCH).getValues()[0], g = String(v[1]);
+    if (!PROG_KEYS[g] || out[g] || normUser_(v[0]) !== user) return;
+    let data = {};
+    try { data = JSON.parse(v.slice(3).map(x => String(x || '').replace(/^~/, '')).join('') || '{}') || {}; } catch (_) { data = {}; }
+    out[g] = { row: r, at: v[2] instanceof Date ? v[2].getTime() : Number(v[2]) || 0, data: data };
+  });
+  return out;
+}
+function progWrite_(sh, user, g, row, data) {
+  const s = JSON.stringify(data), ch = [];
+  for (let i = 0; i < s.length; i += PROG_CHUNK) ch.push('~' + s.slice(i, i + PROG_CHUNK)); // "~" đầu ô: không bị hiểu thành số/ngày/công thức
+  if (ch.length > PROG_MAXCH) throw new Error('Progress data too big');
+  while (ch.length < PROG_MAXCH) ch.push('');
+  const now = new Date(), vals = [user, g, now].concat(ch);
+  if (row) sh.getRange(row, 1, 1, vals.length).setValues([vals]); else sh.appendRow(vals);
+  return now.getTime();
+}
+function progGet_(tok) {
+  const acc = verifyToken_(tok);
+  if (!acc) return { ok: false, auth: true, error: 'Please log in again' };
+  const rows = progRows_(acc.user), data = {}, at = {};
+  Object.keys(rows).forEach(g => { data[g] = rows[g].data; at[g] = rows[g].at; });
+  return { ok: true, data: data, at: at, me: profile_(acc) };
+}
 
 /** Mã ẩn của 1 tài khoản (không lộ tên đăng nhập): dùng để mở "nhà" của bạn trên bảng xếp hạng. */
 function pid_(user) { return sign_('pid:' + user).slice(0, 14); }
@@ -964,9 +1025,26 @@ const SHOP_ACTIONS = {
     });
     const s = style + ':' + JSON.stringify(clean);
     if (s.length > 480) return { ok: false, error: 'Too many items' };
+    const map = Object.assign({}, acc.outfits || {}); map[style] = s;
     accSheet_().getRange(acc.row, 6).setValue(s);
+    accSheet_().getRange(acc.row, 10).setValue(JSON.stringify(map)); // giữ nhân vật của các bộ khác
     CacheService.getScriptCache().remove('board');
-    return { ok: true, outfit: s };
+    return { ok: true, outfit: s, outfits: map };
+  }),
+  progress: shopWrap_(d => { // {groups: {ket: {set: {khoá: chuỗi}, del: [khoá]}}} → gộp vào dòng của em
+    const acc = needAcc_(d), gs = d.groups && typeof d.groups === 'object' ? d.groups : {};
+    {
+      const sh = progSheet_(), rows = progRows_(acc.user), at = {};
+      Object.keys(gs).forEach(g => {
+        const re = PROG_KEYS[g]; if (!re) return;
+        const ch = gs[g] || {}, cur = rows[g] ? rows[g].data : {};
+        const set = ch.set && typeof ch.set === 'object' ? ch.set : {};
+        Object.keys(set).forEach(k => { const v = set[k]; if (re.test(k) && k.length <= 100 && typeof v === 'string' && v.length <= 60000) cur[k] = v; });
+        (Array.isArray(ch.del) ? ch.del : []).forEach(k => { delete cur[String(k)]; });
+        at[g] = progWrite_(sh, acc.user, g, rows[g] && rows[g].row, cur);
+      });
+      return { ok: true, at: at };
+    }
   }),
   react: shopWrap_(d => { // thả / gỡ ❤️ 😆 😤 ở nhà bạn (không thả cho nhà mình)
     const acc = needAcc_(d), accs = accounts_(), to = ownerByPid_(d.pid, accs), type = String(d.type || '');
