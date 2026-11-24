@@ -51,6 +51,10 @@ function doGet(e) {
     try { return json_(board_(p.token)); }
     catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
   }
+  if (p.action === 'profile') {
+    try { return json_(profile_(p.token, p.pid)); }
+    catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
+  }
   if (p.action === 'wallet') {
     try { const acc = verifyToken_(p.token); return json_(acc ? wallet_(acc, p.style, p.g) : { ok: false, auth: true, error: 'Please log in again' }); }
     catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
@@ -450,11 +454,29 @@ function boardData_() {
 }
 
 /** Bảng xếp hạng cho học sinh đã đăng nhập: không lộ tên đăng nhập của bạn khác. */
+/** Mã ẩn của 1 tài khoản (không lộ tên đăng nhập): dùng để mở "nhà" của bạn trên bảng xếp hạng. */
+function pid_(user) { return sign_('pid:' + user).slice(0, 14); }
+/** "Nhà bạn": nickname, lớp, nhân vật đang mặc, hạng + XP tuần/tháng/tổng, số bài, chuỗi tuần, bộ sưu tập đồ. Không có tên thật. */
+function profile_(tok, pid) {
+  const acc = verifyToken_(tok);
+  if (!acc) return { ok: false, auth: true, error: 'Please log in again' };
+  const accs = accounts_();
+  const user = Object.keys(accs).filter(u => accs[u].active && pid_(u) === String(pid || ''))[0];
+  if (!user) return { ok: false, error: 'Player not found' };
+  const a = accs[user], data = boardData_();
+  const pick = list => { const o = list.filter(x => x.user === user)[0]; return o ? { rank: o.rank, xp: o.xp, n: o.n, of: list.length } : { rank: 0, xp: 0, n: 0, of: list.length }; };
+  const st = statsAll_()[user] || { lessons: 0, perfect: 0, streak: 0 };
+  const owned = ledger_(user).filter(r => r.item).map(r => r.item);
+  return { ok: true, me: user === acc.user, name: a.name, cls: a.cls, avatar: a.avatar,
+    week: pick(data.week), month: pick(data.month), all: pick(data.all),
+    lessons: st.lessons, perfect: st.perfect, streak: st.streak, owned: owned.filter((x, i) => owned.indexOf(x) === i) };
+}
+
 function board_(tok) {
   const acc = verifyToken_(tok);
   if (!acc) return { ok: false, auth: true, error: 'Please log in to see the leaderboard' };
   const data = boardData_();
-  const strip = arr => arr.map(o => ({ rank: o.rank, name: o.name, cls: o.cls, avatar: o.avatar, xp: o.xp, n: o.n, me: o.user === acc.user || undefined }));
+  const strip = arr => arr.map(o => ({ pid: pid_(o.user), rank: o.rank, name: o.name, cls: o.cls, avatar: o.avatar, xp: o.xp, n: o.n, me: o.user === acc.user || undefined }));
   return { ok: true, updated: data.updated, me: profile_(acc), week: strip(data.week), month: strip(data.month), all: strip(data.all) };
 }
 
