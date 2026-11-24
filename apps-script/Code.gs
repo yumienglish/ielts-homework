@@ -52,7 +52,7 @@ function doGet(e) {
     catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
   }
   if (p.action === 'profile') {
-    try { return json_(profile_(p.token, p.pid)); }
+    try { return json_(homeProfile_(p.token, p.pid)); }
     catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
   }
   if (p.action === 'wallet') {
@@ -457,7 +457,7 @@ function boardData_() {
 /** Mã ẩn của 1 tài khoản (không lộ tên đăng nhập): dùng để mở "nhà" của bạn trên bảng xếp hạng. */
 function pid_(user) { return sign_('pid:' + user).slice(0, 14); }
 /** "Nhà bạn": nickname, lớp, nhân vật đang mặc, hạng + XP tuần/tháng/tổng, số bài, chuỗi tuần, bộ sưu tập đồ. Không có tên thật. */
-function profile_(tok, pid) {
+function homeProfile_(tok, pid) { // (tên riêng: profile_(acc) là hàm của đăng nhập)
   const acc = verifyToken_(tok);
   if (!acc) return { ok: false, auth: true, error: 'Please log in again' };
   const accs = accounts_();
