@@ -327,7 +327,7 @@ function register_(d) {
   const cnt = Number(cache.get(hk) || 0);
   if (cnt >= MAX_REG_PER_HOUR) return { ok: false, error: 'Too many sign-ups right now, please try again in a few minutes' };
   const accs = accounts_();
-  if (accs[user]) return { ok: false, field: 'nick', error: 'That nickname is taken, please choose another one' };
+  if (accs[user] || Object.keys(accs).some(u => normUser_(accs[u].name) === user)) return { ok: false, field: 'nick', error: 'That nickname is taken, please choose another one' };
   let hs = rosterMatch_(full, cls);
   if (hs && Object.keys(accs).some(u => accs[u].active && accs[u].hs === hs)) hs = ''; // em đó đã có tài khoản → chờ cô xem
   const sh = accSheet_();
@@ -372,7 +372,9 @@ function login_(user, pin) {
   const key = 'fail:' + user;
   const fails = Number(cache.get(key) || 0);
   if (fails >= MAX_FAILS) return { ok: false, locked: true, error: 'Too many wrong tries. Please wait 15 minutes and try again' };
-  const acc = accounts_()[user];
+  const accsL = accounts_();
+  let acc = accsL[user];
+  if (!acc) { const u2 = Object.keys(accsL).filter(u => normUser_(accsL[u].name) === user)[0]; if (u2) acc = accsL[u2]; } // nickname mới sau khi đổi tên
   if (!acc || !acc.active || acc.pin !== pin) {
     cache.put(key, String(fails + 1), LOCK_SEC);
     return { ok: false, error: acc && acc.active ? 'Wrong PIN. Forgot it? Message your teacher' : 'Nickname not found. Check it, or tap "Sign up"' };
@@ -454,6 +456,46 @@ function boardData_() {
 }
 
 /** Bảng xếp hạng cho học sinh đã đăng nhập: không lộ tên đăng nhập của bạn khác. */
+/* ================= NHÀ BẠN: thả cảm xúc, sổ lưu bút, đổi nickname =================
+ * Tab "NhaBan": Thời gian | Từ | Đến | Loại (like/haha/cay/comment) | Nội dung | Ẩn (cô gõ 1 để ẩn bình luận)
+ */
+const SOCIAL_SHEET = 'NhaBan';
+const SOCIAL_HEAD = ['Thời gian', 'Từ', 'Đến', 'Loại', 'Nội dung', 'Ẩn'];
+const REACTS = ['like', 'haha', 'cay'], COMMENT_MAX = 120, COMMENTS_PER_DAY = 10, RENAME_PRICE = 300;
+// từ tục / chửi (so trên chữ thường; từ tiếng Việt có dấu so nguyên dạng, viết tắt so theo từ đứng riêng)
+const BAD_WORDS = ['địt', 'đụ', 'đéo', 'lồn', 'cặc', 'buồi', 'đĩ', 'chó đẻ', 'óc chó', 'ngu như', 'thằng ngu', 'con ngu', 'mất dạy', 'đồ ngu', 'fuck', 'shit', 'bitch', 'dick', 'pussy', 'bastard', 'idiot', 'stupid', 'loser'];
+const BAD_ABBR = ['dm', 'dmm', 'dcm', 'dkm', 'vcl', 'vkl', 'vl', 'clm', 'wtf', 'stfu', 'fk']; // viết tắt rõ nghĩa, đứng riêng
+const BAD_PLAIN = ['lon', 'cac', 'ngu', 'deo', 'dit', 'dis', 'cl', 'cc']; // chỉ khi em gõ ĐÚNG chữ không dấu này (lớn/các/ngủ/đeo… không bị chặn)
+function isRude_(text) {
+  const low = String(text || '').toLowerCase();
+  if (BAD_WORDS.some(w => low.indexOf(w) >= 0)) return true;
+  const raw = low.split(/[^\p{L}\p{N}]+/u).filter(String); // từ gốc (giữ dấu)
+  if (raw.some(t => BAD_PLAIN.indexOf(t) >= 0)) return true;
+  const plain = low.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').split(/[^a-z0-9]+/);
+  return plain.some(t => BAD_ABBR.indexOf(t) >= 0);
+}
+function socialSheet_() {
+  const { ss } = getSheet_();
+  let sh = ss.getSheetByName(SOCIAL_SHEET);
+  if (!sh) { sh = ss.insertSheet(SOCIAL_SHEET); sh.getRange(1, 1, 1, SOCIAL_HEAD.length).setValues([SOCIAL_HEAD]).setFontWeight('bold').setBackground('#ffe3ec'); sh.setFrozenRows(1); }
+  return sh;
+}
+function socialRows_() {
+  const sh = socialSheet_(); const n = sh.getLastRow() - 1; if (n < 1) return [];
+  return sh.getRange(2, 1, n, SOCIAL_HEAD.length).getValues().map((r, i) => ({ row: i + 2, at: r[0] instanceof Date ? r[0] : new Date(r[0]), from: normUser_(r[1]), to: normUser_(r[2]), type: String(r[3]), text: String(r[4] || ''), hidden: !!String(r[5] || '').trim() && String(r[5]).trim() !== '0' }));
+}
+/** Cảm xúc (đếm + mình đã thả chưa) và 30 bình luận mới nhất của 1 nhà. */
+function socialOf_(owner, viewer, accs) {
+  const rows = socialRows_().filter(r => r.to === owner && !r.hidden);
+  const counts = {}, mine = {};
+  REACTS.forEach(t => { const rs = rows.filter(r => r.type === t); counts[t] = rs.length; mine[t] = rs.some(r => r.from === viewer); });
+  const comments = rows.filter(r => r.type === 'comment').slice(-30).reverse().map(r => ({
+    cid: r.row, name: (accs[r.from] || {}).name || '?', pid: pid_(r.from), text: r.text,
+    at: isNaN(r.at) ? '' : Utilities.formatDate(r.at, TIMEZONE, "yyyy-MM-dd'T'HH:mm"), mine: r.from === viewer, canDel: r.from === viewer || owner === viewer }));
+  return { counts: counts, mine: mine, comments: comments, own: owner === viewer };
+}
+function ownerByPid_(pid, accs) { return Object.keys(accs).filter(u => accs[u].active && pid_(u) === String(pid || ''))[0] || ''; }
+
 /** Mã ẩn của 1 tài khoản (không lộ tên đăng nhập): dùng để mở "nhà" của bạn trên bảng xếp hạng. */
 function pid_(user) { return sign_('pid:' + user).slice(0, 14); }
 /** "Nhà bạn": nickname, lớp, nhân vật đang mặc, hạng + XP tuần/tháng/tổng, số bài, chuỗi tuần, bộ sưu tập đồ. Không có tên thật. */
@@ -469,7 +511,8 @@ function homeProfile_(tok, pid) { // (tên riêng: profile_(acc) là hàm của 
   const owned = ledger_(user).filter(r => r.item).map(r => r.item);
   return { ok: true, me: user === acc.user, name: a.name, cls: a.cls, avatar: a.avatar,
     week: pick(data.week), month: pick(data.month), all: pick(data.all),
-    lessons: st.lessons, perfect: st.perfect, streak: st.streak, owned: owned.filter((x, i) => owned.indexOf(x) === i) };
+    lessons: st.lessons, perfect: st.perfect, streak: st.streak, owned: owned.filter((x, i) => owned.indexOf(x) === i),
+    social: socialOf_(user, acc.user, accs), renamePrice: RENAME_PRICE, coins: user === acc.user ? walletState_(acc).coins : undefined };
 }
 
 function board_(tok) {
@@ -924,6 +967,48 @@ const SHOP_ACTIONS = {
     accSheet_().getRange(acc.row, 6).setValue(s);
     CacheService.getScriptCache().remove('board');
     return { ok: true, outfit: s };
+  }),
+  react: shopWrap_(d => { // thả / gỡ ❤️ 😆 😤 ở nhà bạn (không thả cho nhà mình)
+    const acc = needAcc_(d), accs = accounts_(), to = ownerByPid_(d.pid, accs), type = String(d.type || '');
+    if (!to) return { ok: false, error: 'Player not found' };
+    if (REACTS.indexOf(type) < 0) return { ok: false, error: 'Unknown reaction' };
+    if (to === acc.user) return { ok: false, error: 'You can’t react to your own home 😉' };
+    const sh = socialSheet_(), mineRow = socialRows_().filter(r => r.from === acc.user && r.to === to && r.type === type && !r.hidden)[0];
+    if (mineRow) sh.getRange(mineRow.row, 6).setValue('gỡ'); else sh.appendRow([new Date(), acc.user, to, type, '', '']);
+    return { ok: true, social: socialOf_(to, acc.user, accs) };
+  }),
+  comment: shopWrap_(d => { // sổ lưu bút: ≤120 ký tự, ≤10 bình luận/ngày, chặn từ tục
+    const acc = needAcc_(d), accs = accounts_(), to = ownerByPid_(d.pid, accs);
+    const text = String(d.text || '').replace(/\s+/g, ' ').trim().slice(0, COMMENT_MAX);
+    if (!to) return { ok: false, error: 'Player not found' };
+    if (!text) return { ok: false, error: 'Write something first ✏️' };
+    if (isRude_(text)) return { ok: false, error: 'Please be kind 💛 That message has a rude word.' };
+    const today = Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd');
+    const n = socialRows_().filter(r => r.from === acc.user && r.type === 'comment' && !isNaN(r.at) && Utilities.formatDate(r.at, TIMEZONE, 'yyyy-MM-dd') === today).length;
+    if (n >= COMMENTS_PER_DAY) return { ok: false, error: 'You’ve written ' + COMMENTS_PER_DAY + ' messages today. Come back tomorrow! 🌙' };
+    socialSheet_().appendRow([new Date(), acc.user, to, 'comment', text, '']);
+    return { ok: true, social: socialOf_(to, acc.user, accs) };
+  }),
+  delcomment: shopWrap_(d => { // chủ nhà hoặc người viết xoá bình luận
+    const acc = needAcc_(d), accs = accounts_(), r = socialRows_().filter(x => x.row === Number(d.cid) && x.type === 'comment')[0];
+    if (!r || r.hidden) return { ok: false, error: 'Message not found' };
+    if (r.from !== acc.user && r.to !== acc.user) return { ok: false, error: 'You can’t delete this message' };
+    socialSheet_().getRange(r.row, 6).setValue('xoá');
+    return { ok: true, social: socialOf_(r.to, acc.user, accs) };
+  }),
+  rename: shopWrap_(d => { // đổi nickname: 300 xu, không trùng ai; đăng nhập được bằng tên cũ hoặc mới
+    const acc = needAcc_(d), accs = accounts_();
+    const nick = String(d.nick || '').replace(/\s+/g, ' ').trim(), key = normUser_(nick);
+    if (nick.length < 3 || nick.length > 20 || !/^[\p{L}\p{N} ._-]+$/u.test(nick) || key.length < 3) return { ok: false, error: 'Nickname: 3–20 characters, letters, numbers and spaces only' };
+    if (isRude_(nick)) return { ok: false, error: 'Please choose a kind nickname 💛' };
+    if (nick === acc.name) return { ok: false, error: 'That’s already your nickname' };
+    if (Object.keys(accs).some(u => u !== acc.user && (u === key || normUser_(accs[u].name) === key))) return { ok: false, error: 'That nickname is taken, please choose another one' };
+    const w = walletState_(acc);
+    if (w.coins < RENAME_PRICE) return { ok: false, error: 'You need ' + RENAME_PRICE + ' coins to change your nickname' };
+    addLedger_(acc.user, 'đổi tên', -RENAME_PRICE, '', acc.name + ' → ' + nick);
+    accSheet_().getRange(acc.row, 4).setValue(nick);
+    CacheService.getScriptCache().remove('board');
+    return { ok: true, name: nick, coins: w.coins - RENAME_PRICE, me: profile_(Object.assign({}, acc, { name: nick })) };
   }),
   tut: shopWrap_(d => { // xong hướng dẫn tân thủ → +50 xu, chỉ 1 lần (máy chủ nhớ, đổi máy không phải xem lại)
     const acc = needAcc_(d), w = walletState_(acc);
