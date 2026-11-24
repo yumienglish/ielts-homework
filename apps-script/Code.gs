@@ -19,7 +19,10 @@ const HEAD = ['Thời gian nộp', 'Họ tên', 'Lớp', 'Bài', 'Điểm', 'T�
 const ACC_SHEET = 'TaiKhoan';
 // Em tự tạo tài khoản: Tên hiển thị = nickname (hiện trên trang + bảng xếp hạng), Tên đăng nhập = nickname bỏ dấu,
 // Họ tên + Lớp = tên thật để cô đối chiếu. "Mã HS" = Tên gọi trong web quản lý lớp (để cô biết nickname là em nào). Mọi tài khoản đang hoạt động đều lên bảng xếp hạng.
-const ACC_HEAD = ['Tên đăng nhập', 'PIN', 'Họ tên', 'Tên hiển thị', 'Lớp', 'Avatar', 'Hoạt động', 'Mã HS', 'Ngày tạo', 'Nhân vật'];
+const ACC_HEAD = ['Tên đăng nhập', 'PIN', 'Họ tên', 'Tên hiển thị', 'Lớp', 'Avatar', 'Hoạt động', 'Mã HS', 'Ngày tạo', 'Nhân vật', 'Trang'];
+// Mỗi tài khoản chỉ dùng 1 link bài tập (cột "Trang": ket / pet / b2 / a1 / ielts; "*" = mọi link). Tester vào được mọi link.
+const SITES = { ket: 'KET Adventure', pet: 'PET Arena', b2: 'B2 First', a1: 'A1 KID', ielts: 'IELTS homework' };
+const TESTERS = ['thedukeofgamers'];
 // Danh sách học sinh do web quản lý lớp chép sang (để tự ghép tài khoản lúc em đăng ký)
 const ROSTER_SHEET = 'DSHocSinh';
 const MAX_REG_PER_HOUR = 40;
@@ -74,7 +77,7 @@ function doPost(e) {
     catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
   }
   if (d && d.action === 'login') {
-    try { return json_(login_(d.user, d.pin)); }
+    try { return json_(login_(d.user, d.pin, d.site)); }
     catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
   }
   if (d && d.action === 'register') {
@@ -283,7 +286,8 @@ function accounts_() {
       name: String(r[3] || r[2] || r[0]).trim(), cls: String(r[4] || '').trim(), avatar: String(r[5] || ''),
       active: !(act === false || /^(false|không|khong|0|tắt|tat)$/i.test(String(act).trim())), row: i + 2,
       hs: String(r[7] || '').trim().replace(/^-$/, ''), // "-" = cô đã bỏ ghép → chưa lên bảng
-      outfits: outfitsOf_(r[9], r[5]) // nhân vật từng bộ {teen: 'teen:{..}', ket: 'ket:{..}'}
+      outfits: outfitsOf_(r[9], r[5]), // nhân vật từng bộ {teen: 'teen:{..}', ket: 'ket:{..}'}
+      site: TESTERS.indexOf(user) >= 0 ? '*' : (String(r[10] || '').trim().toLowerCase() === '*' || SITES[String(r[10] || '').trim().toLowerCase()] ? String(r[10]).trim().toLowerCase() : '')
     };
   });
   return out;
@@ -339,10 +343,11 @@ function register_(d) {
   const sh = accSheet_();
   const r = sh.getLastRow() + 1;
   sh.getRange(r, 2).setNumberFormat('@');
-  sh.getRange(r, 1, 1, ACC_HEAD.length).setValues([[user, pin, full, nick, cls, '', true, hs, new Date(), '']]);
+  const site = SITES[String(d.site || '')] ? String(d.site) : '';
+  sh.getRange(r, 1, 1, ACC_HEAD.length).setValues([[user, pin, full, nick, cls, '', true, hs, new Date(), '', site]]);
   cache.put(hk, String(cnt + 1), 3600);
   if (hs) cache.remove('board');
-  const acc = { user: user, pin: pin, fullName: full, name: nick, cls: cls, avatar: '', outfits: {}, active: true, hs: hs, row: r };
+  const acc = { user: user, pin: pin, fullName: full, name: nick, cls: cls, avatar: '', outfits: {}, active: true, hs: hs, row: r, site: site };
   return { ok: true, token: makeToken_(acc), me: profile_(acc) };
 }
 function secret_() {
@@ -368,7 +373,7 @@ function verifyToken_(tok) {
 }
 /** Thông tin trả về trang: CHỈ nickname (tên thật chỉ cô thấy). approved = đã ghép với học sinh → có trên bảng. */
 function profile_(acc) {
-  return { user: acc.user, name: acc.name, cls: acc.cls, avatar: acc.avatar, outfits: acc.outfits || {}, approved: !!acc.hs };
+  return { user: acc.user, name: acc.name, cls: acc.cls, avatar: acc.avatar, outfits: acc.outfits || {}, site: acc.site || '', approved: !!acc.hs };
 }
 /** Cột "Nhân vật" (JSON {bộ: chuỗi}) + avatar hiện tại nếu là nhân vật tủ đồ → mỗi bộ giữ nhân vật riêng. */
 function outfitsOf_(cell, avatar) {
@@ -380,7 +385,22 @@ function outfitsOf_(cell, avatar) {
   return out;
 }
 
-function login_(user, pin) {
+/** Link của tài khoản: cột "Trang"; chưa có thì đoán từ bài đã nộp (nhiều nhất) rồi tiến độ đã lưu, đoán được thì ghi lại. */
+function siteOf_(acc) {
+  if (!acc || acc.site) return acc ? acc.site : '';
+  const of = t => /^KET /.test(t) ? 'ket' : /^PET /.test(t) ? 'pet' : /^B2 First (Grammar|Vocabulary|Side)/.test(t) ? 'b2' : /^Listening Trainer A1/.test(t) ? 'a1' : /^B2 /.test(t) ? '' : t ? 'ielts' : '';
+  const cnt = {}, { sh } = getSheet_(), n = sh.getLastRow() - 1;
+  if (n > 0) sh.getRange(2, 1, n, HEAD.length).getValues().forEach(r => {
+    if (normUser_(r[24]) !== acc.user || !(Number(r[4]) > 0)) return; const s = of(String(r[3] || '')); if (s) cnt[s] = (cnt[s] || 0) + 1; });
+  let best = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a])[0] || '';
+  if (!best) { const rows = progRows_(acc.user); best = Object.keys(rows).filter(g => Object.keys(rows[g].data).some(k => /"(r1|submitted)"/.test(rows[g].data[k])))[0] || ''; }
+  if (best) { accSheet_().getRange(acc.row, 11).setValue(best); acc.site = best; }
+  return best;
+}
+function bindSite_(acc, site) { if (SITES[site] && !acc.site) { accSheet_().getRange(acc.row, 11).setValue(site); acc.site = site; } }
+function wrongSite_(acc, site) { const s = acc.site; return !!(site && SITES[site] && s && s !== '*' && s !== site); }
+
+function login_(user, pin, site) {
   user = normUser_(user); pin = normPin_(pin);
   if (!user || pin.length !== 4) return { ok: false, error: 'Please enter your nickname and 4-digit PIN' };
   const cache = CacheService.getScriptCache();
@@ -395,6 +415,10 @@ function login_(user, pin) {
     return { ok: false, error: acc && acc.active ? 'Wrong PIN. Forgot it? Message your teacher' : 'Nickname not found. Check it, or tap "Sign up"' };
   }
   cache.remove(key);
+  site = String(site || '');
+  siteOf_(acc);
+  if (wrongSite_(acc, site)) return { ok: false, field: 'site', site: acc.site, error: 'This account is for ' + SITES[acc.site] + '. Please log in with your own account 🙂' };
+  bindSite_(acc, site); // lần đầu đăng nhập: gắn tài khoản với link này
   return { ok: true, token: makeToken_(acc), me: profile_(acc) };
 }
 
@@ -552,8 +576,9 @@ function progWrite_(sh, user, g, row, data) {
 function progGet_(tok) {
   const acc = verifyToken_(tok);
   if (!acc) return { ok: false, auth: true, error: 'Please log in again' };
+  siteOf_(acc);
   const rows = progRows_(acc.user), data = {}, at = {};
-  Object.keys(rows).forEach(g => { data[g] = rows[g].data; at[g] = rows[g].at; });
+  Object.keys(rows).forEach(g => { if (acc.site === '*' || acc.site === g) { data[g] = rows[g].data; at[g] = rows[g].at; } });
   return { ok: true, data: data, at: at, me: profile_(acc) };
 }
 
@@ -1033,10 +1058,12 @@ const SHOP_ACTIONS = {
   }),
   progress: shopWrap_(d => { // {groups: {ket: {set: {khoá: chuỗi}, del: [khoá]}}} → gộp vào dòng của em
     const acc = needAcc_(d), gs = d.groups && typeof d.groups === 'object' ? d.groups : {};
+    siteOf_(acc); // chưa rõ link thì không ghi (em đăng nhập lại ở đúng link sẽ được gắn)
     {
       const sh = progSheet_(), rows = progRows_(acc.user), at = {};
       Object.keys(gs).forEach(g => {
         const re = PROG_KEYS[g]; if (!re) return;
+        if (acc.site !== '*' && acc.site !== g) return; // tài khoản của link khác → bỏ qua
         const ch = gs[g] || {}, cur = rows[g] ? rows[g].data : {};
         const set = ch.set && typeof ch.set === 'object' ? ch.set : {};
         Object.keys(set).forEach(k => { const v = set[k]; if (re.test(k) && k.length <= 100 && typeof v === 'string' && v.length <= 60000) cur[k] = v; });
