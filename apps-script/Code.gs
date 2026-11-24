@@ -625,66 +625,82 @@ const WALLET_SHEET = 'Vi';
 const WALLET_HEAD = ['Thời gian', 'Tài khoản', 'Loại', 'Xu (+/−)', 'Món', 'Ghi chú'];
 const CHEST_PRICE = 600, GAME_COINS = 5, GAME_PER_DAY = 3, SHOP_SLOTS = 8;
 const AV_CATALOG = { teen: {
-  'bm': ['body', 0, 'free', 'm', '', 0],
-  'bf': ['body', 0, 'free', 'f', '', 0],
-  'body': ['body', 0, 'free', '', '', 1],
-  'mh1': ['hair', 0, 'free', 'm', '', 0],
-  'mh2': ['hair', 0, 'free', 'm', '', 0],
-  'mh3': ['hair', 180, 'shop', 'm', '', 0],
-  'mh4': ['hair', 200, 'shop', 'm', '2026-11-23', 0],
-  'mt1': ['top', 0, 'free', 'm', '', 0],
-  'mt2': ['top', 260, 'shop', 'm', '', 0],
-  'mt3': ['top', 220, 'shop', 'm', '2026-11-23', 0],
-  'mb1': ['bottom', 0, 'free', 'm', '', 0],
-  'mb2': ['bottom', 200, 'shop', 'm', '', 0],
-  'ms1': ['shoes', 0, 'free', 'm', '', 0],
-  'ms2': ['shoes', 240, 'shop', 'm', '', 0],
-  'mset1': ['set', 450, 'shop', 'm', '', 0],
-  'mhat1': ['hat', 160, 'shop', 'm', '2026-11-30', 0],
-  'mset2': ['set', 0, 'chest', 'm', '', 0],
-  'fh1': ['hair', 0, 'free', 'f', '', 0],
-  'fh2': ['hair', 0, 'free', 'f', '', 0],
-  'fh3': ['hair', 200, 'shop', 'f', '', 0],
-  'ft1': ['top', 0, 'free', 'f', '', 0],
-  'ft2': ['top', 260, 'shop', 'f', '', 0],
-  'fb1': ['bottom', 0, 'free', 'f', '', 0],
-  'fd1': ['dress', 320, 'shop', 'f', '', 0],
-  'fset1': ['set', 450, 'shop', 'f', '', 0],
-  'fs1': ['shoes', 0, 'free', 'f', '', 0],
-  'fs2': ['shoes', 240, 'shop', 'f', '2026-11-30', 0],
-  'fhat1': ['hat', 160, 'shop', 'f', '2026-11-23', 0],
-  'fbag1': ['bag', 180, 'shop', 'f', '2026-11-23', 0],
-  'fhat2': ['hat', 0, 'chest', 'f', '', 0],
-  'fset2': ['set', 0, 'chest', 'f', '', 0],
-  'f1': ['face', 0, 'free', '', '', 0],
-  'f2': ['face', 0, 'free', '', '', 0],
-  'f3': ['face', 150, 'shop', '', '', 0],
-  'h1': ['hair', 0, 'free', '', '', 1],
-  'h2': ['hair', 0, 'free', '', '', 1],
-  'h3': ['hair', 0, 'free', '', '', 1],
-  'h4': ['hair', 180, 'shop', '', '', 1],
-  'h5': ['hair', 200, 'shop', '', '', 1],
-  't1': ['top', 0, 'free', '', '', 1],
-  't2': ['top', 260, 'shop', '', '', 1],
-  't3': ['top', 220, 'shop', '', '', 1],
-  'b1': ['bottom', 0, 'free', '', '', 1],
-  'b2': ['bottom', 200, 'shop', '', '', 1],
-  'd1': ['dress', 320, 'shop', '', '', 1],
-  'st1': ['set', 450, 'shop', '', '', 1],
-  's1': ['shoes', 0, 'free', '', '', 1],
-  's2': ['shoes', 240, 'shop', '', '', 1],
-  'c1': ['hat', 160, 'shop', '', '', 1],
-  'g1': ['glasses', 140, 'shop', '', '', 0],
-  'bg1': ['bag', 180, 'shop', '', '', 1],
-  'hd1': ['hand', 120, 'shop', '', '', 0],
-  'p1': ['pet', 380, 'shop', '', '', 0],
-  'pa1': ['petacc', 150, 'shop', '', '', 0],
-  'w1': ['wings', 0, 'chest', '', '', 0],
-  'st2': ['set', 0, 'chest', '', '', 1],
-  'c2': ['hat', 0, 'chest', '', '', 1],
-  'p2': ['pet', 0, 'chest', '', '', 0],
-  'hd2': ['hand', 0, 'chest', '', '', 0],
-  'pa2': ['petacc', 0, 'chest', '', '', 0]
+  'bm': ['body', 0, 'free', 'm', '', 0, '', ''],
+  'bf': ['body', 0, 'free', 'f', '', 0, '', ''],
+  'body': ['body', 0, 'free', '', '', 1, '', ''],
+  'mh1': ['hair', 0, 'free', 'm', '', 0, '', ''],
+  'mh2': ['hair', 0, 'free', 'm', '', 0, '', ''],
+  'mh3': ['hair', 180, 'shop', 'm', '', 0, '', ''],
+  'mh4': ['hair', 200, 'shop', 'm', '2026-11-23', 0, '', ''],
+  'mt1': ['top', 0, 'free', 'm', '', 0, '', ''],
+  'mt2': ['top', 260, 'shop', 'm', '', 0, '', ''],
+  'mt3': ['top', 220, 'shop', 'm', '2026-11-23', 0, '', ''],
+  'mb1': ['bottom', 0, 'free', 'm', '', 0, '', ''],
+  'mb2': ['bottom', 200, 'shop', 'm', '', 0, '', ''],
+  'ms1': ['shoes', 0, 'free', 'm', '', 0, '', ''],
+  'ms2': ['shoes', 240, 'shop', 'm', '', 0, '', ''],
+  'mset1': ['set', 450, 'shop', 'm', '', 0, '', ''],
+  'mhat1': ['hat', 160, 'shop', 'm', '2026-11-30', 0, '', ''],
+  'mset2': ['set', 0, 'chest', 'm', '', 0, '', ''],
+  'fh1': ['hair', 0, 'free', 'f', '', 0, '', ''],
+  'fh2': ['hair', 0, 'free', 'f', '', 0, '', ''],
+  'fh3': ['hair', 200, 'shop', 'f', '', 0, '', ''],
+  'ft1': ['top', 0, 'free', 'f', '', 0, '', ''],
+  'ft2': ['top', 260, 'shop', 'f', '', 0, '', ''],
+  'fb1': ['bottom', 0, 'free', 'f', '', 0, '', ''],
+  'fd1': ['dress', 320, 'shop', 'f', '', 0, '', ''],
+  'fset1': ['set', 450, 'shop', 'f', '', 0, '', ''],
+  'fs1': ['shoes', 0, 'free', 'f', '', 0, '', ''],
+  'fs2': ['shoes', 240, 'shop', 'f', '2026-11-30', 0, '', ''],
+  'fhat1': ['hat', 160, 'shop', 'f', '2026-11-23', 0, '', ''],
+  'fbag1': ['bag', 180, 'shop', 'f', '2026-11-23', 0, '', ''],
+  'fhat2': ['hat', 0, 'chest', 'f', '', 0, '', ''],
+  'fset2': ['set', 0, 'chest', 'f', '', 0, '', ''],
+  'xmh': ['hat', 150, 'shop', 'm', '2026-12-01', 0, '2026-12-31', 'xmas'],
+  'xmt': ['top', 220, 'shop', 'm', '2026-12-01', 0, '2026-12-31', 'xmas'],
+  'xmb': ['bottom', 200, 'shop', 'm', '2026-12-01', 0, '2026-12-31', 'xmas'],
+  'xms': ['shoes', 200, 'shop', 'm', '2026-12-01', 0, '2026-12-31', 'xmas'],
+  'xmset': ['set', 0, 'chest', 'm', '2026-12-01', 0, '2026-12-31', 'xmas'],
+  'xfh': ['hat', 150, 'shop', 'f', '2026-12-01', 0, '2026-12-31', 'xmas'],
+  'xft': ['top', 220, 'shop', 'f', '2026-12-01', 0, '2026-12-31', 'xmas'],
+  'xfb': ['bottom', 200, 'shop', 'f', '2026-12-01', 0, '2026-12-31', 'xmas'],
+  'xfs': ['shoes', 200, 'shop', 'f', '2026-12-01', 0, '2026-12-31', 'xmas'],
+  'xfset': ['set', 0, 'chest', 'f', '2026-12-01', 0, '2026-12-31', 'xmas'],
+  'xp1': ['pet', 300, 'shop', '', '2026-12-01', 0, '2026-12-31', 'xmas'],
+  'xp2': ['pet', 0, 'chest', '', '2026-12-01', 0, '2026-12-31', 'xmas'],
+  'xw': ['wings', 0, 'chest', '', '2026-12-01', 0, '2026-12-31', 'xmas'],
+  'xh1': ['hand', 100, 'shop', '', '2026-12-01', 0, '2026-12-31', 'xmas'],
+  'xh2': ['hand', 120, 'shop', '', '2026-12-01', 0, '2026-12-31', 'xmas'],
+  'xpa': ['petacc', 120, 'shop', '', '2026-12-01', 0, '2026-12-31', 'xmas'],
+  'f1': ['face', 0, 'free', '', '', 0, '', ''],
+  'f2': ['face', 0, 'free', '', '', 0, '', ''],
+  'f3': ['face', 150, 'shop', '', '', 0, '', ''],
+  'h1': ['hair', 0, 'free', '', '', 1, '', ''],
+  'h2': ['hair', 0, 'free', '', '', 1, '', ''],
+  'h3': ['hair', 0, 'free', '', '', 1, '', ''],
+  'h4': ['hair', 180, 'shop', '', '', 1, '', ''],
+  'h5': ['hair', 200, 'shop', '', '', 1, '', ''],
+  't1': ['top', 0, 'free', '', '', 1, '', ''],
+  't2': ['top', 260, 'shop', '', '', 1, '', ''],
+  't3': ['top', 220, 'shop', '', '', 1, '', ''],
+  'b1': ['bottom', 0, 'free', '', '', 1, '', ''],
+  'b2': ['bottom', 200, 'shop', '', '', 1, '', ''],
+  'd1': ['dress', 320, 'shop', '', '', 1, '', ''],
+  'st1': ['set', 450, 'shop', '', '', 1, '', ''],
+  's1': ['shoes', 0, 'free', '', '', 1, '', ''],
+  's2': ['shoes', 240, 'shop', '', '', 1, '', ''],
+  'c1': ['hat', 160, 'shop', '', '', 1, '', ''],
+  'g1': ['glasses', 140, 'shop', '', '', 0, '', ''],
+  'bg1': ['bag', 180, 'shop', '', '', 1, '', ''],
+  'hd1': ['hand', 120, 'shop', '', '', 0, '', ''],
+  'p1': ['pet', 380, 'shop', '', '', 0, '', ''],
+  'pa1': ['petacc', 150, 'shop', '', '', 0, '', ''],
+  'w1': ['wings', 0, 'chest', '', '', 0, '', ''],
+  'st2': ['set', 0, 'chest', '', '', 1, '', ''],
+  'c2': ['hat', 0, 'chest', '', '', 1, '', ''],
+  'p2': ['pet', 0, 'chest', '', '', 0, '', ''],
+  'hd2': ['hand', 0, 'chest', '', '', 0, '', ''],
+  'pa2': ['petacc', 0, 'chest', '', '', 0, '', '']
 } };
 const AV_SLOTS = ['body', 'hair', 'face', 'top', 'bottom', 'dress', 'set', 'shoes', 'wings', 'hat', 'glasses', 'bag', 'hand', 'pet', 'petacc'];
 
@@ -758,7 +774,13 @@ function addLedger_(user, type, coins, item, note) {
 }
 /* AV_CATALOG: id → [ô, giá, nguồn free|shop|chest, giới 'm'|'f'|'' (dùng chung), ngày mở bán 'yyyy-MM-dd' (trống = có ngay), ẩn 1/0] */
 const itG_ = it => it[3] || '';
-const itOn_ = it => !it[5] && (!it[4] || it[4] <= Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd')); // đã mở bán + không ẩn
+// [6] = ngày kết thúc bán (sự kiện), [7] = mã sự kiện
+const itOn_ = it => { const t = Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd');
+  return !it[5] && (!it[4] || it[4] <= t) && (!it[6] || it[6] >= t); }; // đã mở bán, chưa hết hạn, không ẩn
+// Sự kiện: đồ giới hạn thời gian (mã ở cột [7] của AV_CATALOG). Hết hạn → ngừng bán + ra khỏi rương, đồ đã có vẫn giữ.
+const AV_EVENTS = [{ id: 'xmas', name: 'Christmas Event', start: '2026-12-01', end: '2026-12-31' }];
+const TUT_COINS = 50; // hoàn thành hướng dẫn tân thủ (1 lần)
+function eventNow_() { const t = Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd'); return AV_EVENTS.filter(e => e.start <= t && e.end >= t)[0] || null; }
 const fitG_ = (it, g) => !itG_(it) || !g || itG_(it) === g; // hợp giới tính nhân vật
 /** Shop cố định: mọi món "shop" đã tới ngày mở bán (hàng mới về mỗi thứ Hai), lọc theo giới tính. fresh = mở bán tuần này. */
 function shopOf_(style, g) {
@@ -784,14 +806,15 @@ function walletState_(acc) {
   return {
     coins: st.coins + extra, hwCoins: st.coins, streak: st.streak, mult: streakMult_(st.streak),
     lessons: st.lessons, perfect: st.perfect, owned: owned, freeChests: Math.max(0, chestsEarned - chestsUsed),
-    gamesToday: led.filter(r => r.type === 'mini game' && Utilities.formatDate(r.at, TIMEZONE, 'yyyy-MM-dd') === today).length
+    gamesToday: led.filter(r => r.type === 'mini game' && Utilities.formatDate(r.at, TIMEZONE, 'yyyy-MM-dd') === today).length,
+    tut: led.some(r => r.type === 'tân thủ')
   };
 }
 function wallet_(acc, style, g) {
   style = AV_CATALOG[style] ? style : 'teen';
   const sh = shopOf_(style, genderOf_(acc, style, g));
   return Object.assign({ ok: true, style: style, outfit: acc.avatar, shop: sh.items, fresh: sh.fresh, shopWeek: sh.week, chestPrice: CHEST_PRICE,
-    gamesMax: GAME_PER_DAY, gameCoins: GAME_COINS }, walletState_(acc));
+    gamesMax: GAME_PER_DAY, gameCoins: GAME_COINS, event: eventNow_(), tutCoins: TUT_COINS }, walletState_(acc));
 }
 function needAcc_(d) { const acc = verifyToken_(d.token); if (!acc) throw new Error('AUTH'); return acc; }
 const shopWrap_ = fn => d => {
@@ -802,7 +825,7 @@ const SHOP_ACTIONS = {
   buy: shopWrap_(d => {
     const acc = needAcc_(d), style = String(d.style || 'teen'), cat = AV_CATALOG[style] || {}, id = String(d.item || '');
     const it = cat[id]; if (!it || it[2] !== 'shop') return { ok: false, error: 'This item isn’t sold in the shop' };
-    if (!itOn_(it)) return { ok: false, error: 'This item isn’t in the shop yet. New items arrive every Monday!' };
+    if (!itOn_(it)) return { ok: false, error: it[6] && it[6] < Utilities.formatDate(new Date(), TIMEZONE, 'yyyy-MM-dd') ? 'This event is over, the item is no longer for sale' : 'This item isn’t in the shop yet. New items arrive every Monday!' };
     const w = walletState_(acc);
     if (w.owned.indexOf(id) >= 0) return { ok: false, error: 'You already have this item' };
     if (w.coins < it[1]) return { ok: false, error: 'Not enough coins yet. Do more homework to earn some! 💪' };
@@ -836,6 +859,12 @@ const SHOP_ACTIONS = {
     accSheet_().getRange(acc.row, 6).setValue(s);
     CacheService.getScriptCache().remove('board');
     return { ok: true, outfit: s };
+  }),
+  tut: shopWrap_(d => { // xong hướng dẫn tân thủ → +50 xu, chỉ 1 lần (máy chủ nhớ, đổi máy không phải xem lại)
+    const acc = needAcc_(d), w = walletState_(acc);
+    if (w.tut) return { ok: true, added: 0, coins: w.coins };
+    addLedger_(acc.user, 'tân thủ', TUT_COINS, '', 'hướng dẫn tủ đồ');
+    return { ok: true, added: TUT_COINS, coins: w.coins + TUT_COINS };
   }),
   game: shopWrap_(d => {
     const acc = needAcc_(d);
