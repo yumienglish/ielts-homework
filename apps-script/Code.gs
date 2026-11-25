@@ -14,7 +14,7 @@ const TIMEZONE = 'Asia/Ho_Chi_Minh';
 // Cột mới luôn thêm ở CUỐI để các dòng cũ không bị lệch
 const HEAD = ['Thời gian nộp', 'Họ tên', 'Lớp', 'Bài', 'Điểm', 'Tổng', 'Phần 1', 'Phần 2', 'Phần 3', 'Phần 4', 'Phần 5', 'Câu sai', 'Chi tiết (JSON)',
               'Bắt đầu lúc', 'Thời gian làm bài', 'Số lần rời trang', 'Phần 6', 'Ghi âm',
-              'Mã lần nộp', 'Điểm lần 2', 'Câu sai lần 2', 'Nộp lần 2 lúc', 'Thời gian làm lần 2', 'Rời trang lần 2', 'Tài khoản'];
+              'Mã lần nộp', 'Điểm lần 2', 'Câu sai lần 2', 'Nộp lần 2 lúc', 'Thời gian làm lần 2', 'Rời trang lần 2', 'Tài khoản', 'Chi tiết lần 2 (JSON)'];
 // Tài khoản học sinh (đăng nhập tên + PIN). Cô tạo trong web quản lý lớp hoặc gõ thẳng vào tab này.
 const ACC_SHEET = 'TaiKhoan';
 // Em tự tạo tài khoản: Tên hiển thị = nickname (hiện trên trang + bảng xếp hạng), Tên đăng nhập = nickname bỏ dấu,
@@ -86,8 +86,13 @@ function doPost(e) {
     catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
     finally { try { lk.releaseLock(); } catch (_) {} }
   }
-  if (d && d.action === 'progress') return json_(SHOP_ACTIONS.progress(d)); // tiến độ: mỗi em 1 dòng riêng → không chờ khoá chung (không làm chậm nộp bài)
+  if (d && d.action === 'progress') { // tiến độ: mỗi em 1 dòng riêng → không chờ khoá chung (không làm chậm nộp bài)
+    const out = json_(SHOP_ACTIONS.progress(d));
+    try { sweepSummaries_(); } catch (_) {} // tổng kết cả lớp: mỗi giờ kiểm tra 1 lần (bài đã đủ / quá 7 ngày)
+    return out;
+  }
   const lock = LockService.getScriptLock();
+  let submitted = null; // bài vừa nộp → sau khi nhả khoá, xem cả lớp đã nộp đủ chưa
   try {
     lock.waitLock(20000);
     if (d && d.action === 'avatar') return json_(setAvatar_(d.token, d.avatar));
@@ -103,11 +108,13 @@ function doPost(e) {
     const sheetUrl = logToSheet_(d);
     if (d.account) CacheService.getScriptCache().removeAll(['board', 'stats']);
     if (d.attempt === 2) sendMail2_(d, sheetUrl); else sendMail_(d, sheetUrl);
+    submitted = [d.cls, d.title];
     return json_({ ok: true });
   } catch (err) {
     return json_({ ok: false, error: String(err && err.message || err) });
   } finally {
     try { lock.releaseLock(); } catch (_) {}
+    if (submitted) { try { maybeSummary_(submitted[0], submitted[1]); sweepSummaries_(); } catch (_) {} } // lỗi tổng kết không ảnh hưởng việc nộp bài
   }
 }
 
@@ -202,6 +209,7 @@ function getSheet_() {
     sh.setFrozenRows(1);
   }
   // tạo / bổ sung dòng tiêu đề (bảng cũ sẽ tự có thêm cột mới ở cuối)
+  if (sh.getMaxColumns() < HEAD.length) sh.insertColumnsAfter(sh.getMaxColumns(), HEAD.length - sh.getMaxColumns());
   const cur = sh.getRange(1, 1, 1, HEAD.length).getValues()[0];
   if (cur.join('|') !== HEAD.join('|')) {
     sh.getRange(1, 1, 1, HEAD.length).setValues([HEAD]).setFontWeight('bold').setBackground('#d9f2ee');
@@ -229,6 +237,9 @@ function logToSheet_(d) {
     }
     sh.getRange(row, sidCol + 1, 1, 5).setValues([["'" + d.score + '/' + d.total, wrongList_(d.items),
       d.submittedAt ? new Date(d.submittedAt) : new Date(), fmtDur_(d.timeTakenSec), d.leaves]]);
+    // câu trả lời lần 2 (cho file tổng kết cả lớp); ô Sheets tối đa 50.000 ký tự
+    const j2 = JSON.stringify(d.items || []);
+    sh.getRange(row, HEAD.indexOf('Chi tiết lần 2 (JSON)') + 1).setValue(j2.length < 49000 ? j2 : '');
     return ss.getUrl();
   }
   appendFirst_(sh, d);
@@ -245,6 +256,224 @@ function appendFirst_(sh, d) {
   const second = d.sid && !d.canRetry ? 'Không cần (đúng hết)' : '';
   sh.appendRow([when, d.name, d.cls, d.title, d.score, d.total].concat(secs.slice(0, 5), [wrongList_(d.items), JSON.stringify(d.items),
     d.startedAt ? new Date(d.startedAt) : '—', fmtDur_(d.timeTakenSec), d.leaves, secs[5], rec, d.sid || '', second, '', '', '', '', d.account || '']));
+}
+
+/* ================= TỔNG KẾT CẢ LỚP: cả lớp (≥2 em) nộp xong 1 bài → 1 file .docx câu sai gửi mail cô =================
+ * Thứ tự trong file: (1) câu nhiều em cùng sai lần 1, (2) từng em: câu sau lần 2 vẫn sai.
+ * "Xong" = đã làm lần 2 hoặc đúng hết ngay lần 1. Chưa đủ mà đã quá 7 ngày từ bài đầu tiên của lớp → gửi luôn, ghi em nào còn thiếu.
+ * Mỗi (lớp, bài) gửi 1 lần (tab TongKet); cô xoá dòng thì lần kiểm tra sau gửi lại. File .docx dựng bằng XML + Utilities.zip. */
+const SUMMARY_SHEET = 'TongKet', SUMMARY_HEAD = ['Lớp', 'Bài', 'Gửi lúc', 'Kiểu', 'Đã xong / Sĩ số'];
+const SUMMARY_FROM = new Date('2026-11-23T00:00:00+07:00'); // chỉ tổng kết bài có bài nộp đầu tiên từ ngày này (không gửi bù các tuần trước)
+const SUMMARY_WAIT_DAYS = 7, SUMMARY_SKIP = /LÀM LẠI|Revenge|Boss/i;
+const SUMMARY_ON = true; // công tắc: false = tắt hẳn việc tự gửi tổng kết
+
+function summarySheet_() {
+  const { ss } = getSheet_();
+  let sh = ss.getSheetByName(SUMMARY_SHEET);
+  if (!sh) {
+    sh = ss.insertSheet(SUMMARY_SHEET);
+    sh.getRange(1, 1, 1, SUMMARY_HEAD.length).setValues([SUMMARY_HEAD]).setFontWeight('bold').setBackground('#e8f5e9');
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+function summarySent_() {
+  const sh = summarySheet_(), n = sh.getLastRow() - 1, out = {};
+  if (n > 0) sh.getRange(2, 1, n, 2).getValues().forEach(r => { out[clsCode_(r[0]) + '|' + String(r[1])] = true; });
+  return out;
+}
+/** Dữ liệu chung cho 1 lần kiểm tra: mọi dòng bài nộp, danh sách lớp, tài khoản. */
+function summaryCtx_() {
+  const { sh } = getSheet_(), n = sh.getLastRow() - 1;
+  return { vals: n > 0 ? sh.getRange(2, 1, n, HEAD.length).getValues() : [], roster: rosterList_(), accs: accounts_(), sent: summarySent_() };
+}
+const parseJ_ = s => { try { const v = JSON.parse(String(s || '')); return Array.isArray(v) ? v : null; } catch (_) { return null; } };
+const itemKey_ = it => String(it.sec) + '.' + String(it.n);
+/** Tình hình 1 bài của 1 lớp: ai đã nộp / xong / còn thiếu, câu sai lần 1 + lần 2 của từng em. */
+function classLesson_(ctx, cls, title) {
+  const C = k => HEAD.indexOf(k);
+  const members = ctx.roster.filter(x => x.cls === cls);
+  const studs = {}, order = [];
+  let first = null;
+  ctx.vals.forEach(r => {
+    if (clsCode_(r[C('Lớp')]) !== cls || String(r[C('Bài')]) !== title) return;
+    const u = normUser_(r[C('Tài khoản')]), acc = u && ctx.accs[u];
+    const hs = (acc && acc.hs) || rosterPick_(ctx.roster, r[C('Họ tên')], r[C('Lớp')]);
+    if (!hs || !members.some(m => m.name === hs)) return; // chỉ tính học sinh có trong danh sách lớp (bỏ bài thử, tài khoản chưa ghép)
+    const key = 'hs:' + hs;
+    const at = r[C('Thời gian nộp')] instanceof Date ? r[C('Thời gian nộp')] : new Date(r[C('Thời gian nộp')]);
+    if (!isNaN(at) && (!first || at < first)) first = at;
+    if (studs[key]) return; // mỗi em lấy bài nộp đầu tiên
+    const second = String(r[C('Điểm lần 2')] || '').trim(), sid = String(r[C('Mã lần nộp')] || '').trim();
+    const isScore = /^\d+\s*\/\s*\d+$/.test(second.replace(/^'/, ''));
+    studs[key] = { key, hs, name: hs || String(r[C('Họ tên')] || '').trim(), full: String(r[C('Họ tên')] || '').trim(),
+      s1: r[C('Điểm')] + '/' + r[C('Tổng')], s2: isScore ? second.replace(/^'/, '') : second ? '—' : !sid ? 'Nộp 1 lần' : '',
+      done: !!second || !sid, retried: isScore, items1: parseJ_(r[C('Chi tiết (JSON)')]) || [], items2: parseJ_(r[C('Chi tiết lần 2 (JSON)')]),
+      wrong2: isScore ? String(r[C('Câu sai lần 2')] || '').split(/\s*,\s*/).filter(x => x && x !== '—') : [],
+      took: String(r[C('Thời gian làm bài')] || ''), leaves: r[C('Số lần rời trang')] };
+    order.push(key);
+  });
+  const list = order.map(k => studs[k]);
+  const missing = members.filter(m => !studs['hs:' + m.name]).map(m => m.name);
+  const notDone = list.filter(s => !s.done).map(s => s.name);
+  return { cls, title, members, list, missing, notDone, first,
+    complete: members.length >= 2 && !missing.length && members.every(m => studs['hs:' + m.name].done) };
+}
+const natKey_ = k => String(k).split('.').map(x => /^\d+$/.test(x) ? ('000' + x).slice(-4) : x).join('.');
+/** (1) câu ≥2 em cùng sai lần 1 · (2) từng em: câu sau lần 2 vẫn sai */
+function summaryWrong_(L) {
+  const by = {};
+  L.list.forEach(s => s.items1.filter(it => it.ok === false).forEach(it => {
+    const k = itemKey_(it), g = by[k] || (by[k] = { k, q: it.q, correct: it.correct, who: [] });
+    const i2 = s.items2 ? s.items2.filter(x => itemKey_(x) === k)[0] : null;
+    g.who.push({ name: s.name, a1: it.ans, a2: i2 ? i2.ans : '', ok2: s.retried ? s.wrong2.indexOf(k) < 0 : null });
+  }));
+  const shared = Object.keys(by).map(k => by[k]).filter(g => g.who.length >= 2)
+    .sort((a, b) => b.who.length - a.who.length || (natKey_(a.k) < natKey_(b.k) ? -1 : 1));
+  const still = L.list.map(s => {
+    const m1 = {}; s.items1.forEach(it => { m1[itemKey_(it)] = it; });
+    const m2 = {}; (s.items2 || []).forEach(it => { m2[itemKey_(it)] = it; });
+    const rows = s.wrong2.map(k => ({ k, q: (m1[k] || m2[k] || {}).q || '', a1: (m1[k] || {}).ans, a2: m2[k] ? m2[k].ans : (s.items2 ? '' : '(không lưu)'), correct: (m1[k] || m2[k] || {}).correct }))
+      .sort((a, b) => natKey_(a.k) < natKey_(b.k) ? -1 : 1);
+    return { s, rows };
+  });
+  return { shared, still };
+}
+
+/* ---- .docx tối giản: [Content_Types].xml + _rels + word/document.xml + word/styles.xml, nén bằng Utilities.zip ---- */
+const dx_ = s => String(s == null ? '' : s).replace(/<[^>]+>/g, '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
+  .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+/** đoạn văn: segs = chuỗi hoặc [[chữ, {b, i, color, size}]…]; style = 'Heading1' | 'Heading2' | 'Heading3' */
+function dxP_(segs, style) {
+  if (!Array.isArray(segs)) segs = [[segs, {}]];
+  const runs = segs.map(([t, o]) => { o = o || {};
+    const pr = (o.b ? '<w:b/>' : '') + (o.i ? '<w:i/>' : '') + (o.color ? '<w:color w:val="' + o.color + '"/>' : '') + (o.size ? '<w:sz w:val="' + o.size + '"/>' : '');
+    return String(t).split('\n').map((line, j) => (j ? '<w:r><w:br/></w:r>' : '') + '<w:r>' + (pr ? '<w:rPr>' + pr + '</w:rPr>' : '') + '<w:t xml:space="preserve">' + dx_(line) + '</w:t></w:r>').join('');
+  }).join('');
+  return '<w:p>' + (style ? '<w:pPr><w:pStyle w:val="' + style + '"/></w:pPr>' : '') + runs + '</w:p>';
+}
+/** bảng: widths = độ rộng cột (twip); rows[0] = tiêu đề (tô màu); ô = chuỗi hoặc segs như dxP_ */
+function dxTable_(widths, rows) {
+  const cell = (c, w, head) => '<w:tc><w:tcPr><w:tcW w:w="' + w + '" w:type="dxa"/>' + (head ? '<w:shd w:val="clear" w:color="auto" w:fill="D9F2EE"/>' : '') + '</w:tcPr>' +
+    dxP_(head ? [[c, { b: true }]] : c) + '</w:tc>';
+  return '<w:tbl><w:tblPr><w:tblStyle w:val="TableGrid"/><w:tblW w:w="0" w:type="auto"/><w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid>' +
+    widths.map(w => '<w:gridCol w:w="' + w + '"/>').join('') + '</w:tblGrid>' +
+    rows.map((r, i) => '<w:tr>' + (i === 0 ? '<w:trPr><w:tblHeader/></w:trPr>' : '') + r.map((c, j) => cell(c, widths[j], i === 0)).join('') + '</w:tr>').join('') + '</w:tbl>' + dxP_('');
+}
+function docxBlob_(bodyXml, fileName) {
+  const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main', R = 'http://schemas.openxmlformats.org/package/2006/relationships';
+  const files = {
+    '[Content_Types].xml': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+      '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>',
+    '_rels/.rels': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="' + R + '"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
+    'word/_rels/document.xml.rels': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="' + R + '"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>',
+    'word/styles.xml': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="' + W + '">' +
+      '<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:eastAsia="Arial" w:cs="Arial"/><w:sz w:val="21"/><w:szCs w:val="21"/><w:lang w:val="vi-VN"/></w:rPr></w:rPrDefault>' +
+      '<w:pPrDefault><w:pPr><w:spacing w:after="80" w:line="264" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>' +
+      '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style>' +
+      '<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:pPr><w:keepNext/><w:spacing w:before="120" w:after="120"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/><w:color w:val="0F766E"/><w:sz w:val="34"/></w:rPr></w:style>' +
+      '<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:pPr><w:keepNext/><w:spacing w:before="280" w:after="100"/><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:b/><w:color w:val="9D174D"/><w:sz w:val="27"/></w:rPr></w:style>' +
+      '<w:style w:type="paragraph" w:styleId="Heading3"><w:name w:val="heading 3"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:pPr><w:keepNext/><w:spacing w:before="200" w:after="60"/><w:outlineLvl w:val="2"/></w:pPr><w:rPr><w:b/><w:sz w:val="23"/></w:rPr></w:style>' +
+      '<w:style w:type="table" w:styleId="TableGrid"><w:name w:val="Table Grid"/><w:tblPr><w:tblBorders>' +
+      ['top', 'left', 'bottom', 'right', 'insideH', 'insideV'].map(b => '<w:' + b + ' w:val="single" w:sz="4" w:space="0" w:color="B7C4CF"/>').join('') +
+      '</w:tblBorders><w:tblCellMar><w:top w:w="40" w:type="dxa"/><w:left w:w="80" w:type="dxa"/><w:bottom w:w="40" w:type="dxa"/><w:right w:w="80" w:type="dxa"/></w:tblCellMar></w:tblPr></w:style></w:styles>',
+    'word/document.xml': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="' + W + '"><w:body>' + bodyXml +
+      '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1000" w:right="900" w:bottom="1000" w:left="900" w:header="500" w:footer="500" w:gutter="0"/></w:sectPr></w:body></w:document>'
+  };
+  const blobs = Object.keys(files).map(n => Utilities.newBlob('', 'application/xml', n).setDataFromString(files[n], 'UTF-8'));
+  return Utilities.zip(blobs, fileName).setContentType('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+}
+/** Nội dung file tổng kết của 1 (lớp, bài). late = gửi vì đã quá 7 ngày. */
+function summaryDocx_(L, late) {
+  const W = summaryWrong_(L), done = L.list.filter(s => s.done).length, tz = Session.getScriptTimeZone() || 'Asia/Ho_Chi_Minh';
+  const ok2 = v => v === true ? ['  ✅', { color: '15803D', b: true }] : v === false ? ['  ❌', { color: 'B91C1C', b: true }] : ['', {}];
+  let b = dxP_('Tổng kết bài: ' + L.title, 'Heading1');
+  b += dxP_([['Lớp ' + L.cls, { b: true }], [' · ' + Utilities.formatDate(new Date(), tz, 'dd/MM/yyyy') + ' · Đã nộp ' + L.list.length + ' em · Đã xong cả 2 lần: ' + done + ' em' +
+    (L.members.length ? ' · Sĩ số ' + L.members.length : ''), {}]]);
+  if (late) b += dxP_([['Gửi vì đã quá ' + SUMMARY_WAIT_DAYS + ' ngày từ bài nộp đầu tiên của lớp. ', { b: true, color: 'B45309' }],
+    [(L.missing.length ? 'Chưa nộp: ' + L.missing.join(', ') + '. ' : '') + (L.notDone.length ? 'Chưa làm lần 2: ' + L.notDone.join(', ') + '.' : ''), { color: 'B45309' }]]);
+  b += dxP_('Điểm từng em', 'Heading2');
+  b += dxTable_([2900, 1400, 1700, 1900, 1400], [['Học sinh', 'Lần 1', 'Lần 2', 'Thời gian làm', 'Rời trang']]
+    .concat(L.list.map(s => [s.name + (s.hs && s.full && normName_(s.full) !== normName_(s.hs) ? ' (' + s.full + ')' : ''), s.s1,
+      s.s2 === '—' ? 'Đúng hết lần 1' : s.s2 || 'Chưa làm', s.took, String(s.leaves == null ? '' : s.leaves)])));
+  b += dxP_('1. Câu nhiều em cùng sai (' + W.shared.length + ' câu)', 'Heading2');
+  if (!W.shared.length) b += dxP_([['Không có câu nào từ 2 em trở lên cùng sai 🎉', { i: true }]]);
+  W.shared.forEach((g, i) => {
+    b += dxP_([[(i + 1) + '. Câu ' + g.k + ' · ' + g.who.length + '/' + L.list.length + ' em sai', {}]], 'Heading3');
+    b += dxP_([['Đề: ', { b: true }], [g.q || '', {}]]);
+    b += dxP_([['Đáp án: ', { b: true }], [g.correct || '', { b: true, color: '15803D' }]]);
+    b += dxTable_([2900, 3600, 2800], [['Học sinh', 'Lần 1 em trả lời', 'Lần 2']].concat(g.who.map(w => [w.name, w.a1 || '(bỏ trống)',
+      [[w.ok2 === null ? (w.a2 || '—') : w.a2 || (w.ok2 ? 'đã sửa' : 'vẫn sai'), {}], ok2(w.ok2)]])));
+  });
+  b += dxP_('2. Sau lần 2 vẫn sai – từng em', 'Heading2');
+  const fixedAll = W.still.filter(x => x.s.retried && !x.rows.length).map(x => x.s.name);
+  const perfect = W.still.filter(x => x.s.done && !x.s.retried).map(x => x.s.name);
+  const pending = W.still.filter(x => !x.s.done).map(x => x.s.name);
+  let any = false;
+  W.still.filter(x => x.rows.length).forEach(x => {
+    any = true;
+    b += dxP_(x.s.name + ' – ' + x.rows.length + ' câu (lần 1: ' + x.s.s1 + ', lần 2: ' + x.s.s2 + ')', 'Heading3');
+    b += dxTable_([800, 3900, 1600, 1600, 1500], [['Câu', 'Đề', 'Lần 1', 'Lần 2', 'Đáp án']].concat(x.rows.map(r => [r.k, r.q, r.a1 || '(bỏ trống)', r.a2 || '(bỏ trống)', [[r.correct || '', { b: true, color: '15803D' }]]])));
+  });
+  if (!any) b += dxP_([['Không em nào còn câu sai sau lần 2 🎉', { i: true }]]);
+  if (fixedAll.length) b += dxP_([['Sửa đúng hết ở lần 2: ', { b: true }], [fixedAll.join(', '), {}]]);
+  if (perfect.length) b += dxP_([['Đúng hết ngay lần 1: ', { b: true }], [perfect.join(', '), {}]]);
+  if (pending.length) b += dxP_([['Chưa làm lần 2: ', { b: true, color: 'B45309' }], [pending.join(', '), {}]]);
+  return { blob: docxBlob_(b, ('Tong ket – ' + L.cls + ' – ' + L.title).replace(/[\\/:*?"<>|]/g, '-').slice(0, 120) + '.docx'), W };
+}
+/** Tạo + gửi mail + ghi TongKet. kind: 'đủ' | 'quá 7 ngày' */
+function sendSummary_(L, kind) {
+  const r = summaryDocx_(L, kind !== 'đủ'), done = L.list.filter(s => s.done).length, size = L.members.length || L.list.length;
+  const top = r.W.shared.slice(0, 5).map(g => '<li>Câu ' + esc_(g.k) + ' – ' + g.who.length + ' em sai: ' + esc_(g.q || '') + ' → <b>' + esc_(g.correct || '') + '</b></li>').join('');
+  const still = r.W.still.filter(x => x.rows.length).map(x => esc_(x.s.name) + ' (' + x.rows.length + ')').join(', ');
+  const html = '<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.5">' +
+    '<h2 style="color:#0f766e;margin:0 0 6px">Tổng kết bài: ' + esc_(L.title) + '</h2>' +
+    '<p>Lớp <b>' + esc_(L.cls) + '</b> · đã xong ' + done + '/' + size + ' em' + (kind !== 'đủ' ? ' · <b style="color:#b45309">gửi vì đã quá ' + SUMMARY_WAIT_DAYS + ' ngày</b>' +
+      (L.missing.length ? ' · chưa nộp: ' + esc_(L.missing.join(', ')) : '') + (L.notDone.length ? ' · chưa làm lần 2: ' + esc_(L.notDone.join(', ')) : '') : '') + '</p>' +
+    '<p><b>Câu nhiều em cùng sai:</b> ' + r.W.shared.length + ' câu' + (top ? '</p><ul>' + top + '</ul>' : '.</p>') +
+    '<p><b>Sau lần 2 vẫn sai:</b> ' + (still || 'không em nào 🎉') + '</p><p>Chi tiết trong file đính kèm 📎</p></div>';
+  MailApp.sendEmail({ to: TEACHER_EMAIL, subject: '[Tổng kết BTVN] ' + L.cls + ' – ' + L.title + ' – ' + done + '/' + size + ' HS' + (kind !== 'đủ' ? ' (quá ' + SUMMARY_WAIT_DAYS + ' ngày)' : ''),
+    htmlBody: html, name: 'Bài tập về nhà', attachments: [r.blob] });
+  summarySheet_().appendRow([L.cls, L.title, new Date(), kind, done + '/' + size]);
+}
+/** Gọi sau mỗi lần nộp bài: bài này của lớp này đã đủ cả lớp → gửi tổng kết. */
+function maybeSummary_(cls, title) {
+  cls = clsCode_(cls); title = String(title || '');
+  if (!SUMMARY_ON || !cls || !title || SUMMARY_SKIP.test(title)) return;
+  const lock = LockService.getScriptLock(); if (!lock.tryLock(15000)) return;
+  try {
+    const ctx = summaryCtx_(); if (ctx.sent[cls + '|' + title]) return;
+    const L = classLesson_(ctx, cls, title);
+    if (L.complete && L.first && L.first >= SUMMARY_FROM) sendSummary_(L, 'đủ');
+  } catch (e) { console.error('maybeSummary_', e); }
+  finally { try { lock.releaseLock(); } catch (_) {} }
+}
+/** Mỗi giờ tối đa 1 lần (gọi ké khi nộp bài / đồng bộ tiến độ): gửi các bài đã đủ mà chưa gửi, và các bài quá 7 ngày. */
+function sweepSummaries_(force) {
+  if (!SUMMARY_ON) return;
+  const cache = CacheService.getScriptCache();
+  if (!force && cache.get('sumSweep')) return; cache.put('sumSweep', '1', 3600);
+  const lock = LockService.getScriptLock(); if (!lock.tryLock(15000)) return;
+  try {
+    const ctx = summaryCtx_(), seen = {}, now = Date.now(), sizes = {};
+    ctx.roster.forEach(m => { sizes[m.cls] = (sizes[m.cls] || 0) + 1; });
+    ctx.vals.forEach(r => {
+      const cls = clsCode_(r[HEAD.indexOf('Lớp')]), title = String(r[HEAD.indexOf('Bài')] || '');
+      if (cls && title && !SUMMARY_SKIP.test(title) && (sizes[cls] || 0) >= 2) seen[cls + '|' + title] = [cls, title];
+    });
+    Object.keys(seen).forEach(k => {
+      if (ctx.sent[k]) return;
+      const L = classLesson_(ctx, seen[k][0], seen[k][1]);
+      if (!L.first || L.first < SUMMARY_FROM) return;
+      if (L.complete) sendSummary_(L, 'đủ');
+      else if (now - L.first.getTime() >= SUMMARY_WAIT_DAYS * 86400000) sendSummary_(L, 'quá ' + SUMMARY_WAIT_DAYS + ' ngày');
+      else return;
+      ctx.sent[k] = true;
+    });
+  } catch (e) { console.error('sweepSummaries_', e); }
+  finally { try { lock.releaseLock(); } catch (_) {} }
 }
 
 /* ================= TÀI KHOẢN + BẢNG XẾP HẠNG ================= */
@@ -298,18 +527,22 @@ function normName_(s) {
   return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 }
 function clsCode_(s) { const m = /([A-Za-z]{2,4})\s*-?\s*(\d{2,3})/.exec(String(s || '')); return m ? (m[1] + m[2]).toUpperCase() : ''; }
-/** → Tên gọi của học sinh khớp DUY NHẤT, hoặc '' */
-function rosterMatch_(full, cls) {
+/** Danh sách học sinh đang học (tab DSHocSinh do web quản lý ghi): [{name: Tên gọi, full, cls, keys, given}] */
+function rosterList_() {
   const { ss } = getSheet_();
   const sh = ss.getSheetByName(ROSTER_SHEET);
-  if (!sh || sh.getLastRow() < 2) return '';
-  const n = normName_(full), c = clsCode_(cls);
-  if (!n) return '';
-  const list = sh.getRange(2, 1, sh.getLastRow() - 1, 4).getValues().filter(r => String(r[0]).trim()).map(r => {
+  if (!sh || sh.getLastRow() < 2) return [];
+  return sh.getRange(2, 1, sh.getLastRow() - 1, 4).getValues().filter(r => String(r[0]).trim()).map(r => {
     const name = String(r[0]).trim(), plain = name.replace(/\(.*?\)/g, ' ');
     const keys = [normName_(name), normName_(plain), normName_(r[1])].concat(String(r[3] || '').split(/[,;\n]/).map(normName_));
-    return { name: name, keys: keys.filter(String), cls: clsCode_(r[2]), given: normName_(plain).split(' ')[0] };
+    return { name: name, full: String(r[1] || '').trim(), keys: keys.filter(String), cls: clsCode_(r[2]), given: normName_(plain).split(' ')[0] };
   });
+}
+/** → Tên gọi của học sinh khớp DUY NHẤT, hoặc '' */
+function rosterMatch_(full, cls) { return rosterPick_(rosterList_(), full, cls); }
+function rosterPick_(list, full, cls) {
+  const n = normName_(full), c = clsCode_(cls);
+  if (!n || !list.length) return '';
   let cand = list.filter(x => x.keys.indexOf(n) >= 0);
   if (cand.length > 1 && c) cand = cand.filter(x => x.cls === c);
   if (cand.length === 1) return cand[0].name;
