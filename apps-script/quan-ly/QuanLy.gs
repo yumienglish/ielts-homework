@@ -23,6 +23,12 @@ const SCHEMA = {
     ['viaParent', 'Nhắc BT qua phụ huynh (x)', '']] },
   // Nhắc bài tập: tuần nào đã nhắc lớp nào (web app: Trang chủ → 📣 Nhắc bài tập → ✓ Đã nhắc)
   NhacBT: { key: ['mon', 'cls'], cols: [['mon', 'Thứ Hai của tuần', 'd'], ['cls', 'Lớp', 't'], ['at', 'Đã nhắc lúc', 't']] },
+  // Bài tập đã giao từng lớp (web app: 📚 Bài tập). Tự điền theo các bài đang mở trên trang BTVN của lớp (cột "Link bài tập"); cô thêm tay được.
+  BaiGiao: { key: ['id'], cols: [['id', 'Mã bài', 't'], ['cls', 'Lớp', 't'], ['title', 'Bài', ''], ['week', 'Tuần', 'n'], ['link', 'Link', ''],
+    ['from', 'Ngày giao', 'd'], ['src', 'Nguồn (Tự động/Tay)', ''], ['hide', 'Ẩn (x)', '']] },
+  // Cô tick tay khi nhận mail nộp bài lần 1 / lần 2: ngày tick = ngày nộp
+  NopBai: { key: ['bai', 'name'], cols: [['bai', 'Mã bài', 't'], ['name', 'Học sinh', 't'], ['l1', 'Nộp lần 1', 'd'], ['l2', 'Nộp lần 2', 'd'],
+    ['skip', 'Không cần lần 2 (x)', '']] },
   Lich: { key: ['id'], cols: [
     ['id', 'id', 't'], ['date', 'Ngày', 'd'], ['time', 'Giờ bắt đầu', 'h'], ['dur', 'Số phút', 'n'], ['cls', 'Lớp', 't'],
     ['makeup', 'Học bù (x)', ''], ['startNum', 'Buổi số (đặt tay, trống = tự đếm)', 'n']] },

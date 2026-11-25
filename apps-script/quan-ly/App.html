@@ -301,6 +301,18 @@ body.ro #cSave,body.ro #cDel,body.ro #sSave,body.ro #sDel,body.ro [data-del],bod
 body.ro .lkact,body.ro .lkall,body.ro .lkdel{display:none!important}
 body.ro .lkrow input,body.ro [data-lk]{pointer-events:none}
 body.ro .cc,body.ro .ed,body.ro textarea,body.ro [data-ci],body.ro [data-p],body.ro #fullName{pointer-events:none}
+/* 📚 Bài tập đã giao: tick nộp lần 1 / lần 2 */
+.hwcard h3{margin:0;font-size:16.5px;line-height:1.35}.hwcard h3 a{text-decoration:none}
+.hwhead{display:flex;gap:8px;align-items:flex-start;justify-content:space-between}
+.hwbadges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.hwt{width:100%;border-collapse:collapse;margin-top:8px}.hwt td{padding:4px 2px;border-top:1px dashed var(--line);vertical-align:middle}
+.hwt td.n{font-weight:800;font-size:14.5px;width:40%}
+.hwb{font:inherit;font-size:13px;font-weight:800;border:2px dashed var(--line);background:#fff;color:var(--muted);border-radius:12px;padding:5px 8px;min-width:86px;cursor:pointer}
+.hwb.on{border-style:solid;border-color:var(--mint);background:var(--mint-soft);color:var(--mint-ink)}
+.hwb.skip{border-style:solid;border-color:var(--butter);background:var(--butter-soft);color:var(--butter-ink)}
+.hwb:disabled{cursor:default}
+.hwmenu{border:0;background:none;font-size:18px;cursor:pointer;padding:0 4px;color:var(--muted)}
+.hwold summary{cursor:pointer;font-weight:800;color:var(--muted);margin:10px 0}
 </style>
 </head>
 <body>
@@ -315,6 +327,7 @@ body.ro .cc,body.ro .ed,body.ro textarea,body.ro [data-ci],body.ro [data-p],body
   <a href="#home" data-t="home"><span class="i">🏡</span>Trang chủ</a>
   <a href="#lich" data-t="lich"><span class="i">📅</span>Lịch</a>
   <a href="#giaoan" data-t="giaoan"><span class="i">📒</span>Giáo án</a>
+  <a href="#baitap" data-t="baitap"><span class="i">📚</span>Bài tập</a>
   <a href="#hs" data-t="hs"><span class="i">🐰</span>Học sinh</a>
   <a href="#lucky" data-t="lucky"><span class="i">🎁</span>Lucky</a>
   <a href="#hocphi" data-t="hocphi"><span class="i">🍓</span>Học phí</a>
@@ -440,6 +453,9 @@ function fromServer(D) { // các tab Google Sheet -> ST
   SETTINGS = Object.fromEntries(T.CaiDat.map(r => [S(r.key), S(r.value)]));
   SCORES = mkScores(T.Diem.map(r => ({ date: S(r.date), cls: S(r.cls), name: S(r.name), type: S(r.type).toUpperCase(), test: S(r.test), score: S(r.score), max: S(r.max), pct: S(r.pct), ta: S(r.ta), note: S(r.note), res: S(r.res), src: S(r.src) })));
   ST.reminded = {}; (T.NhacBT || []).filter(r => r.mon && r.cls).forEach(r => { ST.reminded[S(r.mon) + '|' + S(r.cls)] = S(r.at) || '✓'; });
+  // 📚 Bài tập đã giao + tick nộp bài (tab BaiGiao, NopBai)
+  ST.hwa = (T.BaiGiao || []).filter(r => S(r.id) && S(r.cls)).map(r => ({ id: S(r.id), cls: S(r.cls), title: S(r.title), week: +r.week || null, link: S(r.link), from: S(r.from), src: S(r.src) || 'Tự động', hide: !!S(r.hide) }));
+  ST.hwt = {}; (T.NopBai || []).filter(r => S(r.bai) && S(r.name)).forEach(r => { ST.hwt[S(r.bai) + '|' + S(r.name)] = { l1: S(r.l1), l2: S(r.l2), skip: !!S(r.skip) }; });
   SUBQ = (T.ChoGhepTen || []).filter(r => r.ref && !S(r.status)).map(r => ({ ref: S(r.ref), src: S(r.src), date: S(r.date), typedName: S(r.typedName), typedCls: S(r.typedCls), test: S(r.test), score: S(r.score), max: S(r.max) }));
   rebuild(); reindex(); SNAP = flat();
 }
@@ -456,6 +472,9 @@ function flat() { // ST -> các dòng theo tab, để so sánh và chỉ gửi d
   (ST.lucky || []).forEach(x => put('LuckyDraw', x.id, { id: x.id, date: x.date, name: x.name, kind: x.kind, pts: x.pts, gift: x.gift || '' }));
   Object.entries(ST.paid).forEach(([name, m]) => Object.entries(m).forEach(([ym, v]) => { if (v !== undefined) put('HocPhi', name + '|' + ym, { name, ym, state: PAY_OUT(v) }); }));
   (ST.prices || []).forEach((x, i) => { const r = { group: x.group, level: x.level, hour: x.hour || '', ord: i + 1 }; Object.keys(x).sort().forEach(k => { if (k[0] === '_') r[k] = x[k]; }); put('BangGia', qKey(x), r); });
+  (ST.hwa || []).forEach(x => put('BaiGiao', x.id, { id: x.id, cls: x.cls, title: x.title, week: x.week || '', link: x.link || '', from: x.from || '', src: x.src || 'Tự động', hide: x.hide ? 'x' : '' }));
+  Object.entries(ST.hwt || {}).forEach(([k, v]) => { if (!v.l1 && !v.l2 && !v.skip) return; const i = k.lastIndexOf('|');
+    put('NopBai', k, { bai: k.slice(0, i), name: k.slice(i + 1), l1: v.l1 || '', l2: v.l2 || '', skip: v.skip ? 'x' : '' }); });
   Object.entries(ST.report).forEach(([name, r]) => put('BaoCao', name, { name, from: r.from || '', to: r.to || '', learn: r.learn ?? '', good: r.good ?? '', weak: r.weak ?? '', goal: r.goal ?? '', sent: r.sent || '' }));
   return o;
 }
@@ -1162,6 +1181,189 @@ function bindDay() { V.querySelectorAll('[data-go]').forEach(b => b.addEventList
 
 // ================= GIÁO ÁN (dạng bảng Syllabus) =================
 const SYL_COLS = [['lesson', 'Bài dạy', 95], ['content', 'Nội dung bài dạy (chi tiết)', 290], ['mat', 'Tài liệu cần chuẩn bị', 170], ['hw', 'Homework', 190], ['print', 'File cần in', 150], ['note', 'Note sau buổi học', 170]];
+// ---- Đọc danh sách bài đang mở trên các trang BTVN (bản gốc + thử: D:/_ya_work/baitap/sites.js) ----
+const HW_SITES = [
+  { id: 'ket', re: /^(.*?\/KET\/)/i },
+  { id: 'pet', re: /^(.*?\/PET\/)/i },
+  { id: 'b2', re: /^(.*?\/B2-First\/)/i },
+  { id: 'a1', re: /^(.*?\/A1-KID\/)/i },
+  { id: 'ielts', re: /^(.*?\/ielts-homework\/)/i }
+];
+const hwPlain = s => String(s || '').replace(/\{\{([^}|]+)(?:\|([^}]+))?\}\}/g, (_, k, v) => v || k).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+/** link bài tập của lớp → {id, base} (base = gốc trang, VD https://yumienglish.github.io/PET/) */
+function hwSiteOf(link) {
+  for (const s of HW_SITES) { const m = String(link || '').match(s.re); if (m) return { id: s.id, base: m[1] }; }
+  return null;
+}
+// chạy lessons.js của trang trong hàm riêng, lấy các hằng số cần dùng (file của chính mình trên GitHub Pages)
+function hwEvalLessons(src) {
+  return new Function('window', 'document', 'location', src + '\n;return { OPEN_WEEK: typeof OPEN_WEEK !== "undefined" ? OPEN_WEEK : null, LESSONS: typeof LESSONS !== "undefined" ? LESSONS : null, VOCAB_LESSONS: typeof VOCAB_LESSONS !== "undefined" ? VOCAB_LESSONS : null };')({}, {}, { search: '' });
+}
+// lấy giá trị "const NAME = {...}" / "[...]" nằm trong 1 trang (A1: dữ liệu tuần; IELTS: danh sách bài của sảnh)
+function hwLiteral(src, name) {
+  const i = src.indexOf('const ' + name + ' ='); if (i < 0) return null;
+  const a = src.indexOf('{', i), b = src.indexOf('[', i), j = a < 0 ? b : b < 0 ? a : Math.min(a, b);
+  const open = src[j], close = open === '{' ? '}' : ']'; let depth = 0, q = null;
+  for (let k = j; k < src.length; k++) {
+    const c = src[k];
+    if (q) { if (c === '\\') { k++; continue; } if (c === q) q = null; continue; }
+    if (c === '"' || c === "'" || c === '`') { q = c; continue; }
+    if (c === '/' && src[k + 1] === '/') { k = src.indexOf('\n', k); if (k < 0) break; continue; }
+    if (c === '/' && src[k + 1] === '*') { k = src.indexOf('*/', k) + 1; continue; }
+    if (c === open) depth++; else if (c === close && --depth === 0) return new Function('return (' + src.slice(j, k + 1) + ');')();
+  }
+  return null;
+}
+async function hwLoadSite(link, fetchText) {
+  const S = hwSiteOf(link); if (!S) return [];
+  const out = [], base = S.base, push = (key, title, week, href) => out.push({ key: S.id + ':' + key, title: hwPlain(title), week: week || null, link: base + href });
+  if (S.id === 'ielts') { // sảnh: mảng LESSONS (bài mới nhất ở cuối); tiêu đề mail = hằng TITLE trong trang bài
+    const L = hwLiteral(await fetchText(base + 'index.html'), 'LESSONS') || [];
+    for (const x of L) {
+      let t = ''; try { const m = (await fetchText(base + x.href)).match(/const TITLE\s*=\s*(['"`])(.*?)\1/); t = m ? m[2] : ''; } catch (e) {}
+      push(String(x.href).replace(/\/$/, ''), t || (x.code + ' – ' + x.title), x.n, x.href);
+    }
+    return out;
+  }
+  if (S.id === 'a1') {
+    const text = await fetchText(base + 'listening-trainer-a1/index.html');
+    const ow = +((text.match(/const OPEN_WEEK = (\d+)/) || [])[1] || 0), W = hwLiteral(text, 'WEEKS') || {};
+    Object.keys(W).map(Number).filter(w => w <= ow).sort((a, b) => a - b).forEach(w => { const X = W[w];
+      push('w' + w, 'Listening Trainer A1 – Tuần ' + w + (X.book ? ' (' + X.book + ')' : ' (Track ' + (X.ex || []).map(e => e.track).filter(Boolean).join(', ') + ')'), w, 'listening-trainer-a1/?w=' + w); });
+    return out;
+  }
+  const D = hwEvalLessons(await fetchText(base + 'lessons.js')), ow = +D.OPEN_WEEK || 0, L = D.LESSONS || {};
+  Object.keys(L).map(Number).filter(w => w <= ow).sort((a, b) => a - b).forEach(w => {
+    if (S.id === 'ket') push('w' + w, `KET ${L[w].code} ${L[w].title} – Week ${w}`, w, '?w=' + w);
+    if (S.id === 'pet') {
+      push('w' + w, `PET ${L[w].code} ${L[w].title} – Week ${w}`, w, '?w=' + w);
+      const V = D.VOCAB_LESSONS && D.VOCAB_LESSONS[w]; if (V) push('v' + w, `PET Vocab ${V.code} ${V.title} – Week ${w}`, w, '?w=' + w + '&m=vocab');
+    }
+    if (S.id === 'b2') (Array.isArray(L[w]) ? L[w] : [L[w]]).forEach((x, i) => push('w' + w + 'b' + (i + 1), `B2 First ${x.kind} ${x.code} ${x.title} – Week ${w}`, w, '?w=' + w + '&b=' + (i + 1)));
+  });
+  return out;
+}
+
+// ================= 📚 BÀI TẬP ĐÃ GIAO (tự điền theo trang BTVN của lớp; cô tick tay khi nhận mail nộp lần 1 / lần 2) =================
+const HW_FETCHED = {}; // gốc trang → {at, list, err}: mỗi trang đọc lại tối đa 10 phút/lần
+const hwFetchText = async u => { const r = await fetch(u + (u.indexOf('?') >= 0 ? '&' : '?') + 't=' + Math.floor(Date.now() / 60000), { cache: 'no-store' }); if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); };
+/** Đọc bài đang mở trên trang của từng lớp, thêm bài mới vào ST.hwa (Ngày giao = hôm nay lần đầu thấy). */
+async function hwRefresh(force) {
+  const sites = {};
+  CLASSES.forEach(c => { const link = S(clsRow(c).hwLink), s = hwSiteOf(link); if (s) (sites[s.base] = sites[s.base] || { link, cls: [] }).cls.push(c); });
+  await Promise.all(Object.keys(sites).map(async base => {
+    const F = HW_FETCHED[base]; if (!force && F && Date.now() - F.at < 600000) return;
+    try { HW_FETCHED[base] = { at: Date.now(), list: await hwLoadSite(sites[base].link, hwFetchText) }; }
+    catch (e) { HW_FETCHED[base] = { at: Date.now(), list: (F && F.list) || [], err: String(e && e.message || e) }; }
+  }));
+  if (READONLY || !ST) return 0;
+  let n = 0;
+  Object.keys(sites).forEach(base => (HW_FETCHED[base].list || []).forEach(l => sites[base].cls.forEach(c => {
+    if (l.classes && l.classes.length && l.classes.indexOf(c) < 0) return;
+    const id = c + '/' + l.key, x = ST.hwa.find(y => y.id === id);
+    if (!x) { ST.hwa.push({ id, cls: c, title: l.title, week: l.week, link: l.link, from: l.from || TODAY, src: 'Tự động', hide: false }); n++; }
+    else if (x.src === 'Tự động' && (x.title !== l.title || x.link !== l.link)) { x.title = l.title; x.link = l.link; n++; }
+  })));
+  if (n) save();
+  return n;
+}
+const hwTick = (id, name) => ST.hwt[id + '|' + name] || {};
+function hwStats(x) {
+  let n1 = 0, n2 = 0; const st = studentsOf(x.cls);
+  st.forEach(s => { const t = hwTick(x.id, s.name); if (!t.l1) n1++; else if (!t.l2 && !t.skip) n2++; });
+  return { total: st.length, n1, n2 };
+}
+const hwList = cls => ST.hwa.filter(x => x.cls === cls && !x.hide)
+  .sort((a, b) => (b.from || '').localeCompare(a.from || '') || (b.week || 0) - (a.week || 0) || b.id.localeCompare(a.id));
+function viewBaiTap(cls) {
+  setTab('baitap', '📚 Bài tập đã giao');
+  const list = CLASSES.filter(c => studentsOf(c).length);
+  if (!cls || list.indexOf(cls) < 0) cls = ST.ui.btCls && list.indexOf(ST.ui.btCls) >= 0 ? ST.ui.btCls : list[0];
+  if (cls && ST.ui.btCls !== cls) { ST.ui.btCls = cls; saveUi(); }
+  const pend = c => hwList(c).reduce((a, x) => a + hwStats(x).n1, 0);
+  let h = `<div class="row wrapf" style="gap:6px;margin:4px 0 10px">${list.map(c => { const p = pend(c);
+    return `<a class="chip${c === cls ? ' on' : ''}" href="#baitap/${encodeURIComponent(c)}">${EMO[c] || ''} ${esc(c)}${p ? ` <span class="badge b-bad" title="lượt chưa nộp lần 1">${p}</span>` : ''}</a>`; }).join('')}</div>`;
+  if (!cls) { V.innerHTML = h + '<div class="card muted">Chưa có lớp nào có học sinh.</div>'; return; }
+  const link = S(clsRow(cls).hwLink), site = hwSiteOf(link), F = site && HW_FETCHED[site.base];
+  const at = F ? new Date(F.at) : null;
+  h += `<div class="card"><div class="row between wrapf" style="gap:8px"><div class="small grow" style="flex:1 1 260px">${site
+      ? `🔗 Tự điền theo bài đang mở trên <a href="${esc(link)}" target="_blank">trang bài tập của lớp</a>${F ? (F.err ? ' · <b style="color:var(--pink-ink)">chưa đọc được trang (' + esc(F.err) + ')</b>' : ' · đọc lúc ' + pd(at.getHours()) + ':' + pd(at.getMinutes())) : ' · đang đọc…'}`
+      : 'Lớp chưa có <b>Link bài tập</b> (✏️ Sửa lớp ở tab Học sinh) → chỉ thêm bài tay được.'}
+    <div class="muted" style="margin-top:4px">Nhận mail nộp bài của em nào thì chạm ô <b>Lần 1</b> / <b>Lần 2</b> của em đó: ngày tick là ngày nộp. Chạm lại để đổi ngày, bỏ tick hoặc chọn “Không cần lần 2”.</div></div>
+    <div class="row" style="gap:6px">${site ? '<button class="btn sm ghost" id="hwR" type="button">🔄 Đọc lại</button>' : ''}${READONLY ? '' : '<button class="btn sm mint" id="hwAdd" type="button">＋ Thêm bài</button>'}</div></div></div>`;
+  const L = hwList(cls), studs = studentsOf(cls);
+  if (!L.length) h += `<div class="card muted small">Chưa có bài nào${site && !F ? ' – đang đọc trang bài tập…' : ''}.</div>`;
+  const btn = (x, st, k, t) => {
+    const on = k === 'l1' ? !!t.l1 : !!(t.l2 || t.skip), lab = k === 'l1' ? (t.l1 ? '✓ ' + dm(t.l1) : 'Lần 1') : t.skip ? '✓ Không cần' : t.l2 ? '✓ ' + dm(t.l2) : 'Lần 2';
+    return `<button class="hwb${on ? (k === 'l2' && t.skip ? ' skip' : ' on') : ''}" type="button" data-hw="${esc(x.id)}" data-n="${esc(st.name)}" data-k="${k}"${READONLY ? ' disabled' : ''}>${lab}</button>`;
+  };
+  const card = x => { const s = hwStats(x);
+    const badges = s.n1 || s.n2 ? (s.n1 ? `<span class="badge b-bad">Chưa nộp: ${s.n1}/${s.total}</span>` : '') + (s.n2 ? `<span class="badge b-warn">Chưa làm lần 2: ${s.n2}</span>` : '')
+      : `<span class="badge b-ok">✅ Cả lớp đã xong</span>`;
+    return `<div class="card hwcard"><div class="hwhead"><div><h3>${x.link ? `<a href="${esc(x.link)}" target="_blank">${esc(x.title)} ↗</a>` : esc(x.title)}</h3>
+        <div class="small muted">Giao ${x.from ? dm(x.from) : '—'}${x.src === 'Tay' ? ' · thêm tay' : ''}</div><div class="hwbadges">${badges}</div></div>
+        ${READONLY ? '' : `<button class="hwmenu" type="button" data-hwm="${esc(x.id)}" title="Sửa ngày giao / ẩn bài">⋯</button>`}</div>
+      <table class="hwt">${studs.map(st => { const t = hwTick(x.id, st.name); return `<tr><td class="n">${esc(st.display)}</td><td>${btn(x, st, 'l1', t)}</td><td>${btn(x, st, 'l2', t)}</td></tr>`; }).join('')}</table></div>`; };
+  const open = L.filter((x, i) => i < 4 || hwStats(x).n1 || hwStats(x).n2), old = L.filter(x => open.indexOf(x) < 0);
+  h += open.map(card).join('') + (old.length ? `<details class="hwold"><summary>📦 Bài cũ hơn, cả lớp đã xong (${old.length})</summary>${old.map(card).join('')}</details>` : '');
+  const hid = ST.hwa.filter(x => x.cls === cls && x.hide);
+  if (hid.length && !READONLY) h += `<div class="small muted" style="margin:8px 4px">Bài đã ẩn: ${hid.map(x => `<a href="#" data-hwun="${esc(x.id)}">${esc(x.title)}</a>`).join(' · ')} <span>(chạm để hiện lại)</span></div>`;
+  V.innerHTML = h;
+  V.querySelectorAll('[data-hw]').forEach(b => b.addEventListener('click', () => hwTap(b.dataset.hw, b.dataset.n, b.dataset.k)));
+  V.querySelectorAll('[data-hwm]').forEach(b => b.addEventListener('click', () => hwLessonModal(b.dataset.hwm)));
+  V.querySelectorAll('[data-hwun]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); const x = ST.hwa.find(y => y.id === a.dataset.hwun); if (x) { x.hide = false; save(); route(true); } }));
+  const r = $('#hwR'); if (r) r.addEventListener('click', () => { r.disabled = true; r.textContent = '⏳ Đang đọc…'; hwRefresh(true).then(n => { toast(n ? '📚 Đã cập nhật ' + n + ' bài' : '📚 Không có bài mới'); route(true); }); });
+  const a = $('#hwAdd'); if (a) a.addEventListener('click', () => hwLessonModal(null, cls));
+  if (site && (!F || Date.now() - F.at > 600000)) hwRefresh().then(() => { if (LAST === 'baitap') route(true); }); // tự đọc trang (10 phút/lần)
+}
+/** Chạm ô Lần 1 / Lần 2: ô trống → tick hôm nay; ô đã tick → đổi ngày / bỏ tick / không cần lần 2 */
+function hwTap(id, name, k) {
+  if (READONLY) return;
+  const key = id + '|' + name, t = ST.hwt[key] || (ST.hwt[key] = {}), who = (byName(name) || { display: name }).display;
+  if (k === 'l1' ? !t.l1 : !t.l2 && !t.skip) {
+    t[k] = TODAY; if (k === 'l2' && !t.l1) t.l1 = TODAY;
+    save(); route(true); toast(`✓ ${who} · nộp lần ${k === 'l1' ? 1 : 2} · ${dm(TODAY)}`); return;
+  }
+  const M = $('#modal'), x = ST.hwa.find(y => y.id === id) || {}, isSkip = k === 'l2' && t.skip;
+  M.innerHTML = `<div class="sheet"><h3 style="font-size:19px">${esc(who)} · ${k === 'l1' ? 'Nộp lần 1' : 'Nộp lần 2'}</h3><div class="small muted" style="margin:2px 0 10px">${esc(x.title || '')}</div>
+    ${isSkip ? '<div class="small">Đang ghi: <b>Không cần lần 2</b> (đúng hết ngay lần 1)</div>' : `<label><div class="lbl">Ngày nộp</div><input type="date" id="hwD" value="${esc(t[k] || TODAY)}"></label>`}
+    <div class="row wrapf" style="gap:8px;margin-top:14px">${isSkip ? '' : '<button class="btn" id="hwS" type="button">💾 Lưu ngày</button>'}
+      ${k === 'l2' && !isSkip ? '<button class="btn sm ghost" id="hwK" type="button">✓ Không cần lần 2 (đúng hết)</button>' : ''}
+      <button class="btn ghost" id="hwX" type="button">🗑️ Bỏ tick</button><button class="btn ghost" id="hwC" type="button">Hủy</button></div></div>`;
+  M.hidden = false;
+  const close = () => { M.hidden = true; M.innerHTML = ''; }, done = () => { close(); save(); route(true); };
+  M.onclick = e => { if (e.target === M) close(); };
+  $('#hwC').onclick = close;
+  if ($('#hwS')) $('#hwS').onclick = () => { const v = $('#hwD').value; if (v) { t[k] = v; done(); } };
+  if ($('#hwK')) $('#hwK').onclick = () => { t.skip = true; t.l2 = ''; done(); };
+  $('#hwX').onclick = () => { if (k === 'l1') t.l1 = ''; else { t.l2 = ''; t.skip = false; } done(); };
+}
+/** ⋯ của 1 bài (sửa ngày giao / tên, ẩn hoặc xóa) – hoặc thêm bài tay (id = null) */
+function hwLessonModal(id, cls) {
+  const x = id ? ST.hwa.find(y => y.id === id) : { cls, title: '', link: '', from: TODAY, src: 'Tay' }; if (!x) return;
+  const manual = x.src === 'Tay', M = $('#modal');
+  M.innerHTML = `<div class="sheet"><h3 style="font-size:19px">${id ? '📚 Sửa bài đã giao' : '＋ Thêm bài đã giao'} · ${esc(x.cls)}</h3>
+    ${manual ? `<label><div class="lbl">Tên bài</div><input id="hwT" value="${esc(x.title)}" placeholder="VD: Workbook trang 12–13"></label>
+      <label><div class="lbl">Link (nếu có)</div><input type="url" id="hwL" value="${esc(x.link || '')}" placeholder="https://…"></label>` : `<div class="small" style="margin-bottom:6px"><b>${esc(x.title)}</b><div class="muted">Bài tự điền từ trang bài tập – tên bài theo trang.</div></div>`}
+    <label><div class="lbl">Ngày giao</div><input type="date" id="hwF" value="${esc(x.from || TODAY)}"></label>
+    <div class="row wrapf" style="gap:8px;margin-top:14px"><button class="btn" id="hwS" type="button">💾 Lưu</button>
+      ${id ? (manual ? '<button class="btn ghost" id="hwDel" type="button">🗑️ Xóa bài</button>' : '<button class="btn ghost" id="hwHide" type="button">🙈 Ẩn với lớp này</button>') : ''}
+      <button class="btn ghost" id="hwC" type="button">Hủy</button></div></div>`;
+  M.hidden = false;
+  const close = () => { M.hidden = true; M.innerHTML = ''; }, done = msg => { close(); save(); route(true); if (msg) toast(msg); };
+  M.onclick = e => { if (e.target === M) close(); };
+  $('#hwC').onclick = close;
+  $('#hwS').onclick = () => {
+    const f = $('#hwF').value || TODAY;
+    if (manual) { const t = $('#hwT').value.trim(); if (!t) { toast('Nhập tên bài'); return; } x.title = t; x.link = $('#hwL').value.trim(); }
+    x.from = f; if (!id) ST.hwa.push({ id: x.cls + '/tay:' + uid(''), cls: x.cls, title: x.title, week: null, link: x.link, from: f, src: 'Tay', hide: false });
+    done(id ? 'Đã lưu' : '📚 Đã thêm bài');
+  };
+  if ($('#hwHide')) $('#hwHide').onclick = () => { x.hide = true; done('🙈 Đã ẩn bài (hiện lại ở cuối trang)'); };
+  if ($('#hwDel')) $('#hwDel').onclick = () => { if (!confirm('Xóa bài "' + x.title + '" và các tick của bài này?')) return;
+    ST.hwa = ST.hwa.filter(y => y !== x); Object.keys(ST.hwt).forEach(k => { if (k.indexOf(x.id + '|') === 0) delete ST.hwt[k]; }); done('Đã xóa bài'); };
+}
+
 function viewGiaoAn(cls, focus) {
   setTab('giaoan', 'Giáo án');
   if (!CLASS_CFG[cls]) cls = (sessOn(TODAY)[0] || {}).cls || CLASSES[0];
@@ -1730,9 +1932,11 @@ function route(keep) {
   const p = location.hash.replace(/^#/, '').split('/').map(decodeURIComponent);
   if (!keep && p[0] !== LAST) window.scrollTo(0, 0);
   LAST = p[0]; pruneTodos();
+  if (!route.hw) { route.hw = true; setTimeout(() => { hwRefresh().then(n => { if (n && LAST === 'baitap') route(true); }).catch(() => {}); }, 1500); } // ghi bài mới mở ngay ngày mở
   if (p[0] === 'lich') viewLich(p[1]);
   else if (p[0] === 'buoi') viewBuoi(p[1], p[2]);
   else if (p[0] === 'giaoan') viewGiaoAn(p[1], p[2]);
+  else if (p[0] === 'baitap') viewBaiTap(p[1]);
   else if (p[0] === 'hs') viewHS(p[1]);
   else if (p[0] === 'hocphi') viewHocPhi();
   else if (p[0] === 'lucky') viewLucky();
