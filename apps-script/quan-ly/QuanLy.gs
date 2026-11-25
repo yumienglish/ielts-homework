@@ -52,7 +52,7 @@ const SCHEMA = {
   Diem: { key: ['ref'], readOnly: true, cols: [
     ['date', 'Ngày', 'd'], ['cls', 'Lớp', 't'], ['name', 'Học sinh', 't'], ['type', 'Loại (HW/XT/CT)', 't'], ['test', 'Bài', ''],
     ['score', 'Điểm', 't'], ['max', 'Max', 't'], ['pct', '%', 't'], ['ta', 'Người chấm', ''], ['note', 'Lỗi sai', ''], ['res', 'Hướng xử lý', ''], ['src', 'Nguồn', ''],
-    ['ref', 'Mã bài nộp (tự ghi)', 't']] },
+    ['ref', 'Mã bài nộp (tự ghi)', 't'], ['l2', 'Lần 2', 't'], ['l2at', 'Nộp lần 2 lúc', 'd']] },
   // Bài nộp online chưa khớp được tên học sinh (web app: Học sinh → Bài nộp online)
   ChoGhepTen: { key: ['ref'], readOnly: true, cols: [
     ['ref', 'Mã bài nộp', 't'], ['src', 'Nguồn', ''], ['date', 'Ngày nộp', 'd'], ['typedName', 'Tên HS tự gõ', ''], ['typedCls', 'Lớp HS tự gõ', ''],
@@ -496,7 +496,7 @@ function importSubmissions_(opts) {
     const match = matcher_(hsRows); let accSt = {};
     const inDiem = {}; readTable_(ss, 'Diem', tz).forEach(function (r) { if (r.ref) inDiem[r.ref] = r; });
     const inQueue = {}; readTable_(ss, 'ChoGhepTen', tz).forEach(function (r) { if (r.ref) inQueue[r.ref] = r; });
-    const found = {}; const msgs = []; let nAdd = 0, nQ = 0, nUpd = 0;
+    const found = {}; const msgs = []; let nAdd = 0, nQ = 0, nUpd = 0, n2 = 0;
     IMPORT_SOURCES.forEach(function (src) {
       let id = sheetId_(set[src.setting]);
       if (!id) { // chưa có link → tự tìm file theo tên trong Drive, tìm thấy thì ghi link vào CaiDat
@@ -517,7 +517,10 @@ function importSubmissions_(opts) {
     const putD = [], putQ = [];
     Object.keys(found).forEach(function (ref) {
       const rec = found[ref];
-      if (inDiem[ref]) { if (rec.updatable && String(inDiem[ref].note) !== rec.row.note) { putD.push({ op: 'put', key: ref, row: { note: rec.row.note } }); nUpd++; } return; }
+      if (inDiem[ref]) {
+        if (rec.updatable && String(inDiem[ref].note) !== rec.row.note) { putD.push({ op: 'put', key: ref, row: { note: rec.row.note } }); nUpd++; }
+        else if (rec.btvn && (String(inDiem[ref].l2 || '') !== rec.row.l2.replace(/^'/, '') ||String(inDiem[ref].l2at || '') !== rec.row.l2at)) { putD.push({ op: 'put', key: ref, row: { l2: rec.row.l2, l2at: rec.row.l2at } }); n2++; }
+        return; }
       if (inQueue[ref]) return;
       const st = (rec.account && accSt[rec.account]) || match(rec.typedName, rec.typedCls);
       if (st) { putD.push({ op: 'put', key: ref, row: diemRow_(rec.row, st, ref) }); nAdd++; }
@@ -533,7 +536,7 @@ function importSubmissions_(opts) {
     writeTable_(ss, 'CaiDat', [{ op: 'put', key: 'Lần lấy bài nộp gần nhất', row: { key: 'Lần lấy bài nộp gần nhất', value: now } }], tz);
     if (opts.ensureTrigger && ensureImportTrigger_()) msgs.push('• Đã bật tự lấy bài nộp 4 tiếng/lần.');
     const waiting = readTable_(ss, 'ChoGhepTen', tz).filter(function (r) { return !r.status; }).length;
-    const text = 'Thêm ' + (nAdd + nRe) + ' bài vào Điểm' + (nUpd ? ', cập nhật ' + nUpd + ' bài Speaking' : '') + '. ' +
+    const text = 'Thêm ' + (nAdd + nRe) + ' bài vào Điểm' + (nUpd ? ', cập nhật ' + nUpd + ' bài Speaking' : '') + (n2 ? ', ' + n2 + ' bài có thêm lần 2' : '') + '. ' +
       (waiting ? waiting + ' bài chờ ghép tên (web app → Học sinh).' : 'Không có bài chờ ghép tên.') + (msgs.length ? '\n' + msgs.join('\n') : '');
     return { text: text, added: nAdd + nRe, queued: waiting };
   } finally { lock.releaseLock(); }
@@ -580,8 +583,10 @@ function parseBtvn_(o, tz) {
   const wrong = txt_(o, 'Câu sai'); const leaves = parseInt(txt_(o, 'Số lần rời trang'), 10) || 0; const rec = txt_(o, 'Ghi âm');
   const note = [wrong && wrong !== '—' ? 'Câu sai: ' + wrong : '', pending ? 'Còn phần cô chấm' : '', leaves ? 'Rời trang ' + leaves + ' lần' : '',
     /^Có/.test(rec) ? 'Có ghi âm (xem email)' : rec === 'Không ghi âm' ? 'Không nộp ghi âm' : ''].filter(String).join(' · ');
-  return { ref: 'BTVN|' + w.key + '|' + norm_(name), typedName: name, typedCls: txt_(o, 'Lớp'), account: accUser_(txt_(o, 'Tài khoản')),
-    row: { date: w.date, type: 'HW', test: txt_(o, 'Bài'), score: score, max: total, pct: tt ? Math.round(sc / tt * 100) + '%' : '', ta: 'Online', note: note, res: '' } };
+  const w2 = when_(o['Nộp lần 2 lúc'], tz); // lần 2 (Nộp lần 2 / "Không cần (đúng hết)") → web app tự tick tab 📚 Bài tập
+  return { ref: 'BTVN|' + w.key + '|' + norm_(name), typedName: name, typedCls: txt_(o, 'Lớp'), account: accUser_(txt_(o, 'Tài khoản')), btvn: true,
+    row: { date: w.date, type: 'HW', test: txt_(o, 'Bài'), score: score, max: total, pct: tt ? Math.round(sc / tt * 100) + '%' : '', ta: 'Online', note: note, res: '',
+      l2: txt_(o, 'Điểm lần 2') ? "'" + txt_(o, 'Điểm lần 2') : '', l2at: w2 ? w2.date : '' } }; // dấu ' : để Sheet không đổi "8/10" thành ngày
 }
 function parseSpeaking_(o, tz) {
   const w = when_(o['Thời gian gửi'], tz); const name = txt_(o, 'Họ tên'); if (!w || !name) return null;

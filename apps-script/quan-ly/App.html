@@ -263,6 +263,7 @@ table.fee2 tr.grp td{padding:12px 2px 5px;border-bottom:2px solid var(--line)}
 .mc.off{justify-content:center;color:#9a8a93;font-weight:700;font-size:12.5px;background:#f6f1f4}
 .mc.na{cursor:pointer}
 b.nm{cursor:pointer;border-bottom:1.5px dotted #d9b8c4}
+.hpz{border:0;background:#e6f7ee;border-radius:9px;padding:1px 6px;margin-left:4px;cursor:pointer;font-size:13px;vertical-align:1px}
 table.fee2 th small{display:block;font-size:10.5px;font-weight:700;opacity:.7}
 .fm{border-top:2px dotted var(--line);padding:8px 0}
 .quote{margin-bottom:12px}
@@ -311,6 +312,7 @@ body.ro .cc,body.ro .ed,body.ro textarea,body.ro [data-ci],body.ro [data-p],body
 .hwb.on{border-style:solid;border-color:var(--mint);background:var(--mint-soft);color:var(--mint-ink)}
 .hwb.skip{border-style:solid;border-color:var(--butter);background:var(--butter-soft);color:var(--butter-ink)}
 .hwb:disabled{cursor:default}
+.hwb.auto{border-style:dotted}
 .hwmenu{border:0;background:none;font-size:18px;cursor:pointer;padding:0 4px;color:var(--muted)}
 .hwold summary{cursor:pointer;font-weight:800;color:var(--muted);margin:10px 0}
 </style>
@@ -453,11 +455,12 @@ function fromServer(D) { // các tab Google Sheet -> ST
   MAU_LIST = T.MauNhanXet.filter(m => m.code).map(m => ({ code: S(m.code), label: S(m.label) || S(m.code), teacher: S(m.teacher), next: S(m.next), parent: S(m.parent) }));
   MAU = Object.fromEntries(MAU_LIST.map(m => [m.code, m]));
   SETTINGS = Object.fromEntries(T.CaiDat.map(r => [S(r.key), S(r.value)]));
-  SCORES = mkScores(T.Diem.map(r => ({ date: S(r.date), cls: S(r.cls), name: S(r.name), type: S(r.type).toUpperCase(), test: S(r.test), score: S(r.score), max: S(r.max), pct: S(r.pct), ta: S(r.ta), note: S(r.note), res: S(r.res), src: S(r.src) })));
+  ST.bank = S(SETTINGS[BANK_KEY]); ST.bankRow = T.CaiDat.some(r => S(r.key) === BANK_KEY); // dòng duy nhất của CaiDat app được ghi
+  SCORES = mkScores(T.Diem.map(r => ({ date: S(r.date), cls: S(r.cls), name: S(r.name), type: S(r.type).toUpperCase(), test: S(r.test), score: S(r.score), max: S(r.max), pct: S(r.pct), ta: S(r.ta), note: S(r.note), res: S(r.res), src: S(r.src), l2: S(r.l2).replace(/^'/, ''), l2at: S(r.l2at) })));
   ST.reminded = {}; (T.NhacBT || []).filter(r => r.mon && r.cls).forEach(r => { ST.reminded[S(r.mon) + '|' + S(r.cls)] = S(r.at) || '✓'; });
   // 📚 Bài tập đã giao + tick nộp bài (tab BaiGiao, NopBai)
   ST.hwa = (T.BaiGiao || []).filter(r => S(r.id) && S(r.cls)).map(r => ({ id: S(r.id), cls: S(r.cls), title: S(r.title), week: +r.week || null, link: S(r.link), from: S(r.from), src: S(r.src) || 'Tự động', hide: !!S(r.hide) }));
-  ST.hwt = {}; (T.NopBai || []).filter(r => S(r.bai) && S(r.name)).forEach(r => { ST.hwt[S(r.bai) + '|' + S(r.name)] = { l1: S(r.l1), l2: S(r.l2), skip: !!S(r.skip) }; });
+  ST.hwt = {}; (T.NopBai || []).filter(r => S(r.bai) && S(r.name)).forEach(r => { ST.hwt[S(r.bai) + '|' + S(r.name)] = { l1: S(r.l1), l2: S(r.l2), skip: S(r.skip) === '-' ? '-' : !!S(r.skip) }; });
   SUBQ = (T.ChoGhepTen || []).filter(r => r.ref && !S(r.status)).map(r => ({ ref: S(r.ref), src: S(r.src), date: S(r.date), typedName: S(r.typedName), typedCls: S(r.typedCls), test: S(r.test), score: S(r.score), max: S(r.max) }));
   rebuild(); reindex(); SNAP = flat();
 }
@@ -476,7 +479,8 @@ function flat() { // ST -> các dòng theo tab, để so sánh và chỉ gửi d
   (ST.prices || []).forEach((x, i) => { const r = { group: x.group, level: x.level, hour: x.hour || '', ord: i + 1 }; Object.keys(x).sort().forEach(k => { if (k[0] === '_') r[k] = x[k]; }); put('BangGia', qKey(x), r); });
   (ST.hwa || []).forEach(x => put('BaiGiao', x.id, { id: x.id, cls: x.cls, title: x.title, week: x.week || '', link: x.link || '', from: x.from || '', src: x.src || 'Tự động', hide: x.hide ? 'x' : '' }));
   Object.entries(ST.hwt || {}).forEach(([k, v]) => { if (!v.l1 && !v.l2 && !v.skip) return; const i = k.lastIndexOf('|');
-    put('NopBai', k, { bai: k.slice(0, i), name: k.slice(i + 1), l1: v.l1 || '', l2: v.l2 || '', skip: v.skip ? 'x' : '' }); });
+    put('NopBai', k, { bai: k.slice(0, i), name: k.slice(i + 1), l1: v.l1 || '', l2: v.l2 || '', skip: v.skip === '-' ? '-' : v.skip ? 'x' : '' }); });
+  if (ST.bankRow || ST.bank) put('CaiDat', BANK_KEY, { key: BANK_KEY, value: ST.bank || '' });
   Object.entries(ST.report).forEach(([name, r]) => put('BaoCao', name, { name, from: r.from || '', to: r.to || '', learn: r.learn ?? '', good: r.good ?? '', weak: r.weak ?? '', goal: r.goal ?? '', sent: r.sent || '' }));
   return o;
 }
@@ -1287,10 +1291,27 @@ async function hwRefresh(force) {
   if (n) save();
   return n;
 }
-const hwTick = (id, name) => ST.hwt[id + '|' + name] || {};
+// Tự tick theo bài nộp online (tab Diem do "lấy bài nộp" ghi, 4 tiếng/lần): tên học sinh + tên bài (giống tiêu đề mail)
+const hwNorm = s => hwPlain(s).toLowerCase();
+let HW_AUTO = null, HW_AUTO_SRC = null;
+function hwAuto(title, name) {
+  if (HW_AUTO_SRC !== SCORES) { HW_AUTO_SRC = SCORES; HW_AUTO = {};
+    SCORES.filter(s => /online/i.test(s.src || '') && s.test && !/LÀM LẠI/i.test(s.test)).forEach(s => {
+      const k = s.name + '|' + hwNorm(s.test), a = HW_AUTO[k] || (HW_AUTO[k] = { l1: '', l2: '', skip: false });
+      if (!a.l1 || s.iso < a.l1) a.l1 = s.iso; // bài nộp đầu tiên
+      if (/không cần/i.test(s.l2 || '')) a.skip = true; else if (s.l2at && (!a.l2 || s.l2at < a.l2)) a.l2 = s.l2at; }); }
+  return HW_AUTO[name + '|' + hwNorm(title)] || {};
+}
+// tick cô ghi tay (tab NopBai) đè lên tick tự động; '-' = cô đã bỏ tick tự động
+function hwTick(x, name) {
+  const m = ST.hwt[x.id + '|' + name] || {}, a = hwAuto(x.title, name);
+  const pick = k => m[k] === '-' ? '' : m[k] || a[k] || '';
+  const skip = m.skip === '-' ? false : !!(m.skip || a.skip);
+  return { l1: pick('l1'), l2: skip ? '' : pick('l2'), skip, auto1: !m.l1 && !!a.l1, auto2: !m.l2 && !m.skip && !!(a.l2 || a.skip) };
+}
 function hwStats(x) {
   let n1 = 0, n2 = 0; const st = studentsOf(x.cls);
-  st.forEach(s => { const t = hwTick(x.id, s.name); if (!t.l1) n1++; else if (!t.l2 && !t.skip) n2++; });
+  st.forEach(s => { const t = hwTick(x, s.name); if (!t.l1) n1++; else if (!t.l2 && !t.skip) n2++; });
   return { total: st.length, n1, n2 };
 }
 const hwList = cls => ST.hwa.filter(x => x.cls === cls && !x.hide)
@@ -1309,13 +1330,14 @@ function viewBaiTap(cls) {
   h += `<div class="card"><div class="row between wrapf" style="gap:8px"><div class="small grow" style="flex:1 1 260px">${site
       ? `🔗 Tự điền theo bài đang mở trên <a href="${esc(link)}" target="_blank">trang bài tập của lớp</a>${F ? (F.err ? ' · <b style="color:var(--pink-ink)">chưa đọc được trang (' + esc(F.err) + ')</b>' : ' · đọc lúc ' + pd(at.getHours()) + ':' + pd(at.getMinutes())) : ' · đang đọc…'}`
       : 'Lớp chưa có <b>Link bài tập</b> (✏️ Sửa lớp ở tab Học sinh) → chỉ thêm bài tay được.'}
-    <div class="muted" style="margin-top:4px">Nhận mail nộp bài của em nào thì chạm ô <b>Lần 1</b> / <b>Lần 2</b> của em đó: ngày tick là ngày nộp. Chạm lại để đổi ngày, bỏ tick hoặc chọn “Không cần lần 2”.</div></div>
-    <div class="row" style="gap:6px">${site ? '<button class="btn sm ghost" id="hwR" type="button">🔄 Đọc lại</button>' : ''}${READONLY ? '' : '<button class="btn sm mint" id="hwAdd" type="button">＋ Thêm bài</button>'}</div></div></div>`;
+    <div class="muted" style="margin-top:4px">Bài nộp online <b>tự tick</b> (ô viền chấm, ngày tick = ngày nộp; cập nhật 4 tiếng/lần hoặc bấm 📥). Bài nộp giấy / ngoài web: chạm ô <b>Lần 1</b> / <b>Lần 2</b> để tick tay. Chạm ô đã tick để đổi ngày, bỏ tick hoặc chọn “Không cần lần 2”.</div></div>
+    <div class="row wrapf" style="gap:6px">${READONLY ? '' : '<button class="btn sm ghost" id="hwImp" type="button">📥 Lấy bài nộp ngay</button>'}${site ? '<button class="btn sm ghost" id="hwR" type="button">🔄 Đọc lại</button>' : ''}${READONLY ? '' : '<button class="btn sm mint" id="hwAdd" type="button">＋ Thêm bài</button>'}</div></div></div>`;
   const L = hwList(cls), studs = studentsOf(cls);
   if (!L.length) h += `<div class="card muted small">Chưa có bài nào${site && !F ? ' – đang đọc trang bài tập…' : ''}.</div>`;
   const btn = (x, st, k, t) => {
     const on = k === 'l1' ? !!t.l1 : !!(t.l2 || t.skip), lab = k === 'l1' ? (t.l1 ? '✓ ' + dm(t.l1) : 'Lần 1') : t.skip ? '✓ Không cần' : t.l2 ? '✓ ' + dm(t.l2) : 'Lần 2';
-    return `<button class="hwb${on ? (k === 'l2' && t.skip ? ' skip' : ' on') : ''}" type="button" data-hw="${esc(x.id)}" data-n="${esc(st.name)}" data-k="${k}"${READONLY ? ' disabled' : ''}>${lab}</button>`;
+    const auto = on && (k === 'l1' ? t.auto1 : t.auto2);
+    return `<button class="hwb${on ? (k === 'l2' && t.skip ? ' skip' : ' on') : ''}${auto ? ' auto' : ''}" type="button" data-hw="${esc(x.id)}" data-n="${esc(st.name)}" data-k="${k}"${auto ? ' title="Tự tick theo bài em nộp online"' : ''}${READONLY ? ' disabled' : ''}>${lab}</button>`;
   };
   const card = x => { const s = hwStats(x);
     const badges = s.n1 || s.n2 ? (s.n1 ? `<span class="badge b-bad">Chưa nộp: ${s.n1}/${s.total}</span>` : '') + (s.n2 ? `<span class="badge b-warn">Chưa làm lần 2: ${s.n2}</span>` : '')
@@ -1323,7 +1345,7 @@ function viewBaiTap(cls) {
     return `<div class="card hwcard"><div class="hwhead"><div><h3>${x.link ? `<a href="${esc(x.link)}" target="_blank">${esc(x.title)} ↗</a>` : esc(x.title)}</h3>
         <div class="small muted">Giao ${x.from ? dm(x.from) : '—'}${x.src === 'Tay' ? ' · thêm tay' : ''}</div><div class="hwbadges">${badges}</div></div>
         ${READONLY ? '' : `<button class="hwmenu" type="button" data-hwm="${esc(x.id)}" title="Sửa ngày giao / ẩn bài">⋯</button>`}</div>
-      <table class="hwt">${studs.map(st => { const t = hwTick(x.id, st.name); return `<tr><td class="n">${esc(st.display)}</td><td>${btn(x, st, 'l1', t)}</td><td>${btn(x, st, 'l2', t)}</td></tr>`; }).join('')}</table></div>`; };
+      <table class="hwt">${studs.map(st => { const t = hwTick(x, st.name); return `<tr><td class="n">${esc(st.display)}</td><td>${btn(x, st, 'l1', t)}</td><td>${btn(x, st, 'l2', t)}</td></tr>`; }).join('')}</table></div>`; };
   const open = L.filter((x, i) => i < 4 || hwStats(x).n1 || hwStats(x).n2), old = L.filter(x => open.indexOf(x) < 0);
   h += open.map(card).join('') + (old.length ? `<details class="hwold"><summary>📦 Bài cũ hơn, cả lớp đã xong (${old.length})</summary>${old.map(card).join('')}</details>` : '');
   const hid = ST.hwa.filter(x => x.cls === cls && x.hide);
@@ -1334,19 +1356,21 @@ function viewBaiTap(cls) {
   V.querySelectorAll('[data-hwun]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); const x = ST.hwa.find(y => y.id === a.dataset.hwun); if (x) { x.hide = false; save(); route(true); } }));
   const r = $('#hwR'); if (r) r.addEventListener('click', () => { r.disabled = true; r.textContent = '⏳ Đang đọc…'; hwRefresh(true).then(n => { toast(n ? '📚 Đã cập nhật ' + n + ' bài' : '📚 Không có bài mới'); route(true); }); });
   const a = $('#hwAdd'); if (a) a.addEventListener('click', () => hwLessonModal(null, cls));
+  const im = $('#hwImp'); if (im) im.addEventListener('click', () => serverCall('importNow', [], 'Đã lấy bài nộp', im));
   if (site && (!F || Date.now() - F.at > 600000)) hwRefresh().then(() => { if (LAST === 'baitap') route(true); }); // tự đọc trang (10 phút/lần)
 }
 /** Chạm ô Lần 1 / Lần 2: ô trống → tick hôm nay; ô đã tick → đổi ngày / bỏ tick / không cần lần 2 */
 function hwTap(id, name, k) {
   if (READONLY) return;
   const key = id + '|' + name, t = ST.hwt[key] || (ST.hwt[key] = {}), who = (byName(name) || { display: name }).display;
-  if (k === 'l1' ? !t.l1 : !t.l2 && !t.skip) {
-    t[k] = TODAY; if (k === 'l2' && !t.l1) t.l1 = TODAY;
+  const x = ST.hwa.find(y => y.id === id) || { id, title: '' }, cur = hwTick(x, name), A = hwAuto(x.title, name);
+  if (k === 'l1' ? !cur.l1 : !cur.l2 && !cur.skip) {
+    t[k] = TODAY; if (k === 'l2' && !cur.l1) t.l1 = TODAY; if (k === 'l2' && t.skip === '-') t.skip = '';
     save(); route(true); toast(`✓ ${who} · nộp lần ${k === 'l1' ? 1 : 2} · ${dm(TODAY)}`); return;
   }
-  const M = $('#modal'), x = ST.hwa.find(y => y.id === id) || {}, isSkip = k === 'l2' && t.skip;
-  M.innerHTML = `<div class="sheet"><h3 style="font-size:19px">${esc(who)} · ${k === 'l1' ? 'Nộp lần 1' : 'Nộp lần 2'}</h3><div class="small muted" style="margin:2px 0 10px">${esc(x.title || '')}</div>
-    ${isSkip ? '<div class="small">Đang ghi: <b>Không cần lần 2</b> (đúng hết ngay lần 1)</div>' : `<label><div class="lbl">Ngày nộp</div><input type="date" id="hwD" value="${esc(t[k] || TODAY)}"></label>`}
+  const M = $('#modal'), isSkip = k === 'l2' && cur.skip, isAuto = k === 'l1' ? cur.auto1 : cur.auto2;
+  M.innerHTML = `<div class="sheet"><h3 style="font-size:19px">${esc(who)} · ${k === 'l1' ? 'Nộp lần 1' : 'Nộp lần 2'}</h3><div class="small muted" style="margin:2px 0 10px">${esc(x.title || '')}${isAuto ? '<br>🤖 Tự tick theo bài em nộp online' : ''}</div>
+    ${isSkip ? '<div class="small">Đang ghi: <b>Không cần lần 2</b> (đúng hết ngay lần 1)</div>' : `<label><div class="lbl">Ngày nộp</div><input type="date" id="hwD" value="${esc(cur[k] || TODAY)}"></label>`}
     <div class="row wrapf" style="gap:8px;margin-top:14px">${isSkip ? '' : '<button class="btn" id="hwS" type="button">💾 Lưu ngày</button>'}
       ${k === 'l2' && !isSkip ? '<button class="btn sm ghost" id="hwK" type="button">✓ Không cần lần 2 (đúng hết)</button>' : ''}
       <button class="btn ghost" id="hwX" type="button">🗑️ Bỏ tick</button><button class="btn ghost" id="hwC" type="button">Hủy</button></div></div>`;
@@ -1356,7 +1380,8 @@ function hwTap(id, name, k) {
   $('#hwC').onclick = close;
   if ($('#hwS')) $('#hwS').onclick = () => { const v = $('#hwD').value; if (v) { t[k] = v; done(); } };
   if ($('#hwK')) $('#hwK').onclick = () => { t.skip = true; t.l2 = ''; done(); };
-  $('#hwX').onclick = () => { if (k === 'l1') t.l1 = ''; else { t.l2 = ''; t.skip = false; } done(); };
+  // bỏ tick: ô tự tick thì ghi '-' (để tick tự động không hiện lại)
+  $('#hwX').onclick = () => { if (k === 'l1') t.l1 = A.l1 ? '-' : ''; else { t.l2 = A.l2 ? '-' : ''; t.skip = A.skip ? '-' : false; } done(); };
 }
 /** ⋯ của 1 bài (sửa ngày giao / tên, ẩn hoặc xóa) – hoặc thêm bài tay (id = null) */
 function hwLessonModal(id, cls) {
@@ -1580,7 +1605,7 @@ function viewHocPhi() {
     <div class="row between wrapf" style="margin:14px 0 8px;gap:6px"><div class="seg" id="hpf"><button data-v="all" class="${HP_FILTER === 'all' ? 'on' : ''}">Tất cả</button><button data-v="un" class="${HP_FILTER === 'un' ? 'on x' : ''}">Còn nợ (${nDebt})</button></div>
       <button class="btn sm ${HP_QUOTE ? 'mint' : 'ghost'}" id="hpQ" type="button">📋 Quote ${HP_QUOTE ? '▴' : '▾'}</button></div>
     ${HP_QUOTE ? quoteCard() : ''}
-    <div class="small muted" style="margin:0 4px 6px">Bấm ô tiền = tick đã đóng · bấm tên = sửa học phí / nghỉ</div>
+    <div class="small muted" style="margin:0 4px 6px">Bấm ô tiền = tick đã đóng · bấm tên = sửa học phí / nghỉ · 💬 = chép tin nhắc học phí gửi phụ huynh</div>
     <div class="card" style="padding:6px 10px 10px"><table class="fee2"><tr><th>Học sinh</th>${MS.map(ym => `<th>${mLabel(ym)}${ym === nxt ? '<small>tháng sau</small>' : ''}</th>`).join('')}</tr>`;
   const cell = (r, ym) => { const f = r.f[ym]; const n = esc(r.s.name);
     if (!f) return chargeOf(r.s, ym) === 'off' ? `<td><div class="mc off" data-m="${n}">💤 nghỉ</div></td>` : `<td><div class="mc na" data-m="${n}" title="Tháng này không thu">—</div></td>`;
@@ -1592,7 +1617,7 @@ function viewHocPhi() {
     if (type === 'thang') info = due.map(ym => { const m = monthlyCalc(c, ym); return m.missing ? `<span class="badge b-bad">${mLabel(ym)} thiếu ${m.missing}b</span>` : ''; }).join(' ') || '<span class="badge b-ok">đủ buổi</span>';
     else { const p = packCalc(c); info = `<span class="small muted">gói ${p.cur}/${p.size}</span><span class="prog"><i style="width:${Math.round(p.cur / p.size * 100)}%"></i></span>${p.left <= 2 ? ' <span class="badge b-warn">sắp hết</span>' : ''}`; }
     h += `<tr class="grp"><td colspan="${MS.length + 1}"><div class="row between">${cp(c)}<span>${info}</span></div></td></tr>`;
-    h += rs.map(r => `<tr><td><b class="nm" data-m="${esc(r.s.name)}">${esc(r.s.display)}</b></td>${MS.map(ym => cell(r, ym)).join('')}</tr>`).join('');
+    h += rs.map(r => `<tr><td><b class="nm" data-m="${esc(r.s.name)}">${esc(r.s.display)}</b>${feeAsk(r.s).length ? `<button class="hpz" type="button" data-fz="${esc(r.s.name)}" title="Chép tin nhắc học phí cho phụ huynh">💬</button>` : ''}</td>${MS.map(ym => cell(r, ym)).join('')}</tr>`).join('');
   }));
   h += `</table></div><details class="small muted" style="margin:4px 4px 0"><summary>Cách tính</summary>
     <b>Lớp tháng:</b> tháng tính từ ngày 1 đến ngày cuối tháng. Buổi chuẩn = số ngày trong tháng rơi vào các thứ học cố định của lớp (VD lớp T3–T5 tháng 11 có 8 buổi). Thiếu buổi mà trong tháng không học bù thì trừ học phí ÷ buổi chuẩn cho mỗi buổi; chỉ đếm những tuần đã có lịch.<br>
@@ -1603,6 +1628,7 @@ function viewHocPhi() {
   V.querySelectorAll('#hpf button').forEach(b => b.addEventListener('click', () => { HP_FILTER = b.dataset.v; viewHocPhi(); }));
   V.querySelectorAll('[data-p]').forEach(el => el.addEventListener('click', () => { const [n, ym] = el.dataset.p.split('|'); setPay(n, ym, !isPaid(n, ym)); viewHocPhi(); }));
   V.querySelectorAll('[data-m]').forEach(el => el.addEventListener('click', () => feeMenu(el.dataset.m)));
+  V.querySelectorAll('[data-fz]').forEach(el => el.addEventListener('click', () => feeAskModal(el.dataset.fz)));
   $('#hpQ').addEventListener('click', () => { HP_QUOTE = !HP_QUOTE; if (!HP_QUOTE) QUOTE_EDIT = false; viewHocPhi(); });
   if (HP_QUOTE) bindQuote();
 }
@@ -1723,6 +1749,54 @@ function feeMenu(name) {
         if (!x || v === st.fee) return; x.fee = v; save(); draw(); if (location.hash.startsWith('#hocphi')) viewHocPhi();
         toast('Đã đổi học phí ' + st.display + ': ' + money(v)); };
       $('#fmFeeOk').addEventListener('click', go); fi.addEventListener('keydown', e => { if (e.key === 'Enter') go(); }); }
+  };
+  const close = () => { M.hidden = true; M.innerHTML = ''; route(true); };
+  M.onclick = e => { if (e.target === M) close(); };
+  draw(); M.hidden = false;
+}
+// ---- 💬 Nhắc học phí: tin nhắn soạn sẵn cho phụ huynh (chép rồi dán vào Zalo) ----
+const BANK_KEY = 'Thông tin chuyển khoản'; // 1 dòng trong tab CaiDat, cô điền ngay trong hộp nhắc học phí
+function feeAsk(st) { // các khoản cần nhắc: tháng đã tới mà chưa đóng; không có thì tháng sau (thu trước); lớp gói sắp hết → gói mới
+  const ms = shownMonths(); let L = ms.filter(ym => ym <= CUR_M && owes(st, ym));
+  if (!L.length) L = ms.filter(ym => ym > CUR_M && owes(st, ym));
+  const items = L.map(ym => ({ ym, f: feeLine(st, ym) }));
+  const cfg = CLASS_CFG[st.cls];
+  if (!items.length && cfg && cfg.type === 'goi') { const p = packCalc(st.cls); if (p.cur && p.left <= 2) items.push({ next: true, left: p.left, f: { type: 'goi', due: st.fee } }); }
+  return items.filter(x => x.f && x.f.due > 0); // học phí 0đ (chưa ghi học phí) thì không nhắc
+}
+function feeMsg(st, items, bank) {
+  const r = stuRow(st.name); const me = S(SETTINGS['Tên cô (ký báo cáo)']); const cfg = CLASS_CFG[st.cls];
+  const L = [`Chào anh/chị${S(r.parent) ? ' ' + S(r.parent) : ''}, cô${me ? ' ' + me : ''} nhắn ạ 🌷`, `Cô gửi học phí tiếng Anh của con ${fullName(st.name) || baseName(st.name)} (lớp ${st.cls}):`];
+  items.forEach(x => { const f = x.f;
+    if (x.next) L.push(`• Gói mới ${cfg.size} buổi (gói hiện tại còn ${x.left} buổi): ${money(f.due)}`);
+    else if (f.type === 'thang') L.push(`• Tháng ${+x.ym.slice(5)}/${x.ym.slice(0, 4)}: ${money(f.due)}${f.minus ? ` (học phí ${money(f.fee)}, đã trừ ${money(f.minus)} cho ${f.missing} buổi lớp không học)` : ''}`);
+    else L.push(`• Gói ${cfg.size} buổi${f.start ? ' bắt đầu ' + dmy(f.start) : ''}: ${money(f.due)}`); });
+  if (items.length > 1) L.push(`Tổng cộng: ${money(items.reduce((t, x) => t + x.f.due, 0))}`);
+  if (bank) L.push('', '🏦 ' + bank);
+  L.push('', 'Anh/chị chuyển khoản giúp cô nhé. Cảm ơn anh/chị!');
+  return L.join('\n');
+}
+function feeAskModal(name) {
+  const st = byName(name); if (!st) return; const M = $('#modal'); const items = feeAsk(st);
+  const z = zaloNum(stuRow(name).phone); let bank = S(ST.bank);
+  const draw = () => {
+    M.innerHTML = `<div class="sheet"><span class="corner stk" style="right:18px;top:10px">💬</span>
+      <div class="row wrapf" style="gap:8px"><h3 style="font-size:20px">Nhắc học phí · ${esc(st.display)}</h3>${cp(st.cls)}</div>
+      ${items.length ? '' : '<div class="alert info" style="margin:8px 0">Em này hiện không còn khoản nào cần đóng.</div>'}
+      <div class="lbl" style="margin-top:8px">Tin nhắn (sửa được trước khi chép)</div>
+      <textarea id="faT" rows="9" style="font-size:14px">${esc(feeMsg(st, items, bank))}</textarea>
+      ${READONLY ? '' : `<div class="lbl" style="margin-top:8px">🏦 Thông tin chuyển khoản <span class="muted small">(lưu cho mọi lần nhắc)</span></div>
+        <div class="row" style="gap:6px"><input type="text" id="faB" class="grow" value="${esc(bank)}" placeholder="VD: Vietcombank 0123456789 – NGUYEN THI MAI"><button class="btn sm mint" id="faBok" type="button">Lưu</button></div>`}
+      <div class="row wrapf" style="gap:6px;margin-top:14px">
+        ${z ? `<a class="btn mint" id="faZ" href="https://zalo.me/${z}" target="_blank" rel="noopener">💬 Chép + mở Zalo PH</a>` : `<span class="small muted">Chưa có SĐT phụ huynh (thêm ở tab Học sinh → ✏️ Sửa)</span>`}
+        <button class="btn ${z ? 'ghost' : ''}" id="faC" type="button">📋 Chép tin</button><button class="btn ghost" id="faX" type="button">Đóng</button></div></div>`;
+    const msg = () => $('#faT').value;
+    $('#faC').addEventListener('click', () => copyText(msg(), '📋 Đã chép tin nhắc học phí – dán vào Zalo phụ huynh'));
+    if ($('#faZ')) $('#faZ').addEventListener('click', () => copyText(msg(), '📋 Đã chép – dán vào Zalo phụ huynh vừa mở')); // <a> tự mở Zalo
+    $('#faX').addEventListener('click', close);
+    const bi = $('#faB');
+    if (bi) { const go = () => { const v = bi.value.trim(); if (v === S(ST.bank)) return; ST.bank = v; SETTINGS[BANK_KEY] = v; bank = v; save(); draw(); toast('Đã lưu thông tin chuyển khoản'); };
+      $('#faBok').addEventListener('click', go); bi.addEventListener('keydown', e => { if (e.key === 'Enter') go(); }); }
   };
   const close = () => { M.hidden = true; M.innerHTML = ''; route(true); };
   M.onclick = e => { if (e.target === M) close(); };
