@@ -358,13 +358,15 @@ const LUCKY = [['dg', '⏰', 'Đúng giờ'], ['bt', '📚', 'Làm bài đầy �
 const LUCKY_GOAL = 50;
 const nrm = s => String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[đĐ]/g, 'd').toLowerCase().replace(/\s+/g, ' ').trim();
 const LK_IN = Object.fromEntries(LUCKY.flatMap(([k, , l]) => [[nrm(l), k], [k, k]]));
+const LK_MEMO = new Map(); const lkIn = x => { if (!LK_MEMO.has(x)) LK_MEMO.set(x, LK_IN[nrm(x)]); return LK_MEMO.get(x); }; // vài nghìn dòng điểm danh chỉ có vài kiểu chữ
 const lkOut = a => LUCKY.filter(([k]) => (a || []).includes(k)).map(x => x[2]).join(', ');
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const baseName = n => String(n).split('(')[0].trim();
-const money = n => Math.round(n).toLocaleString('vi-VN') + 'đ';
-const kfmt = n => Math.round(n / 1000).toLocaleString('vi-VN') + 'k';
+const NUM_VI = new Intl.NumberFormat('vi-VN'); // dựng 1 lần: toLocaleString tự dựng lại mỗi lần gọi nên rất chậm
+const money = n => NUM_VI.format(Math.round(n)) + 'đ';
+const kfmt = n => NUM_VI.format(Math.round(n / 1000)) + 'k';
 const hash = s => { let h = 7; for (const c of s) h = (h * 31 + c.codePointAt(0)) >>> 0; return h; };
 const WD = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
 const WDS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
@@ -417,8 +419,8 @@ const UIKEY = 'qlh-ui';
 let ST, SESS = [];
 let MC_MEMO = {}, KNOWN_WEEKS = null; // nhớ kết quả tính học phí; xóa mỗi khi lịch thay đổi
 function reindex() { // sắp xếp lịch + tự đếm số buổi trong gói
-  MC_MEMO = {}; KNOWN_WEEKS = null;
-  SESS = ST.sess.slice().sort((a, b) => a.date.localeCompare(b.date) || a.m - b.m);
+  MC_MEMO = {}; KNOWN_WEEKS = null; ATT_IDX = null;
+  SESS =ST.sess.slice().sort((a, b) => a.date.localeCompare(b.date) || a.m - b.m);
   const cnt = {};
   SESS.forEach(s => { const cfg = CLASS_CFG[s.cls]; s.num = null; if (!cfg || cfg.type !== 'goi') return;
     if (s.startNum) cnt[s.cls] = +s.startNum; else if (cnt[s.cls] != null) cnt[s.cls] = cnt[s.cls] % cfg.size + 1; else cnt[s.cls] = 1;
@@ -445,7 +447,7 @@ function fromServer(D) { // các tab Google Sheet -> ST
   ST.students.forEach(x => { if (S(x.full)) ST.full[x.name] = S(x.full); });
   T.GiaoAn.filter(r => r.id).sort((a, b) => (+a.ord || 0) - (+b.ord || 0)).forEach(r => (ST.plan[S(r.cls)] = ST.plan[S(r.cls)] || []).push({ id: S(r.id), date: S(r.date), num: S(r.num), lesson: S(r.lesson), content: S(r.content), mat: S(r.mat), hw: S(r.hw), print: S(r.print), note: S(r.note) }));
   T.GhiChuTuan.filter(r => r.mon).forEach(r => ST.weekNotes[S(r.mon)] = { gc: S(r.gc), todo: S(r.todo) });
-  T.DiemDanh.filter(r => r.date && r.cls && r.name).forEach(r => { const k = S(r.date) + '|' + S(r.cls); (ST.att[k] = ST.att[k] || { rows: {} }).rows[S(r.name)] = { status: ST_IN[S(r.status).toLowerCase()] || 'co', hw: HW_IN[S(r.hw).toLowerCase()] || '', tpl: S(r.tpl).split(/[,\s]+/).filter(Boolean), note: S(r.note), lucky: S(r.lucky).split(/\s*,\s*/).map(x => LK_IN[nrm(x)]).filter(Boolean) }; });
+  T.DiemDanh.filter(r => r.date && r.cls && r.name).forEach(r => { const k = S(r.date) + '|' + S(r.cls); (ST.att[k] = ST.att[k] || { rows: {} }).rows[S(r.name)] = { status: ST_IN[S(r.status).toLowerCase()] || 'co', hw: HW_IN[S(r.hw).toLowerCase()] || '', tpl: S(r.tpl).split(/[,\s]+/).filter(Boolean), note: S(r.note), lucky: S(r.lucky).split(/\s*,\s*/).map(lkIn).filter(Boolean) }; });
   T.HocPhi.filter(r => r.name && r.ym).forEach(r => { const v = PAY_IN(S(r.state)); if (v !== undefined) (ST.paid[S(r.name)] = ST.paid[S(r.name)] || {})[S(r.ym)] = v; });
   T.BaoCao.filter(r => r.name).forEach(r => { const o = {}; ['from', 'to', 'learn', 'good', 'weak', 'goal', 'sent'].forEach(k => { if (S(r[k])) o[k] = S(r[k]); }); ST.report[S(r.name)] = o; });
   MAU_LIST = T.MauNhanXet.filter(m => m.code).map(m => ({ code: S(m.code), label: S(m.label) || S(m.code), teacher: S(m.teacher), next: S(m.next), parent: S(m.parent) }));
@@ -547,13 +549,20 @@ function commit() { // so với lần lưu trước, chỉ gửi những dòng t
 // ---- Lưu tạm dữ liệu trên máy để mở app tức thì (cô đã đồng ý) ----
 const CACHEKEY = 'qlh-cache-v1'; let CACHE_T = null;
 function cacheLater() { clearTimeout(CACHE_T); CACHE_T = setTimeout(writeCache, 1500); }
-function writeCache() { // bảng = dữ liệu Google lần cuối + các dòng cô vừa sửa (đã có trong SNAP)
+// các tab cô sửa được: lấy bản đang có trên máy (SNAP, đã là chữ JSON từng dòng); các tab còn lại: bản Google lần cuối
+const CACHE_MINE = ['Lop', 'HocSinh', 'Lich', 'GiaoAn', 'GhiChuTuan', 'DiemDanh', 'HocPhi', 'BangGia', 'LuckyDraw', 'BaoCao', 'NhacBT', 'BaiGiao', 'NopBai'];
+let DB_JSON = {}, DB_JSON_SRC = null; // chữ JSON của từng tab bản Google, tính 1 lần cho mỗi lần tải
+function tblJSON(t) {
+  if (DB_JSON_SRC !== DB.tables) { DB_JSON_SRC = DB.tables; DB_JSON = {}; }
+  return t in DB_JSON ? DB_JSON[t] : (DB_JSON[t] = JSON.stringify((DB.tables || {})[t] || []));
+}
+function writeCache() { // ghép thẳng chuỗi có sẵn, không đổi qua đổi lại cả 2 MB dữ liệu mỗi lần lưu
   CACHE_T = null; if (!DB) return;
   try {
-    const tables = {}; Object.keys(DB.tables).forEach(t => { tables[t] = DB.tables[t]; });
-    const mine = {}; Object.keys(SNAP).forEach(k => { const t = k.slice(0, k.indexOf('\u0001')); (mine[t] = mine[t] || []).push(JSON.parse(SNAP[k])); });
-    ['Lop', 'HocSinh', 'Lich', 'GiaoAn', 'GhiChuTuan', 'DiemDanh', 'HocPhi', 'BangGia', 'LuckyDraw', 'BaoCao', 'NhacBT'].forEach(t => { tables[t] = mine[t] || []; });
-    localStorage.setItem(CACHEKEY, JSON.stringify({ at: Date.now(), canEdit: DB.canEdit, tables }));
+    const mine = {}; for (const k in SNAP) { const t = k.slice(0, k.indexOf('\u0001')); (mine[t] = mine[t] || []).push(SNAP[k]); }
+    const parts = Object.keys(DB.tables).filter(t => !CACHE_MINE.includes(t)).map(t => JSON.stringify(t) + ':' + tblJSON(t));
+    CACHE_MINE.forEach(t => parts.push(JSON.stringify(t) + ':[' + (mine[t] || []).join(',') + ']'));
+    localStorage.setItem(CACHEKEY, '{"at":' + Date.now() + ',"canEdit":' + JSON.stringify(DB.canEdit == null ? null : DB.canEdit) + ',"tables":{' + parts.join(',') + '}}');
   } catch (e) { try { localStorage.removeItem(CACHEKEY); } catch (_) {} }
 }
 function readCache() { try { const c = JSON.parse(localStorage.getItem(CACHEKEY)); return c && c.tables ? c : null; } catch (e) { return null; } }
@@ -570,12 +579,13 @@ function flush() {
 }
 let PENDING_D = null, PENDING_I = null;
 const RO_TABLES = ['Diem', 'MauNhanXet', 'CaiDat', 'ChoGhepTen'];
-const stateSig = () => JSON.stringify(SNAP) + '|' + RO_TABLES.map(t => JSON.stringify((DB.tables || {})[t] || [])).join('|') + '|' + DB.canEdit;
+const roSig = () => RO_TABLES.map(tblJSON).join('|') + '|' + DB.canEdit;
+const sameSnap = (a, b) => { let n = 0; for (const k in a) { if (a[k] !== b[k]) return false; n++; } for (const k in b) n--; return n === 0; }; // so từng dòng, không ghép cả 2 MB thành 1 chuỗi
 function applyServer(D, again, quiet) { // chỉ vẽ lại khi dữ liệu thật sự khác → không giật màn hình, không mất vị trí đang xem
-  const had = !!ST; const before = had ? stateSig() : '';
+  const had = !!ST; const snap0 = SNAP, ro0 = had ? roSig() : '';
   const keep = { ST, SNAP, SCORES, MAU, MAU_LIST, SETTINGS, SUBQ, READONLY };
   fromServer(D);
-  if (had && stateSig() === before) { // giống hệt → giữ nguyên trạng thái + màn hình đang hiện
+  if (had && sameSnap(snap0, SNAP) && roSig() === ro0) { // giống hệt → giữ nguyên trạng thái + màn hình đang hiện
     ({ ST, SNAP, SCORES, MAU, MAU_LIST, SETTINGS, SUBQ, READONLY } = keep); rebuild(); reindex();
     if (again && !quiet) toast('Dữ liệu đã là mới nhất ✓');
   } else { route(true); if (had) toast('Đã cập nhật dữ liệu mới nhất'); }
@@ -674,11 +684,18 @@ const isTest = l => l && /review|mid ?term|final|mock|kiểm tra|ôn thi|\btest\
 
 // ---------- Thống kê ----------
 const fullName = n => (ST.full && ST.full[n]) || '';
+// Chỉ mục tên học sinh → các buổi có điểm danh: dựng 1 lần, xóa mỗi khi dữ liệu đổi (reindex) → tab Học sinh không phải lục lại cả bảng cho từng em
+let ATT_IDX = null;
+function attIdx() {
+  if (ATT_IDX) return ATT_IDX; ATT_IDX = {};
+  Object.entries(ST.att).forEach(([k, v]) => { const i = k.indexOf('|'); const iso = k.slice(0, i), cls = k.slice(i + 1);
+    Object.entries(v.rows || {}).forEach(([n, r]) => (ATT_IDX[n] = ATT_IDX[n] || []).push([iso, cls, r])); });
+  return ATT_IDX;
+}
 function attOf(name, from, to) {
   const out = { total: 0, co: 0, muon: 0, phep: 0, kp: 0, hwTotal: 0, du: 0, thieu: 0, khong: 0, tpl: [], notes: [] };
-  Object.entries(ST.att).forEach(([k, v]) => {
-    const [iso, cls] = k.split('|'); if ((from && iso < from) || (to && iso > to)) return;
-    const r = v.rows[name]; if (!r) return;
+  (attIdx()[name] || []).forEach(([iso, cls, r]) => {
+    if ((from && iso < from) || (to && iso > to)) return;
     out.total++; out[r.status]++;
     if (r.hw) { out.hwTotal++; out[r.hw]++; }
     (r.tpl || []).forEach(c => out.tpl.push({ iso, cls, code: c }));
@@ -686,7 +703,10 @@ function attOf(name, from, to) {
   });
   return out;
 }
-const scoresOf = (name, from, to) => SCORES.filter(s => s.name === name && (!from || s.iso >= from) && (!to || s.iso <= to)).sort((a, b) => a.iso.localeCompare(b.iso));
+let SC_IDX = null, SC_SRC = null; // chỉ mục điểm theo tên (dựng lại khi SCORES được thay bằng bản mới)
+const scoresOf = (name, from, to) => {
+  if (SC_SRC !== SCORES) { SC_SRC = SCORES; SC_IDX = {}; SCORES.forEach(s => (SC_IDX[s.name] = SC_IDX[s.name] || []).push(s)); }
+  return (SC_IDX[name] || []).filter(s => (!from || s.iso >= from) && (!to || s.iso <= to)).sort((a, b) => a.iso.localeCompare(b.iso)); };
 
 // ---------- Học phí ----------
 const ymOf = iso => iso.slice(0, 7);
@@ -1590,7 +1610,7 @@ function viewHocPhi() {
 const Q_PCT = [100, 75, 65, 55, 50]; // giá mỗi học viên, lớp 1 (kèm 1-1) / 2 / 3 / 4 / 5+ học viên = % giá kèm 1-1
 const Q_HOURS = 8 * 1.5;            // 1 tháng = 8 tiết, 1 tiết = 1h30
 const QCOLS = ['Kèm 1-1', 'Nhóm 2', 'Nhóm 3', 'Nhóm 4', 'Nhóm 5+'];
-const qk = n => Math.round(n / 1000).toLocaleString("vi-VN"); // số nghìn đồng, không kèm chữ k (cho vừa điện thoại)
+const qk = n => NUM_VI.format(Math.round(n / 1000)); // số nghìn đồng, không kèm chữ k (cho vừa điện thoại)
 const qKey = x => x.group + '|' + x.level;
 const qHour = (x, j) => x.hour * Q_PCT[j] / 100;            // tính bằng số nguyên → làm tròn đúng như Sheet (172.5k → 173k)
 const qMonth = (x, j) => x.hour * Q_PCT[j] * Q_HOURS / 100;
