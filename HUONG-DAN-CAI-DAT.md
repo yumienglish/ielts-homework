@@ -36,13 +36,15 @@ Có 2 phần: **(A) máy chủ nhận bài** bằng Google Apps Script, dùng đ
 2. Push thư mục `d:\Syllabus` lên repo đó.
 3. Trên GitHub, vào repo → **Settings → Pages** → Source: **Deploy from a branch** → Branch: `main` / `(root)` → **Save**.
 4. Sau 1–2 phút, trang có địa chỉ (repo `ielts-homework` của tổ chức `yumienglish`; các link cũ `miathoday.github.io/…` vẫn tự chuyển sang link mới):
-   - Mục lục **Homework - IELTS Foundation. Pack 1**: <https://yumienglish.github.io/ielts-homework/>
+   - Sảnh **IELTS Foundation** (học sinh đăng nhập → thấy tên mình, số bài đã xong và danh sách bài, bài mới nhất ở trên): <https://yumienglish.github.io/ielts-homework/>
    - Unit 1 · MS Foundation: <https://yumienglish.github.io/ielts-homework/unit-01-ms-foundation-ls/>
    - Grammar · Present Simple: <https://yumienglish.github.io/ielts-homework/grammar/>
    - Basic Listening · Letters: <https://yumienglish.github.io/ielts-homework/basic-listening-letters/>. Đáp án nằm ở hằng số `KEY` đầu phần script trong `basic-listening-letters/index.html`; ô nào để trống thì câu đó hiện "cô chấm sau".
+   - Vocabulary · Units 47 & 52 (Vocabulary in Use Elementary): <https://yumienglish.github.io/ielts-homework/vocab-47-52/>. Tranh lấy từ sách, tranh Unit 52 vẽ bằng ChatGPT (`vocab-47-52/img/ai/`).
    - Link cũ `…/unit-02-present-simple/` vẫn dùng được, trang sẽ tự chuyển sang `…/grammar/`.
 
-Gửi link mục lục cho học sinh là tiện nhất: các em tự chọn bài, mỗi trang bài tập đều có nút **← Homework · IELTS Foundation · Pack 1** để quay về mục lục.
+Gửi link sảnh cho học sinh là tiện nhất: các em đăng nhập, tự chọn bài; mỗi trang bài tập đều có nút **← All lessons** để quay về sảnh.
+**Thêm bài mới vào sảnh:** thêm 1 dòng vào mảng `LESSONS` trong `index.html` (bài mới nhất đặt cuối mảng, sảnh tự đưa lên đầu và gắn nhãn THIS WEEK).
 
 > Ghi âm (Unit 1, Exercise 8) chỉ chạy khi trang mở qua **https** (GitHub Pages đã có sẵn https). Học sinh dùng Chrome trên Android hoặc máy tính, Safari trên iPhone hoặc iPad. Lần đầu bấm ghi âm, trình duyệt hỏi quyền micro, học sinh bấm **Cho phép**.
 

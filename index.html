@@ -3,45 +3,146 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Homework - IELTS Foundation. Pack 1</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<title>IELTS Foundation 📚</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#fff8ef;--ink:#2b2d42;--muted:#6b7080;--brand:#14866d;--line:#ece3d6}
+:root{--ink:#2b2d42;--muted:#6b7080;--line:#ece3d6;--brand:#14866d;--brand-dark:#0d5e4c;--accent:#ff8c42;--blue:#3a6df0;--ok:#1f8a4c;--ok-bg:#e7f7ee;--warn:#b7791f;--warn-bg:#fff5df}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;font-size:17px}
-header{background:linear-gradient(135deg,#14866d,#2bb39a);color:#fff;text-align:center;padding:30px 16px 46px}
-header h1{margin:0;font-size:clamp(24px,5vw,34px)}
-header p{margin:4px 0 0;opacity:.92}
-main{max-width:720px;margin:-26px auto 40px;padding:0 16px}
-.unit{display:flex;gap:14px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px;text-decoration:none;color:inherit;box-shadow:0 4px 18px rgba(60,40,10,.07);transition:transform .15s}
-a.unit:hover{transform:translateY(-2px)}
-.unit.soon{opacity:.55;cursor:default;box-shadow:none}
-.n{background:var(--brand);color:#fff;font-weight:800;border-radius:12px;padding:8px 12px;flex:none;text-align:center;min-width:92px}
-.soon .n{background:#9aa0ad}
-.t{font-weight:800;font-size:18px}
-.d{color:var(--muted);font-size:14.5px}
-.tag{display:inline-block;background:#eee8dd;color:var(--muted);border-radius:999px;padding:0 10px;font-size:13px;font-weight:800;margin-left:6px;vertical-align:middle}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;color:var(--ink);font-family:Nunito,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:18px;line-height:1.5;
+  background:
+  radial-gradient(circle at 8% 12%,rgba(255,214,102,.35) 0 90px,transparent 91px),
+  radial-gradient(circle at 92% 30%,rgba(140,220,255,.35) 0 120px,transparent 121px),
+  radial-gradient(circle at 15% 70%,rgba(180,240,190,.35) 0 110px,transparent 111px),
+  radial-gradient(circle at 88% 85%,rgba(255,170,200,.3) 0 100px,transparent 101px),
+  linear-gradient(180deg,#e3f9ff 0%,#effff3 50%,#fff7e3 100%) fixed}
+.hero{position:relative;overflow:hidden;background:linear-gradient(120deg,#12c2c4 0%,#28a7f0 48%,#8f6cf6 100%);color:#fff;text-align:center;padding:28px 16px 50px}
+.hero::before,.hero::after{content:"✦";position:absolute;color:rgba(255,255,255,.55);font-size:46px;top:12px;right:8%;animation:twk 2.4s infinite}
+.hero::after{content:"★";font-size:34px;top:auto;bottom:34px;right:auto;left:7%;animation-delay:1.2s}
+@keyframes twk{50%{opacity:.25;transform:scale(.8) rotate(20deg)}}
+.hero h1{margin:0;font-size:clamp(26px,6vw,38px);font-weight:800;text-shadow:0 3px 0 rgba(0,0,0,.15)}
+.hero p{margin:4px 0 0;opacity:.95;font-size:15.5px}
+main{max-width:860px;margin:-30px auto 0;padding:0 clamp(12px,3vw,32px) 60px;position:relative;z-index:1}
+.card{display:block;background:#fff;border-radius:18px;border:2px solid #fff;box-shadow:0 6px 0 rgba(20,90,120,.08),0 8px 22px rgba(20,60,90,.08);padding:18px;margin-bottom:16px;color:inherit;text-decoration:none}
+.player{text-align:center;background:linear-gradient(180deg,#fff,#fff9ec)}
+.pav{display:inline-flex;align-items:center;justify-content:center;width:84px;height:84px;border-radius:50%;background:#fff3c4;font-size:52px;box-shadow:0 0 0 3px #fff,0 0 0 6px #ffd23f;object-fit:cover}
+.player h2{margin:10px 0 0;color:#5a3fd6;font-size:26px}
+.pcls{color:var(--muted);font-weight:700;font-size:15px}
+.hiline{font-weight:700;margin:6px 0 0}
+.stats{display:flex;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.stat{flex:1;min-width:90px;max-width:160px;border-radius:14px;padding:8px 6px;display:flex;flex-direction:column;line-height:1.25}
+.stat b{font-size:20px} .stat span{font-size:13.5px;color:var(--muted);font-weight:700}
+.stat:nth-child(1){background:#fff3c4} .stat:nth-child(2){background:#dff7e6} .stat:nth-child(3){background:#ece6ff}
+.yarow{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.linkbtn{background:none;border:none;color:var(--blue);font:inherit;font-size:15px;cursor:pointer;text-decoration:underline;padding:0;font-weight:700}
+.sech{color:#5a3fd6;margin:22px 4px 10px;font-size:21px}
+.lesson{display:flex;gap:14px;align-items:center;transition:transform .15s}
+.lesson:hover{transform:translateY(-3px) scale(1.01)}
+.lesson.now{border-color:#ffb27a;box-shadow:0 6px 0 rgba(255,138,61,.18),0 8px 22px rgba(255,138,61,.15)}
+.lnum{flex:none;width:58px;height:58px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.15)}
+.k-vocabulary{background:linear-gradient(135deg,#2bd47d,#12a8c4)} .k-grammar{background:linear-gradient(135deg,#ff9a3d,#ff4f8b)}
+.k-listening{background:linear-gradient(135deg,#5b8cff,#8f6cf6)} .k-unit{background:linear-gradient(135deg,#12c2c4,#14866d)}
+.linfo{flex:1;min-width:0}
+.lt{font-size:13px;font-weight:800;color:var(--muted);letter-spacing:.3px}
+.lt .nowtag{color:#e2600d}
+.ln{font-weight:800;font-size:19px;line-height:1.25}
+.ld{color:var(--muted);font-size:14.5px}
+.ls{margin-top:4px}
+.tag{display:inline-block;background:#eee8dd;color:var(--muted);border-radius:999px;padding:1px 10px;font-size:13.5px;font-weight:800}
+.tag.new{background:#e2f3ff;color:#1f6fd1} .tag.ok{background:var(--ok-bg);color:var(--ok)} .tag.warn{background:var(--warn-bg);color:var(--warn)}
+.tag .off{filter:grayscale(1);opacity:.35}
+.play{flex:none;font-weight:800;font-size:14.5px;color:#fff;background:linear-gradient(180deg,#ffa057,#ff7a2e);box-shadow:0 4px 0 #c9561a;border-radius:14px;padding:9px 14px;white-space:nowrap}
+.lesson.done .play{background:#fff;color:var(--brand);box-shadow:0 0 0 2px var(--brand) inset}
+.tag{white-space:nowrap}
+@media (max-width:560px){.lesson{flex-wrap:wrap;gap:10px 12px}.lnum{width:48px;height:48px;font-size:23px;align-self:flex-start}
+  .linfo{flex:1 1 calc(100% - 64px)}.play{margin-left:60px;text-align:center}}
+.muted{color:var(--muted)} .small{font-size:14px}
 </style>
 <script src="zalo-guard.js?v=1"></script>
+<script src="/yumi-auth.js?v=1"></script>
 </head>
 <body>
-<header>
-  <h1>📚 Homework - IELTS Foundation. Pack 1</h1>
-  <p>Chọn bài cô giao để làm nhé!</p>
+<header class="hero">
+  <h1>📚 IELTS Foundation</h1>
+  <p>Homework · MS Foundation</p>
 </header>
-<main>
-  <a class="unit" href="unit-01-ms-foundation-ls/">
-    <span class="n">Unit 1</span>
-    <span><span class="t">MS Foundation</span><br><span class="d">Daily routines · Exercise 1–8 · nghe mp3, ghép tranh, xếp câu, ghi âm</span></span>
-  </a>
-  <a class="unit" href="grammar/">
-    <span class="n">Grammar</span>
-    <span><span class="t">Present Simple (I do / work / like…)</span><br><span class="d">Bài 2.1 – 2.5 · kéo thả, điền từ, đặt câu hỏi</span></span>
-  </a>
-  <a class="unit" href="basic-listening-letters/">
-    <span class="n">Listening</span>
-    <span><span class="t">Basic Listening · Letters</span><br><span class="d">Bảng chữ cái, viết tắt, địa danh, đánh vần tên · 4 bài nghe + ghi âm</span></span>
-  </a>
-</main>
+<main id="app"></main>
+
+<script>
+/* ============ IELTS Foundation – sảnh chính (thay trang mục lục cũ) ============
+   Thêm bài mới: thêm 1 dòng vào LESSONS (bài mới nhất đặt ở CUỐI mảng; sảnh tự xếp bài mới nhất lên đầu).
+   key = khoá localStorage của trang bài đó (để đọc trạng thái: chưa làm / đang làm / làm lại / xong + điểm). */
+const LESSONS = [
+  {n:1, kind:'Unit',       icon:'🎧', href:'unit-01-ms-foundation-ls/', key:'btvn-unit01-ms-foundation-ls-v1', code:'Unit 1 · MS Foundation', title:'Daily routines', desc:'Listen, match, put words in order, speak'},
+  {n:2, kind:'Grammar',    icon:'✏️', href:'grammar/', key:'btvn-unit02-present-simple-v1', code:'Grammar', title:'Present Simple (I do / work / like…)', desc:'Drag and drop, fill in, ask questions'},
+  {n:3, kind:'Listening',  icon:'🔤', href:'basic-listening-letters/', key:'btvn-basic-listening-letters-v1', code:'Basic Listening', title:'Letters', desc:'Alphabet, abbreviations, place names, spelling'},
+  {n:4, kind:'Vocabulary', icon:'📒', href:'vocab-47-52/', key:'btvn-vocab-47-52-v1', code:'Vocabulary · Units 47 & 52', title:'Everyday things · Time words', desc:'New words, pictures, questions, speak'},
+];
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const lsGet = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const HI = ['Small steps every week = BIG English! 🚀', 'Mistakes mean you’re trying. Keep going! 🌱', 'Every new word is a new superpower. 💪',
+  'Today’s you is smarter than yesterday’s you. ✨', 'One lesson at a time. You’ve got this! 🎯', 'Ready for IELTS? Let’s level up! 📈'];
+// Trạng thái 1 bài (cùng kiểu lưu ở cả 4 trang: startedAt / submitted / r1 / done)
+function stateOf(L){
+  const s = lsGet(L.key) || {};
+  if (s.done || (s.submitted && !s.r1)) {
+    const r = s.r1; const p = r && r.total ? r.score / r.total : 1;
+    return {st:'done', stars: p >= .9 ? 3 : p >= .7 ? 2 : 1, score: r ? `${r.score}/${r.total}` : ''};
+  }
+  if (s.submitted) return {st:'fix'};
+  if (s.startedAt) return {st:'progress'};
+  return {st:'new'};
+}
+const stars = n => [1, 2, 3].map(i => `<span class="${i <= n ? '' : 'off'}">⭐</span>`).join('');
+function render(){
+  const YA = window.YumiAuth && YumiAuth.ready() ? YumiAuth : null, m = YA && YA.me();
+  const me = lsGet('ielts-me') || {};
+  const av = me.av || (m && m.avatar && !/[\/.]/.test(m.avatar) ? m.avatar : '🙂');
+  const avHtml = /^data:image\//.test(av) ? `<img class="pav" src="${av}" alt="">` : `<span class="pav">${esc(av)}</span>`;
+  const st = LESSONS.map(L => ({L, s:stateOf(L)}));
+  const done = st.filter(x => x.s.st === 'done'), starSum = done.reduce((a, x) => a + x.s.stars, 0);
+  const newest = LESSONS[LESSONS.length - 1].n;
+  const cards = st.slice().reverse().map(({L, s}) => {
+    const tag = s.st === 'done' ? `<span class="tag ok">${stars(s.stars)} ${s.score}</span>` : s.st === 'fix' ? '<span class="tag warn">✏️ Fix your mistakes</span>'
+      : s.st === 'progress' ? '<span class="tag">⏳ In progress</span>' : '<span class="tag new">🆕 New</span>';
+    const btn = s.st === 'done' ? 'REVIEW' : s.st === 'fix' ? 'FIX ✏️' : s.st === 'progress' ? 'CONTINUE ▶' : 'PLAY ▶';
+    return `<a class="card lesson${s.st === 'done' ? ' done' : ''}${L.n === newest ? ' now' : ''}" href="${L.href}">
+      <div class="lnum k-${L.kind.toLowerCase()}">${L.icon}</div>
+      <div class="linfo"><div class="lt">LESSON ${L.n} · ${esc(L.code).toUpperCase()}${L.n === newest ? ' · <span class="nowtag">THIS WEEK</span>' : ''}</div>
+        <div class="ln">${esc(L.title)}</div><div class="ld">${esc(L.desc)}</div><div class="ls">${tag}</div></div>
+      <span class="play">${btn}</span></a>`;
+  }).join('');
+  $('#app').innerHTML = `<section class="card player" id="player">${avHtml}
+      <h2>Hi ${esc(m ? m.name : (me.name || 'superstar'))}! 🌟</h2>
+      ${m && m.cls ? `<div class="pcls">Class ${esc(m.cls)}</div>` : ''}
+      <p class="hiline">${HI[Math.floor(Math.random() * HI.length)]}</p>
+      <div class="stats">
+        <div class="stat"><b>🏁 ${done.length}/${LESSONS.length}</b><span>lessons done</span></div>
+        <div class="stat"><b>⭐ ${starSum}</b><span>stars</span></div>
+        <div class="stat"><b>✏️ ${st.filter(x => x.s.st === 'fix').length}</b><span>to fix</span></div>
+      </div>
+    </section>
+    <h2 class="sech">📋 Lessons</h2>${cards}
+    <p class="muted small" style="text-align:center">⭐⭐⭐ = 90%+ on your first try · ⭐⭐ = 70%+ · ⭐ = finished</p>`;
+  if (YA && m){
+    const row = document.createElement('div'); row.className = 'yarow';
+    row.appendChild(YA.trophy({theme:YA_OPTS.theme}));
+    const out = document.createElement('button'); out.type = 'button'; out.className = 'linkbtn'; out.textContent = 'Log out';
+    out.onclick = () => YA.logout();
+    row.appendChild(out); $('#player').appendChild(row);
+    YA.autoBoard({theme:YA_OPTS.theme});
+  }
+}
+const YA_OPTS = { mascot: '📚', title: 'IELTS Foundation 📚', sub: 'Log in to do your homework ✍️',
+  theme: { bg: 'linear-gradient(160deg,#dff3ee,#fff8ef 55%,#ffe9d6)', card: '#fff', text: '#2b2d42', acc: '#14866d', acc2: '#2bb39a',
+    font: 'Nunito,system-ui,sans-serif', head: 'Nunito,system-ui,sans-serif' } };
+(function boot(){
+  const YA = window.YumiAuth && YumiAuth.ready() ? YumiAuth : null;
+  if (YA && !YA.me()){ YA.require(YA_OPTS).then(boot); return; } // bắt đăng nhập trước
+  render();
+})();
+</script>
 </body>
 </html>
