@@ -1251,7 +1251,9 @@ async function hwLoadSite(link, fetchText) {
   }
   if (S.id === 'a1') {
     const text = await fetchText(base + 'listening-trainer-a1/index.html');
-    const ow = +((text.match(/const OPEN_WEEK = (\d+)/) || [])[1] || 0), W = hwLiteral(text, 'WEEKS') || {};
+    const W = hwLiteral(text, 'WEEKS') || {}; // tuần đang mở = OPEN_WEEK_SET (bản cũ: OPEN_WEEK) + các tuần OPEN_DATES đã tới ngày (giống trang A1)
+    const ow = Object.entries(hwLiteral(text, 'OPEN_DATES') || {}).reduce((w, [k, d]) => (+k > w && W[k] && Date.parse(d + 'T00:00:00+07:00') <= Date.now() ? +k : w),
+      +((text.match(/const OPEN_WEEK(?:_SET)? = (\d+)/) || [])[1] || 0));
     Object.keys(W).map(Number).filter(w => w <= ow).sort((a, b) => a - b).forEach(w => { const X = W[w];
       push('w' + w, 'Listening Trainer A1 – Tuần ' + w + (X.book ? ' (' + X.book + ')' : ' (Track ' + (X.ex || []).map(e => e.track).filter(Boolean).join(', ') + ')'), w, 'listening-trainer-a1/?w=' + w); });
     return out;
