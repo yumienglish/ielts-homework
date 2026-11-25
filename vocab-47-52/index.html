@@ -1237,7 +1237,8 @@ function yaSync(){ // đã bắt đầu làm bài → tên + lớp theo tài kho
   S.name = String(m.fullName || m.name).slice(0, 80); S.cls = String(m.cls || '-').slice(0, 30); save();
 }
 function yaAvatar(){ // gửi avatar emoji lên bảng xếp hạng (ảnh tự chụp thì không gửi)
-  if (YA && AV && !/^data:/.test(AV)) YA.setAvatar(AV);
+  const cur = String((YA && YA.me() || {}).avatar || '');
+  if (YA && AV && !/^data:/.test(AV) && !/^[a-z0-9]+:\{/.test(cur)) YA.setAvatar(AV); // tài khoản có nhân vật tủ đồ → không ghi đè bằng emoji
 }
 function yaUI(){ // ẩn 2 ô tên/lớp, thêm nút 🏆 + Log out trên đầu trang
   const m = YA && YA.me(); if (!m) return;
@@ -1250,8 +1251,8 @@ function yaUI(){ // ẩn 2 ô tên/lớp, thêm nút 🏆 + Log out trên đầu
   const out = document.createElement('button'); out.type = 'button'; out.className = 'linkbtn'; out.textContent = 'Log out';
   out.onclick = () => YA.logout();
   row.appendChild(out); $('.hero').appendChild(row);
-  if (!meGet().av && m.avatar && !/[\/.]/.test(m.avatar)){ AV = m.avatar; paintAvPick(); } // máy mới: lấy avatar của tài khoản
-  else if (meGet().av) yaAvatar();
+  if (!okAv(meGet().av) && okAv(m.avatar)){ AV = m.avatar; paintAvPick(); } // máy mới: lấy avatar của tài khoản
+  else if (okAv(meGet().av)) yaAvatar();
   YA.autoBoard({ theme: YA_OPTS.theme });
 }
 
@@ -1261,7 +1262,9 @@ const ME_KEY = 'ielts-me';
 const AVATARS = ['🦊', '🐼', '🐯', '🦁', '🐸', '🐵', '🦄', '🐙', '🐧', '🐨', '🐰', '🐲', '🦖', '🦋', '🐳', '🤖'];
 const meGet = () => { try { return JSON.parse(localStorage.getItem(ME_KEY)) || {}; } catch (e) { return {}; } };
 const avHtml = (av, c = 'av') => /^data:image\//.test(av || '') ? `<img class="${c}" src="${av}" alt="">` : `<span class="${c}">${esc(av || '🙂')}</span>`;
-let AV = meGet().av || AVATARS[Math.floor(Math.random() * AVATARS.length)];
+// avatar hợp lệ: emoji ngắn hoặc ảnh tự chọn (KHÔNG nhận mã nhân vật tủ đồ 'teen:{…}' – trước đây bị in nguyên văn ra màn hình)
+function okAv(a){ a = String(a || ''); return /^data:image\//.test(a) || (!!a && a.length <= 8 && !/[\/.:{}]/.test(a)); }
+let AV = okAv(meGet().av) ? meGet().av : AVATARS[Math.floor(Math.random() * AVATARS.length)];
 function loadAvatarFile(f, done){
   if (!f || !/^image\//.test(f.type)) return;
   const r = new FileReader();

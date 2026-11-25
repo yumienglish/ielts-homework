@@ -26,6 +26,7 @@ body{margin:0;color:var(--ink);font-family:Nunito,system-ui,-apple-system,"Segoe
 main{max-width:860px;margin:-30px auto 0;padding:0 clamp(12px,3vw,32px) 60px;position:relative;z-index:1}
 .card{display:block;background:#fff;border-radius:18px;border:2px solid #fff;box-shadow:0 6px 0 rgba(20,90,120,.08),0 8px 22px rgba(20,60,90,.08);padding:18px;margin-bottom:16px;color:inherit;text-decoration:none}
 .player{text-align:center;background:linear-gradient(180deg,#fff,#fff9ec)}
+.pchar{overflow:hidden;font-size:0}.pchar .ya-av{width:100%;height:100%;border-radius:50%}
 .pav{display:inline-flex;align-items:center;justify-content:center;width:84px;height:84px;border-radius:50%;background:#fff3c4;font-size:52px;box-shadow:0 0 0 3px #fff,0 0 0 6px #ffd23f;object-fit:cover}
 .player h2{margin:10px 0 0;color:#5a3fd6;font-size:26px}
 .pcls{color:var(--muted);font-weight:700;font-size:15px}
@@ -99,8 +100,12 @@ const stars = n => [1, 2, 3].map(i => `<span class="${i <= n ? '' : 'off'}">⭐<
 function render(){
   const YA = window.YumiAuth && YumiAuth.ready() ? YumiAuth : null, m = YA && YA.me();
   const me = lsGet('ielts-me') || {};
-  const av = me.av || (m && m.avatar && !/[\/.]/.test(m.avatar) ? m.avatar : '🙂');
-  const avHtml = /^data:image\//.test(av) ? `<img class="pav" src="${av}" alt="">` : `<span class="pav">${esc(av)}</span>`;
+  // avatar: ảnh tự chọn / emoji ngắn; nhân vật tủ đồ ('teen:{…}') thì vẽ khuôn mặt bằng yumi-auth, không in mã ra màn hình
+  const okAv = a => /^data:image\//.test(a || '') || (!!a && a.length <= 8 && !/[\/.:{}]/.test(a));
+  const acc = m && m.avatar ? String(m.avatar) : '';
+  const av = okAv(me.av) ? me.av : okAv(acc) ? acc : '🙂';
+  const avHtml = /^data:image\//.test(av) ? `<img class="pav" src="${av}" alt="">`
+    : !okAv(me.av) && /^[a-z0-9]+:\{/.test(acc) && YA && YA.avatarHtml ? `<span class="pav pchar">${YA.avatarHtml(acc, m.name)}</span>` : `<span class="pav">${esc(av)}</span>`;
   const st = LESSONS.map(L => ({L, s:stateOf(L)}));
   const done = st.filter(x => x.s.st === 'done'), starSum = done.reduce((a, x) => a + x.s.stars, 0);
   const newest = LESSONS[LESSONS.length - 1].n;
