@@ -107,7 +107,8 @@ function doPost(e) {
     }
     const sheetUrl = logToSheet_(d);
     if (d.account) CacheService.getScriptCache().removeAll(['board', 'stats']);
-    if (d.attempt === 2) sendMail2_(d, sheetUrl); else sendMail_(d, sheetUrl);
+    // mail tóm tắt 7h đang chạy (Mia's Classroom bật) → không gửi mail từng lần nộp; bài có ghi âm vẫn gửi ngay (file chỉ nằm trong mail)
+    if (!digestOn_() || d.audio || (Array.isArray(d.audios) && d.audios.length)) { if (d.attempt === 2) sendMail2_(d, sheetUrl); else sendMail_(d, sheetUrl); }
     submitted = d;
     return json_({ ok: true });
   } catch (err) {
@@ -116,6 +117,17 @@ function doPost(e) {
     try { lock.releaseLock(); } catch (_) {}
     if (submitted) { try { maybeSummary_(submitted); sweepSummaries_(); } catch (_) {} } // lỗi tổng kết không ảnh hưởng việc nộp bài
   }
+}
+
+/** Mail tóm tắt 7h: tab MailSang (Mia's Classroom ghi) B1 = "Bật", B2 = lần gửi gần nhất. Quá 36 tiếng không gửi → coi như tắt (gửi mail từng lần như cũ). */
+function digestOn_() {
+  const c = CacheService.getScriptCache(); const hit = c.get('digestOn'); if (hit) return hit === '1';
+  let on = false;
+  try {
+    const sh = getSheet_().ss.getSheetByName('MailSang');
+    if (sh) { const v = sh.getRange(1, 2, 2, 1).getValues(); on = String(v[0][0]).trim() === 'Bật' && v[1][0] instanceof Date && Date.now() - v[1][0].getTime() < 36 * 3600e3; }
+  } catch (_) {}
+  c.put('digestOn', on ? '1' : '0', 600); return on;
 }
 
 function validate_(d) {

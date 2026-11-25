@@ -1331,7 +1331,7 @@ function viewBaiTap(cls) {
       ? `🔗 Tự điền theo bài đang mở trên <a href="${esc(link)}" target="_blank">trang bài tập của lớp</a>${F ? (F.err ? ' · <b style="color:var(--pink-ink)">chưa đọc được trang (' + esc(F.err) + ')</b>' : ' · đọc lúc ' + pd(at.getHours()) + ':' + pd(at.getMinutes())) : ' · đang đọc…'}`
       : 'Lớp chưa có <b>Link bài tập</b> (✏️ Sửa lớp ở tab Học sinh) → chỉ thêm bài tay được.'}
     <div class="muted" style="margin-top:4px">Bài nộp online <b>tự tick</b> (ô viền chấm, ngày tick = ngày nộp; cập nhật 4 tiếng/lần hoặc bấm 📥). Bài nộp giấy / ngoài web: chạm ô <b>Lần 1</b> / <b>Lần 2</b> để tick tay. Chạm ô đã tick để đổi ngày, bỏ tick hoặc chọn “Không cần lần 2”.</div></div>
-    <div class="row wrapf" style="gap:6px">${READONLY ? '' : '<button class="btn sm ghost" id="hwImp" type="button">📥 Lấy bài nộp ngay</button>'}${site ? '<button class="btn sm ghost" id="hwR" type="button">🔄 Đọc lại</button>' : ''}${READONLY ? '' : '<button class="btn sm mint" id="hwAdd" type="button">＋ Thêm bài</button>'}</div></div></div>`;
+    <div class="row wrapf" style="gap:6px">${READONLY ? '' : `<button class="btn sm ${SETTINGS['Mail tóm tắt 7h'] ? 'mint' : 'ghost'}" id="hwDg" type="button" title="7h sáng mỗi ngày 1 mail gộp các bài nộp (thay mail từng lần nộp)">📧 Mail 7h: ${SETTINGS['Mail tóm tắt 7h'] ? 'Bật' : 'Tắt'}</button><button class="btn sm ghost" id="hwImp" type="button">📥 Lấy bài nộp ngay</button>`}${site ? '<button class="btn sm ghost" id="hwR" type="button">🔄 Đọc lại</button>' : ''}${READONLY ? '' : '<button class="btn sm mint" id="hwAdd" type="button">＋ Thêm bài</button>'}</div></div></div>`;
   const L = hwList(cls), studs = studentsOf(cls);
   if (!L.length) h += `<div class="card muted small">Chưa có bài nào${site && !F ? ' – đang đọc trang bài tập…' : ''}.</div>`;
   const btn = (x, st, k, t) => {
@@ -1357,6 +1357,9 @@ function viewBaiTap(cls) {
   const r = $('#hwR'); if (r) r.addEventListener('click', () => { r.disabled = true; r.textContent = '⏳ Đang đọc…'; hwRefresh(true).then(n => { toast(n ? '📚 Đã cập nhật ' + n + ' bài' : '📚 Không có bài mới'); route(true); }); });
   const a = $('#hwAdd'); if (a) a.addEventListener('click', () => hwLessonModal(null, cls));
   const im = $('#hwImp'); if (im) im.addEventListener('click', () => serverCall('importNow', [], 'Đã lấy bài nộp', im));
+  const dg = $('#hwDg'); if (dg) dg.addEventListener('click', () => { const on = !!SETTINGS['Mail tóm tắt 7h'];
+    if (!confirm(on ? 'Tắt mail tóm tắt 7h? Mail từng lần nộp sẽ gửi lại như cũ.' : 'Bật mail tóm tắt 7h sáng?\n• Mỗi sáng 1 mail gộp các bài nộp hôm trước (lần 1 + lần 2), chia theo lớp.\n• Mail từng lần nộp tạm dừng (bài có ghi âm vẫn gửi ngay).')) return;
+    serverCall('setDigest', [!on], on ? 'Đã tắt mail 7h' : 'Đã bật mail 7h', dg); });
   if (site && (!F || Date.now() - F.at > 600000)) hwRefresh().then(() => { if (LAST === 'baitap') route(true); }); // tự đọc trang (10 phút/lần)
 }
 /** Chạm ô Lần 1 / Lần 2: ô trống → tick hôm nay; ô đã tick → đổi ngày / bỏ tick / không cần lần 2 */

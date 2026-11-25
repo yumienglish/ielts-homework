@@ -627,3 +627,99 @@ function matcher_(students) {
     return null;
   };
 }
+
+// ===================== MAIL TÓM TẮT 7H SÁNG (cô chọn 25/11/2026) =====================
+// Thay cho mail từng lần nộp: 7h mỗi sáng 1 mail gộp các bài nộp từ lần gửi trước (lần 1 + lần 2), chia theo lớp → bài.
+// Bật / tắt ở web app (📚 Bài tập → 📧 Mail 7h). Bật xong ghi tab "MailSang" của file bài nộp BTVN: máy chủ Homework thấy
+// "Bật" + lần gửi gần nhất trong 36 tiếng thì thôi gửi mail từng lần nộp (bài có ghi âm vẫn gửi ngay vì file nằm trong mail).
+const DIGEST_KEY = 'Mail tóm tắt 7h';
+function btvnFileId_(ss, tz) {
+  const set = {}; readTable_(ss, 'CaiDat', tz).forEach(function (r) { set[r.key] = String(r.value || '').trim(); });
+  return sheetId_(set['Link file bài nộp BTVN']) || findByTitle_('BTVN – Bài nộp của học sinh');
+}
+/** Ghi trạng thái cho máy chủ Homework đọc: B1 = Bật/Tắt, B2 = lần gửi (hoặc bật) gần nhất. */
+function digestFlag_(id, on) {
+  if (!id) return; const f = SpreadsheetApp.openById(id); let sh = f.getSheetByName('MailSang');
+  if (!sh) {
+    sh = f.insertSheet('MailSang');
+    sh.getRange(1, 1, 3, 1).setValues([["Mail tóm tắt 7h (Mia's Classroom bật/tắt)"], ['Gửi / bật lần gần nhất'],
+      ['Bật = mail từng lần nộp tạm dừng (trừ bài có ghi âm); quá 36 tiếng không gửi thì tự gửi lại mail từng lần như cũ']]);
+  }
+  sh.getRange(1, 2, 2, 1).setValues([[on ? 'Bật' : 'Tắt'], [new Date()]]);
+}
+/** Web app gọi: bật / tắt mail 7h (tạo / xoá hẹn giờ của cô). */
+function setDigest(on) {
+  const ss = SpreadsheetApp.getActive(); if (!canEdit_(ss)) throw new Error('Bạn chỉ có quyền xem.');
+  const tz = ss.getSpreadsheetTimeZone(); const P = PropertiesService.getScriptProperties();
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'dailyDigest') ScriptApp.deleteTrigger(t); });
+  if (on) {
+    ScriptApp.newTrigger('dailyDigest').timeBased().atHour(7).nearMinute(0).everyDays(1).create();
+    P.setProperty('DIGEST_TO', String(Session.getActiveUser().getEmail() || Session.getEffectiveUser().getEmail()));
+    P.setProperty('DIGEST_LAST', String(Date.now() - 12 * 3600e3)); // mail đầu tiên gộp cả bài nộp 12 tiếng trước khi bật
+  }
+  writeTable_(ss, 'CaiDat', [{ op: 'put', key: DIGEST_KEY, row: { key: DIGEST_KEY, value: on ? 'Bật từ ' + Utilities.formatDate(new Date(), tz, 'dd/MM/yyyy') : '' } }], tz);
+  digestFlag_(btvnFileId_(ss, tz), on);
+  const out = getAll();
+  out.importText = on ? '📧 Đã bật: 7h sáng mỗi ngày cô nhận 1 mail tóm tắt bài nộp (mail từng lần nộp tạm dừng, trừ bài có ghi âm)' : 'Đã tắt mail 7h – mail từng lần nộp gửi lại như cũ';
+  return out;
+}
+/** Hẹn giờ 7h. */
+function dailyDigest() {
+  const ss = SpreadsheetApp.getActive(); const tz = ss.getSpreadsheetTimeZone(); const P = PropertiesService.getScriptProperties();
+  const set = {}; readTable_(ss, 'CaiDat', tz).forEach(function (r) { set[r.key] = String(r.value || '').trim(); });
+  if (!set[DIGEST_KEY]) return; // đã tắt
+  const id = btvnFileId_(ss, tz); if (!id) return;
+  const now = Date.now(), from = +P.getProperty('DIGEST_LAST') || now - 864e5;
+  const items = digestItems_(id, ss, tz, from, now);
+  const to = P.getProperty('DIGEST_TO') || Session.getEffectiveUser().getEmail();
+  if (items.length && to) MailApp.sendEmail({ to: to, name: "Mia's Classroom", subject: '[Tóm tắt BTVN] ' + Utilities.formatDate(new Date(now), tz, 'dd/MM') + ' – ' + items.length + ' lượt nộp',
+    htmlBody: digestHtml_(items, tz, from, now, id) });
+  P.setProperty('DIGEST_LAST', String(now));
+  digestFlag_(id, true); // còn chạy → máy chủ Homework tiếp tục gộp mail
+}
+/** Các lượt nộp (lần 1 / lần 2) trong khoảng (from, to]. */
+function digestItems_(id, ss, tz, from, to) {
+  const hsRows = readTable_(ss, 'HocSinh', tz); const match = matcher_(hsRows); const accSt = accStudents_(id, hsRows); const out = [];
+  const inWin = function (c) { const v = c && c.v; return v instanceof Date && v.getTime() > from && v.getTime() <= to; };
+  readSource_(id, tz).forEach(function (o) {
+    const in1 = inWin(o['Thời gian nộp']), in2 = inWin(o['Nộp lần 2 lúc']); if (!in1 && !in2) return;
+    const name = txt_(o, 'Họ tên'), acc = accUser_(txt_(o, 'Tài khoản')); const st = (acc && accSt[acc]) || match(name, txt_(o, 'Lớp'));
+    const sc = parseFloat(txt_(o, 'Điểm').replace(',', '.')), tt = parseFloat(txt_(o, 'Tổng').replace(',', '.'));
+    out.push({ cls: st ? st.cls : (clsCode_(txt_(o, 'Lớp')) || txt_(o, 'Lớp') || '?'), who: st ? st.name : name, matched: !!st, title: txt_(o, 'Bài'),
+      in1: in1, in2: in2, s1: txt_(o, 'Điểm') + '/' + txt_(o, 'Tổng'), pct: tt ? sc / tt : null, s2: txt_(o, 'Điểm lần 2'),
+      dur: txt_(o, 'Thời gian làm bài'), lv: parseInt(txt_(o, 'Số lần rời trang'), 10) || 0, lv2: parseInt(txt_(o, 'Rời trang lần 2'), 10) || 0,
+      wrong: txt_(o, 'Câu sai'), wrong2: txt_(o, 'Câu sai lần 2'), rec: /^Có/.test(txt_(o, 'Ghi âm')) });
+  });
+  return out;
+}
+function digestHtml_(items, tz, from, to, id) {
+  const e = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  const fmt = function (t) { return Utilities.formatDate(new Date(t), tz, 'HH:mm dd/MM'); };
+  const td = 'style="border:1px solid #eadfe3;padding:5px 7px;vertical-align:top"';
+  const byCls = {};
+  items.forEach(function (x) { const c = byCls[x.cls] = byCls[x.cls] || {}; (c[x.title] = c[x.title] || []).push(x); });
+  let h = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;max-width:780px">' +
+    '<h2 style="margin:0 0 4px;color:#b23a60">🌷 Bài nộp từ ' + fmt(from) + ' đến ' + fmt(to) + '</h2>' +
+    '<div style="color:#777;margin-bottom:10px">' + items.length + ' lượt nộp · ⚠️ = điểm dưới 50% hoặc rời trang từ 3 lần · bài có ghi âm 🎙 đã gửi mail riêng (kèm file)</div>';
+  Object.keys(byCls).sort().forEach(function (c) {
+    h += '<h3 style="margin:16px 0 6px;color:#5b3fd1">' + e(c) + '</h3>';
+    Object.keys(byCls[c]).sort().forEach(function (t) {
+      h += '<div style="font-weight:bold;margin:8px 0 4px">📚 ' + e(t) + '</div><table style="border-collapse:collapse;font-size:13.5px;width:100%">' +
+        '<tr style="background:#fdf0f4"><th ' + td + '>Học sinh</th><th ' + td + '>Lần 1</th><th ' + td + '>Lần 2</th><th ' + td + '>Câu còn sai</th></tr>';
+      byCls[c][t].forEach(function (x) {
+        const warn = (x.in1 && ((x.pct != null && x.pct < 0.5) || x.lv >= 3)) || (x.in2 && x.lv2 >= 3);
+        const l1 = x.in1 ? '<b>' + e(x.s1) + '</b> · ' + e(x.dur) + (x.lv ? ' · <span style="color:#d64045">rời trang ' + x.lv + '</span>' : '') + (x.rec ? ' · 🎙' : '')
+          : '<span style="color:#999">(nộp trước đó)</span>';
+        const no2 = /Không cần/.test(x.s2);
+        const l2 = x.in2 ? '<b>' + e(x.s2) + '</b>' + (x.lv2 ? ' · <span style="color:#d64045">rời trang ' + x.lv2 + '</span>' : '')
+          : no2 ? '✅ đúng hết' : x.s2 ? e(x.s2) : '<span style="color:#b4232f">chưa làm</span>';
+        const wr = x.s2 && !no2 ? (x.wrong2 && x.wrong2 !== '—' ? x.wrong2 : '✅') : (x.wrong && x.wrong !== '—' ? x.wrong : '✅');
+        h += '<tr><td ' + td + '>' + (warn ? '⚠️ ' : '') + e(x.who) + (x.matched ? '' : ' <span style="color:#999">(chưa ghép tên)</span>') + '</td><td ' + td + '>' + l1 +
+          '</td><td ' + td + '>' + l2 + '</td><td ' + td + '>' + e(wr) + '</td></tr>';
+      });
+      h += '</table>';
+    });
+  });
+  return h + '<p style="margin-top:16px"><a href="https://docs.google.com/spreadsheets/d/' + id + '/edit">Mở file bài nộp (chi tiết từng câu)</a> · ' +
+    "Tình trạng nộp từng lớp: Mia's Classroom → 📚 Bài tập</p></div>";
+}
