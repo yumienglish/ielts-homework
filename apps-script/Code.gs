@@ -108,13 +108,13 @@ function doPost(e) {
     const sheetUrl = logToSheet_(d);
     if (d.account) CacheService.getScriptCache().removeAll(['board', 'stats']);
     if (d.attempt === 2) sendMail2_(d, sheetUrl); else sendMail_(d, sheetUrl);
-    submitted = [d.cls, d.title];
+    submitted = d;
     return json_({ ok: true });
   } catch (err) {
     return json_({ ok: false, error: String(err && err.message || err) });
   } finally {
     try { lock.releaseLock(); } catch (_) {}
-    if (submitted) { try { maybeSummary_(submitted[0], submitted[1]); sweepSummaries_(); } catch (_) {} } // lỗi tổng kết không ảnh hưởng việc nộp bài
+    if (submitted) { try { maybeSummary_(submitted); sweepSummaries_(); } catch (_) {} } // lỗi tổng kết không ảnh hưởng việc nộp bài
   }
 }
 
@@ -263,7 +263,7 @@ function appendFirst_(sh, d) {
  * "Xong" = đã làm lần 2 hoặc đúng hết ngay lần 1. Chưa đủ mà đã quá 7 ngày từ bài đầu tiên của lớp → gửi luôn, ghi em nào còn thiếu.
  * Mỗi (lớp, bài) gửi 1 lần (tab TongKet); cô xoá dòng thì lần kiểm tra sau gửi lại. File .docx dựng bằng XML + Utilities.zip. */
 const SUMMARY_SHEET = 'TongKet', SUMMARY_HEAD = ['Lớp', 'Bài', 'Gửi lúc', 'Kiểu', 'Đã xong / Sĩ số'];
-const SUMMARY_FROM = new Date('2026-11-23T00:00:00+07:00'); // chỉ tổng kết bài có bài nộp đầu tiên từ ngày này (không gửi bù các tuần trước)
+const SUMMARY_FROM = new Date('2026-11-20T00:00:00+07:00'); // chỉ tổng kết bài có bài nộp đầu tiên từ ngày này (không gửi bù các tuần trước)
 const SUMMARY_WAIT_DAYS = 7, SUMMARY_SKIP = /LÀM LẠI|Revenge|Boss/i;
 const SUMMARY_ON = true; // công tắc: false = tắt hẳn việc tự gửi tổng kết
 
@@ -289,6 +289,13 @@ function summaryCtx_() {
 }
 const parseJ_ = s => { try { const v = JSON.parse(String(s || '')); return Array.isArray(v) ? v : null; } catch (_) { return null; } };
 const itemKey_ = it => String(it.sec) + '.' + String(it.n);
+/** Học sinh (trong danh sách lớp) của 1 bài nộp: tài khoản đã ghép → Tên gọi; không thì ghép theo họ tên + lớp. Lớp lấy theo DANH SÁCH LỚP
+ *  (không theo chữ em gõ khi tạo tài khoản – VD "PET1", "10"). → {name, cls} hoặc null (bài thử, tài khoản chưa ghép). */
+function rowMember_(ctx, user, full, rawCls) {
+  const u = normUser_(user), acc = u && ctx.accs[u];
+  const hs = (acc && acc.hs) || rosterPick_(ctx.roster, full, rawCls);
+  return hs ? ctx.roster.filter(m => m.name === hs)[0] || null : null;
+}
 /** Tình hình 1 bài của 1 lớp: ai đã nộp / xong / còn thiếu, câu sai lần 1 + lần 2 của từng em. */
 function classLesson_(ctx, cls, title) {
   const C = k => HEAD.indexOf(k);
@@ -296,10 +303,10 @@ function classLesson_(ctx, cls, title) {
   const studs = {}, order = [];
   let first = null;
   ctx.vals.forEach(r => {
-    if (clsCode_(r[C('Lớp')]) !== cls || String(r[C('Bài')]) !== title) return;
-    const u = normUser_(r[C('Tài khoản')]), acc = u && ctx.accs[u];
-    const hs = (acc && acc.hs) || rosterPick_(ctx.roster, r[C('Họ tên')], r[C('Lớp')]);
-    if (!hs || !members.some(m => m.name === hs)) return; // chỉ tính học sinh có trong danh sách lớp (bỏ bài thử, tài khoản chưa ghép)
+    if (String(r[C('Bài')]) !== title) return;
+    const m = rowMember_(ctx, r[C('Tài khoản')], r[C('Họ tên')], r[C('Lớp')]);
+    if (!m || m.cls !== cls) return; // chỉ tính học sinh của lớp này trong danh sách lớp (bỏ bài thử, tài khoản chưa ghép)
+    const hs = m.name;
     const key = 'hs:' + hs;
     const at = r[C('Thời gian nộp')] instanceof Date ? r[C('Thời gian nộp')] : new Date(r[C('Thời gian nộp')]);
     if (!isNaN(at) && (!first || at < first)) first = at;
@@ -438,13 +445,14 @@ function sendSummary_(L, kind) {
     htmlBody: html, name: 'Bài tập về nhà', attachments: [r.blob] });
   summarySheet_().appendRow([L.cls, L.title, new Date(), kind, done + '/' + size]);
 }
-/** Gọi sau mỗi lần nộp bài: bài này của lớp này đã đủ cả lớp → gửi tổng kết. */
-function maybeSummary_(cls, title) {
-  cls = clsCode_(cls); title = String(title || '');
-  if (!SUMMARY_ON || !cls || !title || SUMMARY_SKIP.test(title)) return;
+/** Gọi sau mỗi lần nộp bài (d = bài vừa nộp): bài này của lớp em đó đã đủ cả lớp → gửi tổng kết. */
+function maybeSummary_(d) {
+  const title = String(d && d.title || '');
+  if (!SUMMARY_ON || !title || SUMMARY_SKIP.test(title)) return;
   const lock = LockService.getScriptLock(); if (!lock.tryLock(15000)) return;
   try {
-    const ctx = summaryCtx_(); if (ctx.sent[cls + '|' + title]) return;
+    const ctx = summaryCtx_(), m = rowMember_(ctx, d.account, d.name, d.cls), cls = m && m.cls;
+    if (!cls || ctx.sent[cls + '|' + title]) return;
     const L = classLesson_(ctx, cls, title);
     if (L.complete && L.first && L.first >= SUMMARY_FROM) sendSummary_(L, 'đủ');
   } catch (e) { console.error('maybeSummary_', e); }
@@ -460,8 +468,9 @@ function sweepSummaries_(force) {
     const ctx = summaryCtx_(), seen = {}, now = Date.now(), sizes = {};
     ctx.roster.forEach(m => { sizes[m.cls] = (sizes[m.cls] || 0) + 1; });
     ctx.vals.forEach(r => {
-      const cls = clsCode_(r[HEAD.indexOf('Lớp')]), title = String(r[HEAD.indexOf('Bài')] || '');
-      if (cls && title && !SUMMARY_SKIP.test(title) && (sizes[cls] || 0) >= 2) seen[cls + '|' + title] = [cls, title];
+      const title = String(r[HEAD.indexOf('Bài')] || ''); if (!title || SUMMARY_SKIP.test(title)) return;
+      const m = rowMember_(ctx, r[HEAD.indexOf('Tài khoản')], r[HEAD.indexOf('Họ tên')], r[HEAD.indexOf('Lớp')]);
+      if (m && (sizes[m.cls] || 0) >= 2) seen[m.cls + '|' + title] = [m.cls, title];
     });
     Object.keys(seen).forEach(k => {
       if (ctx.sent[k]) return;
