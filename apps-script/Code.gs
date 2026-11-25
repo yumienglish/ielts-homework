@@ -21,7 +21,7 @@ const ACC_SHEET = 'TaiKhoan';
 // Họ tên + Lớp = tên thật để cô đối chiếu. "Mã HS" = Tên gọi trong web quản lý lớp (để cô biết nickname là em nào). Mọi tài khoản đang hoạt động đều lên bảng xếp hạng.
 const ACC_HEAD = ['Tên đăng nhập', 'PIN', 'Họ tên', 'Tên hiển thị', 'Lớp', 'Avatar', 'Hoạt động', 'Mã HS', 'Ngày tạo', 'Nhân vật', 'Trang'];
 // Mỗi tài khoản chỉ dùng 1 link bài tập (cột "Trang": ket / pet / b2 / a1 / ielts; "*" = mọi link). Tester vào được mọi link.
-const SITES = { ket: 'KET Adventure', pet: 'PET Arena', b2: 'B2 First', a1: 'A1 KID', ielts: 'IELTS homework' };
+const SITES = { ket: 'KET Adventure', pet: 'PET Arena', b2: 'B2 First', a1: 'A1 KID', ielts: 'IELTS homework', grad: 'FCE Graduation' };
 const TESTERS = ['thedukeofgamers'];
 // Danh sách học sinh do web quản lý lớp chép sang (để tự ghép tài khoản lúc em đăng ký)
 const ROSTER_SHEET = 'DSHocSinh';
@@ -631,7 +631,7 @@ function outfitsOf_(cell, avatar) {
 /** Link của tài khoản: cột "Trang"; chưa có thì đoán từ bài đã nộp (nhiều nhất) rồi tiến độ đã lưu, đoán được thì ghi lại. */
 function siteOf_(acc) {
   if (!acc || acc.site) return acc ? acc.site : '';
-  const of = t => /^KET /.test(t) ? 'ket' : /^PET /.test(t) ? 'pet' : /^B2 First (Grammar|Vocabulary|Side)/.test(t) ? 'b2' : /^Listening Trainer A1/.test(t) ? 'a1' : /^B2 /.test(t) ? '' : t ? 'ielts' : '';
+  const of = t => /^KET /.test(t) ? 'ket' : /^PET /.test(t) ? 'pet' : /^B2 First (Grammar|Vocabulary|Side)/.test(t) ? 'b2' : /^Listening Trainer A1/.test(t) ? 'a1' : /^FCE Graduation (Tests|Side)/.test(t) ? 'grad' : /^(B2|FCE) /.test(t) ? '' : t ? 'ielts' : '';
   const cnt = {}, { sh } = getSheet_(), n = sh.getLastRow() - 1;
   if (n > 0) sh.getRange(2, 1, n, HEAD.length).getValues().forEach(r => {
     if (normUser_(r[24]) !== acc.user || !(Number(r[4]) > 0)) return; const s = of(String(r[3] || '')); if (s) cnt[s] = (cnt[s] || 0) + 1; });
@@ -783,7 +783,7 @@ function ownerByPid_(pid, accs) { return Object.keys(accs).filter(u => accs[u].a
  * → đổi máy / dùng chung máy vẫn giữ sao, màn đã qua, bài đang làm. Cô không cần sửa tab này.
  */
 const PROG_SHEET = 'TienDo', PROG_CHUNK = 45000, PROG_MAXCH = 12;
-const PROG_KEYS = { ket: /^ket-/, pet: /^pet-/, b2: /^b2-/, a1: /^(a1kid-|btvn-listening-trainer-a1-)/, ielts: /^(btvn-(?!listening-trainer-a1)|ielts-)/ };
+const PROG_KEYS = { ket: /^ket-/, pet: /^pet-/, b2: /^b2-/, a1: /^(a1kid-|btvn-listening-trainer-a1-)/, ielts: /^(btvn-(?!listening-trainer-a1)|ielts-)/, grad: /^grad-/ };
 function progSheet_() {
   const { ss } = getSheet_();
   let sh = ss.getSheetByName(PROG_SHEET);
