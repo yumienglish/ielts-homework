@@ -392,14 +392,14 @@ function docxBlob_(bodyXml, fileName) {
   const blobs = Object.keys(files).map(n => Utilities.newBlob('', 'application/xml', n).setDataFromString(files[n], 'UTF-8'));
   return Utilities.zip(blobs, fileName).setContentType('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
 }
-/** Nội dung file tổng kết của 1 (lớp, bài). late = gửi vì đã quá 7 ngày. */
+/** Nội dung file tổng kết của 1 (lớp, bài). late = '' (đủ lớp) | 'quá 7 ngày' | 'gửi sớm' (cô yêu cầu khi lớp chưa xong hết). */
 function summaryDocx_(L, late) {
   const W = summaryWrong_(L), done = L.list.filter(s => s.done).length, tz = Session.getScriptTimeZone() || 'Asia/Ho_Chi_Minh';
   const ok2 = v => v === true ? ['  ✅', { color: '15803D', b: true }] : v === false ? ['  ❌', { color: 'B91C1C', b: true }] : ['', {}];
   let b = dxP_('Tổng kết bài: ' + L.title, 'Heading1');
   b += dxP_([['Lớp ' + L.cls, { b: true }], [' · ' + Utilities.formatDate(new Date(), tz, 'dd/MM/yyyy') + ' · Đã nộp ' + L.list.length + ' em · Đã xong cả 2 lần: ' + done + ' em' +
     (L.members.length ? ' · Sĩ số ' + L.members.length : ''), {}]]);
-  if (late) b += dxP_([['Gửi vì đã quá ' + SUMMARY_WAIT_DAYS + ' ngày từ bài nộp đầu tiên của lớp. ', { b: true, color: 'B45309' }],
+  if (late) b += dxP_([[/^quá/.test(late) ? 'Gửi vì đã quá ' + SUMMARY_WAIT_DAYS + ' ngày từ bài nộp đầu tiên của lớp. ' : 'Gửi sớm theo yêu cầu của cô (lớp chưa xong hết). ', { b: true, color: 'B45309' }],
     [(L.missing.length ? 'Chưa nộp: ' + L.missing.join(', ') + '. ' : '') + (L.notDone.length ? 'Chưa làm lần 2: ' + L.notDone.join(', ') + '.' : ''), { color: 'B45309' }]]);
   b += dxP_('Điểm từng em', 'Heading2');
   b += dxTable_([2900, 1400, 1700, 1900, 1400], [['Học sinh', 'Lần 1', 'Lần 2', 'Thời gian làm', 'Rời trang']]
@@ -432,16 +432,17 @@ function summaryDocx_(L, late) {
 }
 /** Tạo + gửi mail + ghi TongKet. kind: 'đủ' | 'quá 7 ngày' */
 function sendSummary_(L, kind) {
-  const r = summaryDocx_(L, kind !== 'đủ'), done = L.list.filter(s => s.done).length, size = L.members.length || L.list.length;
+  const late = kind === 'đủ' ? '' : kind, lateTxt = /^quá/.test(late) ? 'gửi vì đã quá ' + SUMMARY_WAIT_DAYS + ' ngày' : 'gửi sớm theo yêu cầu';
+  const r = summaryDocx_(L, late), done = L.list.filter(s => s.done).length, size = L.members.length || L.list.length;
   const top = r.W.shared.slice(0, 5).map(g => '<li>Câu ' + esc_(g.k) + ' – ' + g.who.length + ' em sai: ' + esc_(g.q || '') + ' → <b>' + esc_(g.correct || '') + '</b></li>').join('');
   const still = r.W.still.filter(x => x.rows.length).map(x => esc_(x.s.name) + ' (' + x.rows.length + ')').join(', ');
   const html = '<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.5">' +
     '<h2 style="color:#0f766e;margin:0 0 6px">Tổng kết bài: ' + esc_(L.title) + '</h2>' +
-    '<p>Lớp <b>' + esc_(L.cls) + '</b> · đã xong ' + done + '/' + size + ' em' + (kind !== 'đủ' ? ' · <b style="color:#b45309">gửi vì đã quá ' + SUMMARY_WAIT_DAYS + ' ngày</b>' +
+    '<p>Lớp <b>' + esc_(L.cls) + '</b> · đã xong ' + done + '/' + size + ' em' + (kind !== 'đủ' ? ' · <b style="color:#b45309">' + lateTxt + '</b>' +
       (L.missing.length ? ' · chưa nộp: ' + esc_(L.missing.join(', ')) : '') + (L.notDone.length ? ' · chưa làm lần 2: ' + esc_(L.notDone.join(', ')) : '') : '') + '</p>' +
     '<p><b>Câu nhiều em cùng sai:</b> ' + r.W.shared.length + ' câu' + (top ? '</p><ul>' + top + '</ul>' : '.</p>') +
     '<p><b>Sau lần 2 vẫn sai:</b> ' + (still || 'không em nào 🎉') + '</p><p>Chi tiết trong file đính kèm 📎</p></div>';
-  MailApp.sendEmail({ to: TEACHER_EMAIL, subject: '[Tổng kết BTVN] ' + L.cls + ' – ' + L.title + ' – ' + done + '/' + size + ' HS' + (kind !== 'đủ' ? ' (quá ' + SUMMARY_WAIT_DAYS + ' ngày)' : ''),
+  MailApp.sendEmail({ to: TEACHER_EMAIL, subject: '[Tổng kết BTVN] ' + L.cls + ' – ' + L.title + ' – ' + done + '/' + size + ' HS' + (kind !== 'đủ' ? ' (' + (/^quá/.test(late) ? 'quá ' + SUMMARY_WAIT_DAYS + ' ngày' : 'gửi sớm') + ')' : ''),
     htmlBody: html, name: 'Bài tập về nhà', attachments: [r.blob] });
   summarySheet_().appendRow([L.cls, L.title, new Date(), kind, done + '/' + size]);
 }
