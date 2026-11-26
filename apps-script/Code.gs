@@ -50,6 +50,7 @@ function setup() {
 
 function doGet(e) {
   const p = (e && e.parameter) || {};
+  try { maybeDigest_(); } catch (_) {} // mail tóm tắt sáng (nếu cô bật): lượt truy cập đầu tiên từ 7h
   if (p.action === 'board') {
     try { return json_(board_(p.token)); }
     catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
@@ -88,7 +89,7 @@ function doPost(e) {
   }
   if (d && d.action === 'progress') { // tiến độ: mỗi em 1 dòng riêng → không chờ khoá chung (không làm chậm nộp bài)
     const out = json_(SHOP_ACTIONS.progress(d));
-    try { sweepSummaries_(); } catch (_) {} // tổng kết cả lớp: mỗi giờ kiểm tra 1 lần (bài đã đủ / quá 7 ngày)
+    try { sweepSummaries_(); maybeDigest_(); } catch (_) {} // tổng kết cả lớp: mỗi giờ kiểm tra 1 lần (bài đã đủ / quá 7 ngày)
     return out;
   }
   const lock = LockService.getScriptLock();
@@ -115,7 +116,7 @@ function doPost(e) {
     return json_({ ok: false, error: String(err && err.message || err) });
   } finally {
     try { lock.releaseLock(); } catch (_) {}
-    if (submitted) { try { maybeSummary_(submitted); sweepSummaries_(); } catch (_) {} } // lỗi tổng kết không ảnh hưởng việc nộp bài
+    if (submitted) { try { maybeSummary_(submitted); sweepSummaries_(); maybeDigest_(); } catch (_) {} } // lỗi tổng kết không ảnh hưởng việc nộp bài
   }
 }
 
@@ -1441,3 +1442,66 @@ const SHOP_ACTIONS = {
     return { ok: true, coins: w.coins + GAME_COINS, added: GAME_COINS, gamesToday: w.gamesToday + 1 };
   })
 };
+
+// ===================== MAIL TÓM TẮT BUỔI SÁNG =====================
+// Cô bật / tắt ở Mia's Classroom (📚 Bài tập → 📧 Mail 7h) → tab MailSang của file này: B1 = Bật/Tắt, B2 = lần gửi gần nhất.
+// Không dùng hẹn giờ (hẹn giờ phải xin thêm quyền → web app chặn học sinh nộp bài tới khi cô cấp quyền): gửi ở lượt truy cập
+// đầu tiên từ 7h sáng mỗi ngày (học sinh mở trang / nộp bài / đồng bộ tiến độ), gộp các bài nộp từ lần gửi trước.
+function maybeDigest_() {
+  const c = CacheService.getScriptCache(); if (c.get('dgChk')) return; c.put('dgChk', '1', 600); // tối đa 10 phút xem 1 lần
+  const now = new Date(); if (+Utilities.formatDate(now, TIMEZONE, 'H') < 7) return;
+  const today7 = new Date(Utilities.formatDate(now, TIMEZONE, 'yyyy-MM-dd') + 'T07:00:00+07:00');
+  const sh = getSheet_().ss.getSheetByName('MailSang'); if (!sh) return;
+  const due = () => { const v = sh.getRange(1, 2, 2, 1).getValues(); return String(v[0][0]).trim() === 'Bật' && !(v[1][0] instanceof Date && v[1][0] >= today7) ? v : null; };
+  if (!due()) return;
+  const lock = LockService.getScriptLock(); if (!lock.tryLock(10000)) { c.remove('dgChk'); return; }
+  try {
+    const v = due(); if (!v) return; // máy khác vừa gửi
+    const from = v[1][0] instanceof Date ? v[1][0].getTime() : now.getTime() - 864e5;
+    const items = digestItems_(summaryCtx_(), from, now.getTime());
+    if (items.length) MailApp.sendEmail({ to: TEACHER_EMAIL, name: "Mia's Classroom", subject: '[Tóm tắt BTVN] ' + Utilities.formatDate(now, TIMEZONE, 'dd/MM') + ' – ' + items.length + ' lượt nộp',
+      htmlBody: digestHtml_(items, from, now.getTime(), getSheet_().ss.getUrl()) });
+    sh.getRange(2, 2).setValue(now);
+    c.put('digestOn', '1', 600);
+  } finally { lock.releaseLock(); }
+}
+/** Các lượt nộp (lần 1 / lần 2) trong khoảng (from, to] – tên + lớp theo danh sách lớp. */
+function digestItems_(ctx, from, to) {
+  const inWin = t => t instanceof Date && t.getTime() > from && t.getTime() <= to; const out = [];
+  ctx.vals.forEach(r => {
+    const in1 = inWin(r[0]), in2 = inWin(r[21]); if (!in1 && !in2) return;
+    const m = rowMember_(ctx, r[24], r[1], r[2]); const sc = Number(r[4]), tt = Number(r[5]);
+    out.push({ cls: m ? m.cls : (clsCode_(r[2]) || String(r[2] || '?')), who: m ? m.name : String(r[1] || ''), matched: !!m, title: String(r[3] || ''),
+      in1, in2, s1: r[4] + '/' + r[5], pct: tt ? sc / tt : null, s2: String(r[19] || '').replace(/^'/, ''), dur: String(r[14] || ''),
+      lv: Number(r[15]) || 0, lv2: Number(r[23]) || 0, wrong: String(r[11] || ''), wrong2: String(r[20] || ''), rec: /^Có/.test(String(r[17] || '')) });
+  });
+  return out;
+}
+function digestHtml_(items, from, to, url) {
+  const fmt = t => Utilities.formatDate(new Date(t), TIMEZONE, 'HH:mm dd/MM');
+  const td = 'style="border:1px solid #eadfe3;padding:5px 7px;vertical-align:top"';
+  const byCls = {}; items.forEach(x => { const c = byCls[x.cls] = byCls[x.cls] || {}; (c[x.title] = c[x.title] || []).push(x); });
+  let h = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;max-width:780px">' +
+    '<h2 style="margin:0 0 4px;color:#b23a60">🌷 Bài nộp từ ' + fmt(from) + ' đến ' + fmt(to) + '</h2>' +
+    '<div style="color:#777;margin-bottom:10px">' + items.length + ' lượt nộp · ⚠️ = điểm dưới 50% hoặc rời trang từ 3 lần · bài có ghi âm 🎙 đã gửi mail riêng (kèm file)</div>';
+  Object.keys(byCls).sort().forEach(c => {
+    h += '<h3 style="margin:16px 0 6px;color:#5b3fd1">' + esc_(c) + '</h3>';
+    Object.keys(byCls[c]).sort().forEach(t => {
+      h += '<div style="font-weight:bold;margin:8px 0 4px">📚 ' + esc_(t) + '</div><table style="border-collapse:collapse;font-size:13.5px;width:100%">' +
+        '<tr style="background:#fdf0f4"><th ' + td + '>Học sinh</th><th ' + td + '>Lần 1</th><th ' + td + '>Lần 2</th><th ' + td + '>Câu còn sai</th></tr>';
+      byCls[c][t].forEach(x => {
+        const warn = (x.in1 && ((x.pct != null && x.pct < 0.5) || x.lv >= 3)) || (x.in2 && x.lv2 >= 3);
+        const no2 = /Không cần/.test(x.s2);
+        const l1 = x.in1 ? '<b>' + esc_(x.s1) + '</b>' + (x.dur ? ' · ' + esc_(x.dur) : '') + (x.lv ? ' · <span style="color:#d64045">rời trang ' + x.lv + '</span>' : '') + (x.rec ? ' · 🎙' : '')
+          : '<span style="color:#999">(nộp trước đó)</span>';
+        const l2 = x.in2 ? '<b>' + esc_(x.s2) + '</b>' + (x.lv2 ? ' · <span style="color:#d64045">rời trang ' + x.lv2 + '</span>' : '')
+          : no2 ? '✅ đúng hết' : x.s2 ? esc_(x.s2) : '<span style="color:#b4232f">chưa làm</span>';
+        const wr = x.s2 && !no2 ? (x.wrong2 && x.wrong2 !== '—' ? x.wrong2 : '✅') : (x.wrong && x.wrong !== '—' ? x.wrong : '✅');
+        h += '<tr><td ' + td + '>' + (warn ? '⚠️ ' : '') + esc_(x.who) + (x.matched ? '' : ' <span style="color:#999">(chưa ghép tên)</span>') + '</td><td ' + td + '>' + l1 +
+          '</td><td ' + td + '>' + l2 + '</td><td ' + td + '>' + esc_(wr) + '</td></tr>';
+      });
+      h += '</table>';
+    });
+  });
+  return h + '<p style="margin-top:16px"><a href="' + url + '">Mở file bài nộp (chi tiết từng câu)</a> · Tình trạng nộp từng lớp: Mia\'s Classroom → 📚 Bài tập</p></div>';
+}

@@ -1360,7 +1360,7 @@ function viewBaiTap(cls) {
   const a = $('#hwAdd'); if (a) a.addEventListener('click', () => hwLessonModal(null, cls));
   const im = $('#hwImp'); if (im) im.addEventListener('click', () => serverCall('importNow', [], 'Đã lấy bài nộp', im));
   const dg = $('#hwDg'); if (dg) dg.addEventListener('click', () => { const on = !!SETTINGS['Mail tóm tắt 7h'];
-    if (!confirm(on ? 'Tắt mail tóm tắt 7h? Mail từng lần nộp sẽ gửi lại như cũ.' : 'Bật mail tóm tắt 7h sáng?\n• Mỗi sáng 1 mail gộp các bài nộp hôm trước (lần 1 + lần 2), chia theo lớp.\n• Mail từng lần nộp tạm dừng (bài có ghi âm vẫn gửi ngay).')) return;
+    if (!confirm(on ? 'Tắt mail tóm tắt 7h? Mail từng lần nộp sẽ gửi lại như cũ.' : 'Bật mail tóm tắt buổi sáng?\n• Mỗi sáng từ 7h (lúc có học sinh vào trang đầu tiên) 1 mail gộp các bài nộp hôm trước (lần 1 + lần 2), chia theo lớp.\n• Mail từng lần nộp tạm dừng (bài có ghi âm vẫn gửi ngay).')) return;
     serverCall('setDigest', [!on], on ? 'Đã tắt mail 7h' : 'Đã bật mail 7h', dg); });
   if (site && (!F || Date.now() - F.at > 600000)) hwRefresh().then(() => { if (LAST === 'baitap') route(true); }); // tự đọc trang (10 phút/lần)
 }
