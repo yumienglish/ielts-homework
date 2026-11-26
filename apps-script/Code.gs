@@ -51,6 +51,10 @@ function setup() {
 function doGet(e) {
   const p = (e && e.parameter) || {};
   try { maybeDigest_(); } catch (_) {} // mail tóm tắt sáng (nếu cô bật): lượt truy cập đầu tiên từ 7h
+  if (p.action === 'ping') { // kiểm tra trang hằng ngày (kho site-check)
+    try { return json_(sitePing_()); }
+    catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
+  }
   if (p.action === 'board') {
     try { return json_(board_(p.token)); }
     catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
@@ -73,6 +77,10 @@ function doGet(e) {
 function doPost(e) {
   let d;
   try { d = JSON.parse(e.postData.contents); } catch (_) { return json_({ ok: false, error: 'Dữ liệu không hợp lệ' }); }
+  if (d && d.action === 'siteAlert') { // kiểm tra trang hằng ngày: có trang lỗi → mail cô (cần khoá)
+    try { return json_(siteAlert_(d)); }
+    catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
+  }
   if (d && d.app === 'a1pet') { // A1 KID: trứng thú cưng đã nở → mail báo cô (hàm petHatched_ ở cuối file)
     try { petHatched_(d); return json_({ ok: true }); }
     catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
@@ -443,10 +451,171 @@ function summaryDocx_(L, late) {
   if (pending.length) b += dxP_([['Chưa làm lần 2: ', { b: true, color: 'B45309' }], [pending.join(', '), {}]]);
   return { blob: docxBlob_(b, ('Tong ket – ' + L.cls + ' – ' + L.title).replace(/[\\/:*?"<>|]/g, '-').slice(0, 120) + '.docx'), W };
 }
+/* ---- 🎮 Game ôn đầu giờ (file .html đính kèm mail tổng kết): câu cả lớp hay sai → lưới ô số chiếu lên lớp ---- */
+const GAME_MAX = 8, GAME_MIN = 4;
+/** Chọn câu cho game: câu ≥2 em sai → câu lần 2 vẫn sai → (nếu còn ít hơn GAME_MIN) câu 1 em sai. Bỏ câu không có đề/đáp án dùng được. */
+function gameQs_(L, W) {
+  const useful = (q, a) => q && a && !/^Q\d+$/.test(q) && !/cô chấm/i.test(a) && String(q).length <= 400;
+  const top = arr => { const c = {}; arr.forEach(a => { a = String(a == null ? '' : a).trim(); if (a && !/^\(.*\)$/.test(a)) c[a] = (c[a] || 0) + 1; }); return Object.keys(c).sort((x, y) => c[y] - c[x])[0] || ''; };
+  const clean = s => String(s == null ? '' : s).replace(/^Câu gốc:\s*/, 'Sentence: ').replace(/<[^>]+>/g, '').trim();
+  const out = [], seen = {}, add = (k, q, a, ws, n, t) => {
+    q = clean(q); a = clean(a);
+    if (seen[k] || out.length >= GAME_MAX || !useful(q, a)) return;
+    seen[k] = 1; const w = top(ws); out.push({ k, q, a, w: w && w !== a ? w : '', n, t });
+  };
+  W.shared.forEach(g => add(g.k, g.q, g.correct, g.who.map(x => x.a1), g.who.length, 1));
+  const by = {};
+  W.still.forEach(x => x.rows.forEach(r => { const b = by[r.k] || (by[r.k] = { k: r.k, q: r.q, a: r.correct, ws: [], n: 0 }); b.n++; b.ws.push(r.a2 && r.a2 !== '(không lưu)' ? r.a2 : r.a1); }));
+  Object.keys(by).map(k => by[k]).sort((a, b) => b.n - a.n || (natKey_(a.k) < natKey_(b.k) ? -1 : 1)).forEach(b => add(b.k, b.q, b.a, b.ws, b.n, 2));
+  if (out.length < GAME_MIN) {
+    const solo = {};
+    L.list.forEach(s => s.items1.filter(it => it.ok === false).forEach(it => { const k = itemKey_(it); if (!solo[k]) solo[k] = { it, ws: [] }; solo[k].ws.push(it.ans); }));
+    Object.keys(solo).sort((a, b) => natKey_(a) < natKey_(b) ? -1 : 1).forEach(k => { if (out.length < GAME_MIN) add(k, solo[k].it.q, solo[k].it.correct, solo[k].ws, solo[k].ws.length, 1); });
+  }
+  return out;
+}
+/** File game .html (tự chạy, không cần mạng; chữ trên màn chiếu toàn tiếng Anh). null nếu không có câu nào. */
+function gameBlob_(L, W) {
+  const qs = gameQs_(L, W);
+  if (!qs.length) return null;
+  const short = n => String(n || '').replace(/\(.*?\)/g, '').trim() || String(n || '');
+  let players = (L.members.length ? L.members.map(m => m.name) : L.list.map(s => s.name)).map(short).filter(Boolean).slice(0, 8);
+  if (players.length < 2) players = ['Team A', 'Team B'];
+  const data = { id: (L.cls + '|' + L.title).replace(/[^\w|.-]+/g, '_').slice(0, 80), cls: L.cls, title: L.title, total: L.list.length, players, qs };
+  const json = JSON.stringify(data).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
+  const html = GAME_HTML_.replace('__TITLE__', String(L.title).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])))
+    .replace('__DATA__', () => json);
+  const name = ('Game on tap – ' + L.cls + ' – ' + L.title).replace(/[\\/:*?"<>|]/g, '-').slice(0, 120) + '.html';
+  return { blob: Utilities.newBlob('', 'text/html', name).setDataFromString(html, 'UTF-8'), n: qs.length };
+}
+const GAME_HTML_ = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mistake Hunt – __TITLE__</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1f2937;--vio:#7c3aed;--pink:#ff4f8b;--ok:#15803d;--bad:#dc2626}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:'Baloo 2','Segoe UI',system-ui,sans-serif;color:var(--ink);background:radial-gradient(circle at 15% 0,#ffe4f0,transparent 45%),radial-gradient(circle at 95% 100%,#dbeafe,transparent 50%),#fff7ed}
+button{font-family:inherit;cursor:pointer}
+header{position:sticky;top:0;z-index:15;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 16px;background:#fffffff2;box-shadow:0 2px 12px #0000001a}
+.brand{font-weight:800;font-size:24px;color:var(--vio);line-height:1.05}.brand small{display:block;font-size:14px;font-weight:600;color:#6b7280}
+.players{display:flex;gap:8px;flex-wrap:wrap;flex:1}
+.pl{display:flex;align-items:center;gap:4px;background:#f5f3ff;border:2px solid #ede9fe;border-radius:16px;padding:2px 6px 2px 12px;font-weight:700;font-size:18px}
+.pl.lead{border-color:#fbbf24;background:#fffbeb}
+.pl .nm{cursor:text;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl .sc{font-size:30px;font-weight:800;min-width:40px;text-align:center;color:var(--vio)}
+.pl button{width:34px;height:34px;border:0;border-radius:10px;font-size:20px;font-weight:800;background:#fff;color:var(--vio);box-shadow:0 2px 0 #0000001f}
+.pl button.p{background:var(--vio);color:#fff}
+.tools{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tools button{border:0;border-radius:12px;padding:6px 12px;font-size:16px;font-weight:700;background:#f3f4f6}
+#clock{font-size:28px;font-weight:800;min-width:64px;text-align:center;color:#0f766e}#clock.low{color:var(--bad)}
+main{padding:26px 20px 40px}
+.sub{text-align:center;font-size:20px;color:#6b7280;margin:0 0 18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px;max-width:1150px;margin:0 auto}
+.tile{aspect-ratio:4/3;border:0;border-radius:26px;color:#fff;font-size:72px;font-weight:800;box-shadow:0 9px 0 #00000026;transition:transform .15s}
+.tile:hover{transform:translateY(-5px) rotate(-1.5deg)}.tile.done{background:#e5e7eb!important;color:#9ca3af;box-shadow:none;font-size:46px}
+.end{text-align:center;margin-top:26px}.big{border:0;border-radius:18px;padding:12px 26px;font-size:24px;font-weight:800;color:#fff;background:linear-gradient(135deg,#f59e0b,#ef4444);box-shadow:0 6px 0 #00000026}
+.ov{position:fixed;inset:0;z-index:10;display:none;align-items:center;justify-content:center;padding:96px 20px 20px;background:#0f172ad0}.ov.on{display:flex}
+.card{position:relative;width:100%;max-width:1050px;max-height:calc(100vh - 116px);overflow:auto;background:#fff;border-radius:30px;padding:26px 38px 30px;box-shadow:0 24px 70px #00000080}
+.x{position:absolute;top:14px;right:16px;border:0;background:#f3f4f6;border-radius:12px;width:44px;height:44px;font-size:22px}
+.tags{display:flex;gap:8px;flex-wrap:wrap}.tag{border-radius:999px;padding:3px 14px;font-weight:700;font-size:18px;background:#ede9fe;color:var(--vio)}
+.tag.hot{background:#fee2e2;color:#b91c1c}.tag.dbl{background:#fef3c7;color:#b45309;animation:pulse 1s infinite alternate}
+@keyframes pulse{to{transform:scale(1.08)}}
+.q{font-size:clamp(28px,4.2vw,52px);font-weight:700;line-height:1.22;margin:16px 0 22px;white-space:pre-wrap}
+.miss,.ans{display:none;border-radius:20px;padding:14px 22px;margin:0 0 14px;font-size:clamp(24px,3.2vw,40px);font-weight:700}
+.miss{background:#fef2f2;border:3px dashed #fca5a5;color:#991b1b}.miss s{text-decoration-thickness:4px}.miss small{display:block;font-size:20px;color:#b91c1c;font-weight:600}
+.ans{background:#f0fdf4;border:3px solid #86efac;color:var(--ok)}.miss.on,.ans.on{display:block}
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.btns button{border:0;border-radius:16px;padding:10px 20px;font-size:21px;font-weight:800;color:#fff;box-shadow:0 5px 0 #00000026}
+.b1{background:#2563eb}.b2{background:#e11d48}.b3{background:#16a34a}.b4{background:#6b7280}
+#flash{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;flex-direction:column;color:#fff;font-weight:800;font-size:28vh;line-height:1;text-align:center;background:#7c3aedf0}
+#flash small{font-size:6vh;margin-top:3vh}
+.rank{font-size:34px;font-weight:800;margin:6px 0}.rank .s{color:var(--vio)}
+.conf{position:fixed;top:-20px;z-index:40;width:12px;height:18px;border-radius:3px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+.help{text-align:center;color:#9ca3af;font-size:15px;margin-top:30px}
+</style></head><body>
+<header><div class="brand">🔎 Mistake Hunt<small id="sub"></small></div><div class="players" id="players"></div>
+<div class="tools"><span id="clock">0:00</span><button data-t="20">⏱ 20s</button><button data-t="40">⏱ 40s</button><button id="b321">🖐 3-2-1</button><button id="undo">↶ Undo</button><button id="fs">⛶</button><button id="reset">↺</button></div></header>
+<main><p class="sub">Last homework's trickiest questions – can you beat them now?</p><div class="grid" id="grid"></div><div class="end" id="end"></div><p class="help">Click a number · Space = next step · Esc = close · F = full screen · click a name to edit it</p></main>
+<div class="ov" id="ov"><div class="card" id="card"></div></div><div id="flash"></div>
+<script>
+const D = __DATA__;
+const KEY = 'mistake-hunt-' + D.id, COL = ['#ff4f8b', '#7c3aed', '#2563eb', '#0ea5a4', '#16a34a', '#f59e0b', '#ef4444', '#db2777'];
+const $ = s => document.querySelector(s), esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let S = null; try { S = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
+const fresh = () => ({ names: D.players.slice(), sc: D.players.map(() => 0), done: [], dbl: D.qs.length >= 3 ? Math.floor(Math.random() * D.qs.length) : -1, hist: [] });
+if (!S || !Array.isArray(S.sc) || S.sc.length !== D.players.length) S = fresh();
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+let cur = -1, stepN = 0, AC = null;
+function beep(f, d, when) { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); const o = AC.createOscillator(), g = AC.createGain(), t = AC.currentTime + (when || 0); o.frequency.value = f; o.connect(g); g.connect(AC.destination); g.gain.setValueAtTime(.2, t); g.gain.exponentialRampToValueAtTime(.001, t + (d || .15)); o.start(t); o.stop(t + (d || .15)); } catch (e) {} }
+const tada = () => [523, 659, 784, 1047].forEach((f, i) => beep(f, .25, i * .1));
+function players() {
+  const max = Math.max.apply(null, S.sc);
+  $('#players').innerHTML = S.names.map((n, i) => '<div class="pl' + (max > 0 && S.sc[i] === max ? ' lead' : '') + '"><span class="nm" data-n="' + i + '">' + (max > 0 && S.sc[i] === max ? '👑 ' : '') + esc(n) + '</span><button data-m="' + i + '">−</button><span class="sc">' + S.sc[i] + '</span><button class="p" data-p="' + i + '">+</button></div>').join('');
+}
+function grid() {
+  $('#sub').textContent = D.cls + ' · ' + D.title;
+  $('#grid').innerHTML = D.qs.map((q, i) => '<button class="tile' + (S.done.indexOf(i) >= 0 ? ' done' : '') + '" data-q="' + i + '" style="background:' + COL[i % COL.length] + '">' + (S.done.indexOf(i) >= 0 ? '✓' : i + 1) + '</button>').join('');
+  $('#end').innerHTML = S.done.length >= D.qs.length ? '<button class="big" id="win">🏆 Final scores</button>' : '';
+}
+function add(i, d) { S.sc[i] += d; S.hist.push([i, d]); save(); players(); beep(d > 0 ? 880 : 220, .15); }
+function open(i) {
+  cur = i; stepN = 0; const q = D.qs[i], dbl = i === S.dbl;
+  $('#card').innerHTML = '<button class="x" id="cl">✕</button><div class="tags"><span class="tag">Question ' + (i + 1) + '</span>' +
+    (q.t === 2 ? '<span class="tag hot">🔥 Still tricky after 2 tries!</span>' : '<span class="tag hot">😱 ' + q.n + '/' + D.total + ' missed this</span>') +
+    (dbl ? '<span class="tag dbl">⭐ DOUBLE POINTS</span>' : '') + '</div><div class="q">' + esc(q.q) + '</div>' +
+    (q.w ? '<div class="miss" id="miss"><small>Someone wrote…  what\\'s wrong?</small><s>' + esc(q.w) + '</s></div>' : '') +
+    '<div class="ans" id="ans">✅ ' + esc(q.a) + '</div><div class="btns"><button class="b1" id="c321">🖐 Boards up 3-2-1</button>' +
+    (q.w ? '<button class="b2" id="cmiss">😬 Show a common mistake</button>' : '') + '<button class="b3" id="cans">✅ Show the answer</button><button class="b4" id="cdone">Done ✓</button></div>';
+  $('#ov').classList.add('on');
+  if (dbl) { flash('⭐', 'DOUBLE POINTS!', '#f59e0bf0', 1500); tada(); }
+}
+function reveal(w) { const el = $(w); if (el) el.classList.add('on'); if (w === '#ans') { beep(660, .12); beep(990, .2, .12); } else beep(300, .2); }
+function next() { if (cur < 0) return; if (stepN === 0) { boards(); } else if (stepN === 1 && D.qs[cur].w && !$('#miss').classList.contains('on')) reveal('#miss'); else reveal('#ans'); stepN++; }
+function close(done) { if (cur >= 0 && (done === true || $('#ans').classList.contains('on')) && S.done.indexOf(cur) < 0) { S.done.push(cur); save(); } cur = -1; $('#ov').classList.remove('on'); grid(); if (S.done.length >= D.qs.length) tada(); }
+function flash(big, sub, bg, ms) { const f = $('#flash'); f.style.background = bg || '#7c3aedf0'; f.innerHTML = big + (sub ? '<small>' + sub + '</small>' : ''); f.style.display = 'flex'; clearTimeout(flash.t); flash.t = setTimeout(() => { f.style.display = 'none'; }, ms || 900); }
+function boards() { [3, 2, 1].forEach((n, i) => setTimeout(() => { flash(n, '', ['#2563ebf0', '#7c3aedf0', '#e11d48f0'][i], 950); beep(520, .15); }, i * 1000)); setTimeout(() => { flash('🖐', 'BOARDS UP!', '#16a34af0', 1300); beep(880, .4); }, 3000); }
+const T = { end: 0, iv: null };
+function timer(s) { T.end = Date.now() + s * 1000; clearInterval(T.iv); T.iv = setInterval(tick, 200); tick(); beep(700, .1); }
+function tick() { const l = Math.max(0, Math.ceil((T.end - Date.now()) / 1000)); $('#clock').textContent = Math.floor(l / 60) + ':' + String(l % 60).padStart(2, '0'); $('#clock').classList.toggle('low', l > 0 && l <= 5); if (l <= 5 && l > 0) beep(440, .06); if (l === 0) { clearInterval(T.iv); flash('⏰', "TIME'S UP!", '#dc2626f0', 1400); beep(200, .5); } }
+function win() {
+  const r = S.names.map((n, i) => [n, S.sc[i]]).sort((a, b) => b[1] - a[1]);
+  $('#card').innerHTML = '<button class="x" id="cl">✕</button><div style="text-align:center"><div style="font-size:90px">🏆</div>' + r.map((x, i) => '<div class="rank">' + (['🥇', '🥈', '🥉'][i] || '⭐') + ' ' + esc(x[0]) + ' – <span class="s">' + x[1] + '</span></div>').join('') + '</div>';
+  cur = -2; $('#ov').classList.add('on'); tada();
+  for (let i = 0; i < 120; i++) { const c = document.createElement('div'); c.className = 'conf'; c.style.left = Math.random() * 100 + 'vw'; c.style.background = COL[i % COL.length]; c.style.animationDuration = 2 + Math.random() * 3 + 's'; c.style.animationDelay = Math.random() * 1.5 + 's'; document.body.appendChild(c); setTimeout(() => c.remove(), 7000); }
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('button,[data-n]'); if (!t) { if (e.target.id === 'ov') close(false); return; }
+  if (t.dataset.q != null) open(+t.dataset.q);
+  else if (t.dataset.p != null) add(+t.dataset.p, cur >= 0 && cur === S.dbl ? 2 : 1);
+  else if (t.dataset.m != null) add(+t.dataset.m, -1);
+  else if (t.dataset.n != null) { const v = prompt('Name:', S.names[+t.dataset.n]); if (v && v.trim()) { S.names[+t.dataset.n] = v.trim().slice(0, 20); save(); players(); } }
+  else if (t.dataset.t) timer(+t.dataset.t);
+  else if (t.id === 'b321' || t.id === 'c321') { boards(); if (stepN === 0) stepN = 1; }
+  else if (t.id === 'cmiss') { reveal('#miss'); stepN = Math.max(stepN, 2); }
+  else if (t.id === 'cans') { reveal('#ans'); stepN = 3; }
+  else if (t.id === 'cdone') close(true);
+  else if (t.id === 'cl') close(false);
+  else if (t.id === 'win') win();
+  else if (t.id === 'undo') { const h = S.hist.pop(); if (h) { S.sc[h[0]] -= h[1]; save(); players(); } }
+  else if (t.id === 'fs') fullscreen();
+  else if (t.id === 'reset') { if (confirm('Start a new game? Scores will be cleared.')) { S = fresh(); save(); players(); grid(); } }
+});
+function fullscreen() { if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {}); else document.exitFullscreen(); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && $('#ov').classList.contains('on')) close(false);
+  else if ((e.key === ' ' || e.key === 'Enter') && cur >= 0) { e.preventDefault(); next(); }
+  else if ((e.key === 'f' || e.key === 'F') && !e.ctrlKey) fullscreen();
+  else if (/^[1-8]$/.test(e.key) && cur === -1 && D.qs[+e.key - 1]) open(+e.key - 1);
+});
+players(); grid();
+</script></body></html>`;
+
 /** Tạo + gửi mail + ghi TongKet. kind: 'đủ' | 'quá 7 ngày' */
 function sendSummary_(L, kind) {
   const late = kind === 'đủ' ? '' : kind, lateTxt = /^quá/.test(late) ? 'gửi vì đã quá ' + SUMMARY_WAIT_DAYS + ' ngày' : 'gửi sớm theo yêu cầu';
   const r = summaryDocx_(L, late), done = L.list.filter(s => s.done).length, size = L.members.length || L.list.length;
+  let game = null; try { game = gameBlob_(L, r.W); } catch (e) { console.error('gameBlob_', e); } // lỗi game không được chặn mail tổng kết
   const top = r.W.shared.slice(0, 5).map(g => '<li>Câu ' + esc_(g.k) + ' – ' + g.who.length + ' em sai: ' + esc_(g.q || '') + ' → <b>' + esc_(g.correct || '') + '</b></li>').join('');
   const still = r.W.still.filter(x => x.rows.length).map(x => esc_(x.s.name) + ' (' + x.rows.length + ')').join(', ');
   const html = '<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.5">' +
@@ -454,9 +623,10 @@ function sendSummary_(L, kind) {
     '<p>Lớp <b>' + esc_(L.cls) + '</b> · đã xong ' + done + '/' + size + ' em' + (kind !== 'đủ' ? ' · <b style="color:#b45309">' + lateTxt + '</b>' +
       (L.missing.length ? ' · chưa nộp: ' + esc_(L.missing.join(', ')) : '') + (L.notDone.length ? ' · chưa làm lần 2: ' + esc_(L.notDone.join(', ')) : '') : '') + '</p>' +
     '<p><b>Câu nhiều em cùng sai:</b> ' + r.W.shared.length + ' câu' + (top ? '</p><ul>' + top + '</ul>' : '.</p>') +
-    '<p><b>Sau lần 2 vẫn sai:</b> ' + (still || 'không em nào 🎉') + '</p><p>Chi tiết trong file đính kèm 📎</p></div>';
+    '<p><b>Sau lần 2 vẫn sai:</b> ' + (still || 'không em nào 🎉') + '</p><p>Chi tiết trong file Word đính kèm 📎</p>' +
+    (game ? '<p>🎮 <b>Game ôn đầu giờ</b> (' + game.n + ' câu): file .html đính kèm – tải về máy chiếu, mở bằng Chrome, bấm F11. Bấm số để mở câu, phím cách để sang bước tiếp.</p>' : '') + '</div>';
   MailApp.sendEmail({ to: TEACHER_EMAIL, subject: '[Tổng kết BTVN] ' + L.cls + ' – ' + L.title + ' – ' + done + '/' + size + ' HS' + (kind !== 'đủ' ? ' (' + (/^quá/.test(late) ? 'quá ' + SUMMARY_WAIT_DAYS + ' ngày' : 'gửi sớm') + ')' : ''),
-    htmlBody: html, name: 'Bài tập về nhà', attachments: [r.blob] });
+    htmlBody: html, name: 'Bài tập về nhà', attachments: game ? [r.blob, game.blob] : [r.blob] });
   summarySheet_().appendRow([L.cls, L.title, new Date(), kind, done + '/' + size]);
 }
 /** Gọi sau mỗi lần nộp bài (d = bài vừa nộp): bài này của lớp em đó đã đủ cả lớp → gửi tổng kết. */
@@ -1504,4 +1674,34 @@ function digestHtml_(items, from, to, url) {
     });
   });
   return h + '<p style="margin-top:16px"><a href="' + url + '">Mở file bài nộp (chi tiết từng câu)</a> · Tình trạng nộp từng lớp: Mia\'s Classroom → 📚 Bài tập</p></div>';
+}
+
+/* ================= KIỂM TRA TRANG HẰNG NGÀY (kho GitHub riêng tư yumienglish/site-check, chạy 6h30 + 17h) =================
+ * GitHub mở mọi trang bài tập + gọi ?action=ping. Có lỗi → POST {action:'siteAlert', key, problems} → mail cho cô.
+ * Khoá thật nằm trong GitHub (secret ALERT_KEY); ở đây chỉ giữ mã băm SHA-256 → người ngoài không gửi được mail báo giả. */
+const ALERT_KEY_SHA256 = '75ef2d84572d9458500208f9a3fb52466f97d5f06adec7af98870d061bd174c1';
+function sha256Hex_(s) {
+  return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(s), Utilities.Charset.UTF_8).map(b => ((b + 256) % 256).toString(16).padStart(2, '0')).join('');
+}
+/** máy chủ còn sống + mở được file bài nộp */
+function sitePing_() { const { sh } = getSheet_(); return { ok: true, rows: sh.getLastRow() }; }
+function siteAlert_(d) {
+  if (!d || !d.key || sha256Hex_(d.key) !== ALERT_KEY_SHA256) return { ok: false, error: 'forbidden' };
+  const P = (Array.isArray(d.problems) ? d.problems : []).slice(0, 40).map(p => ({ site: String(p && p.site || '').slice(0, 80), url: String(p && p.url || '').slice(0, 300), err: String(p && p.err || '').slice(0, 400) }));
+  if (!P.length) return { ok: true, sent: false };
+  const cache = CacheService.getScriptCache(), sig = sha256Hex_(JSON.stringify(P.map(p => [p.url, p.err]))).slice(0, 16);
+  if (cache.get('siteAlert') === sig) return { ok: true, sent: false, dup: true }; // cùng lỗi y hệt trong 6 tiếng → không gửi lại
+  const sites = P.map(p => p.site).filter((s, i, a) => a.indexOf(s) === i);
+  const link = u => /^https:\/\//.test(u) ? '<a href="' + esc_(u) + '">' + esc_(u) + '</a>' : esc_(u);
+  const rows = P.map(p => '<tr><td style="padding:6px 8px;border:1px solid #e5e7eb;vertical-align:top"><b>' + esc_(p.site) + '</b><br><span style="font-size:12px">' + link(p.url) + '</span></td>' +
+    '<td style="padding:6px 8px;border:1px solid #e5e7eb;vertical-align:top;font-family:Consolas,monospace;font-size:12px;color:#b91c1c">' + esc_(p.err) + '</td></tr>').join('');
+  const html = '<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.5">' +
+    '<h2 style="color:#b91c1c;margin:0 0 6px">⚠️ Có trang bài tập đang lỗi</h2>' +
+    '<p>Máy vừa mở thử ' + (+d.pages || '') + ' trang: <b>' + P.length + ' lỗi</b> ở ' + esc_(sites.join(', ')) + ' (đã thử lại sau 15 giây, vẫn lỗi). Học sinh có thể không làm bài được.</p>' +
+    '<table style="border-collapse:collapse;margin:8px 0">' + rows + '</table>' +
+    '<p>👉 Cô chuyển tiếp mail này cho Claude (hoặc chép nội dung) và nhắn: <i>"trang bị lỗi, sửa giúp"</i>.</p>' +
+    (/^https:\/\/github\.com\//.test(String(d.run || '')) ? '<p style="font-size:12px;color:#6b7280">Chi tiết lần kiểm tra: <a href="' + esc_(d.run) + '">' + esc_(d.run) + '</a></p>' : '') + '</div>';
+  MailApp.sendEmail({ to: TEACHER_EMAIL, name: 'Kiểm tra trang', subject: '⚠️ Trang bài tập bị lỗi: ' + sites.join(', '), htmlBody: html });
+  cache.put('siteAlert', sig, 6 * 3600);
+  return { ok: true, sent: true };
 }
