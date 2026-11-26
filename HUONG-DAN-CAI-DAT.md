@@ -40,7 +40,8 @@ Có 2 phần: **(A) máy chủ nhận bài** bằng Google Apps Script, dùng đ
    - Unit 1 · MS Foundation: <https://yumienglish.github.io/ielts-homework/unit-01-ms-foundation-ls/>
    - Grammar · Present Simple: <https://yumienglish.github.io/ielts-homework/grammar/>
    - Basic Listening · Letters: <https://yumienglish.github.io/ielts-homework/basic-listening-letters/>. Đáp án nằm ở hằng số `KEY` đầu phần script trong `basic-listening-letters/index.html`; ô nào để trống thì câu đó hiện "cô chấm sau".
-   - Vocabulary · Units 47 & 52 (Vocabulary in Use Elementary): <https://yumienglish.github.io/ielts-homework/vocab-47-52/>. Tranh lấy từ sách, tranh Unit 52 vẽ bằng ChatGPT (`vocab-47-52/img/ai/`).
+   - Lesson 4 · Language Builder · Unit 1 (Mindset for IELTS Foundation, Skills Modules): <https://yumienglish.github.io/ielts-homework/lb-unit-01/>. Nguồn: `D:\FOUNDATION\Mindset For IELTS - Foundation\…\language builder\unit 1.docx` (tranh và audio lấy từ file Word). Bài 9 chỉ cho nghe kiểm tra sau khi nộp.
+   - Đã gỡ khỏi sảnh (26/11), trang vẫn còn để giao lại khi cần: Vocabulary · Units 47 & 52 <https://yumienglish.github.io/ielts-homework/vocab-47-52/>.
    - Link cũ `…/unit-02-present-simple/` vẫn dùng được, trang sẽ tự chuyển sang `…/grammar/`.
 
 Gửi link sảnh cho học sinh là tiện nhất: các em đăng nhập, tự chọn bài; mỗi trang bài tập đều có nút **← All lessons** để quay về sảnh.
