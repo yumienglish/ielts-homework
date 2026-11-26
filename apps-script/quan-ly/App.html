@@ -835,7 +835,7 @@ function remindBlock(cls, extra = '') { // 1 lớp: tình trạng nộp bài + c
     : '<div class="small muted" style="margin-top:4px">Lớp này chưa có bài nộp online → tin nhắn chỉ nhắc chung.</div>';
   h += `<div class="row wrapf" style="gap:6px;margin-top:8px"><button class="btn sm" type="button" data-cpg="${esc(cls)}">📋 Chép tin nhóm lớp</button>`;
   h += par.map(st => { const z = zaloNum(stuRow(st.name).phone);
-    return z ? `<a class="btn sm mint" href="https://zalo.me/${z}" target="_blank" rel="noopener" data-cpp="${esc(st.name)}" data-c="${esc(cls)}">💬 PH ${esc(st.display)}</a>`
+    return z ? `<a class="btn sm mint" href="https:\/\/zalo.me/${z}" target="_blank" rel="noopener" data-cpp="${esc(st.name)}" data-c="${esc(cls)}">💬 PH ${esc(st.display)}</a>`
       : `<a class="btn sm ghost" href="#hs/${encodeURIComponent(st.name)}" title="Bấm ✏️ Sửa để thêm SĐT phụ huynh">💬 ${esc(st.display)}: chưa có SĐT PH</a>`; }).join('');
   if (!READONLY) h += `<button class="btn sm ghost" type="button" data-rmd="${esc(cls)}">${rk ? '✓ Đã nhắc ' + esc(rk) + ' · bỏ' : '✓ Đã nhắc'}</button>`;
   return h + `</div></div>`;
@@ -1394,7 +1394,7 @@ function hwLessonModal(id, cls) {
   const manual = x.src === 'Tay', M = $('#modal');
   M.innerHTML = `<div class="sheet"><h3 style="font-size:19px">${id ? '📚 Sửa bài đã giao' : '＋ Thêm bài đã giao'} · ${esc(x.cls)}</h3>
     ${manual ? `<label><div class="lbl">Tên bài</div><input id="hwT" value="${esc(x.title)}" placeholder="VD: Workbook trang 12–13"></label>
-      <label><div class="lbl">Link (nếu có)</div><input type="url" id="hwL" value="${esc(x.link || '')}" placeholder="https://…"></label>` : `<div class="small" style="margin-bottom:6px"><b>${esc(x.title)}</b><div class="muted">Bài tự điền từ trang bài tập – tên bài theo trang.</div></div>`}
+      <label><div class="lbl">Link (nếu có)</div><input type="url" id="hwL" value="${esc(x.link || '')}" placeholder="https:\/\/…"></label>` : `<div class="small" style="margin-bottom:6px"><b>${esc(x.title)}</b><div class="muted">Bài tự điền từ trang bài tập – tên bài theo trang.</div></div>`}
     <label><div class="lbl">Ngày giao</div><input type="date" id="hwF" value="${esc(x.from || TODAY)}"></label>
     <div class="row wrapf" style="gap:8px;margin-top:14px"><button class="btn" id="hwS" type="button">💾 Lưu</button>
       ${id ? (manual ? '<button class="btn ghost" id="hwDel" type="button">🗑️ Xóa bài</button>' : '<button class="btn ghost" id="hwHide" type="button">🙈 Ẩn với lớp này</button>') : ''}
@@ -1515,7 +1515,7 @@ function classModal(code) {
       <label class="grow"><div class="lbl">Kiểu học phí</div><select id="cT"><option value="thang" ${c0.type === 'thang' ? 'selected' : ''}>Theo tháng</option><option value="goi" ${c0.type === 'goi' ? 'selected' : ''}>Theo gói buổi</option></select></label>
       <label style="width:96px"><div class="lbl" id="cNl">Buổi</div><input type="number" id="cN" min="1"></label></div>
     <label><div class="lbl">Giáo trình</div><input type="text" id="cB" value="${esc(c0.book || '')}" placeholder="VD: Mindset for IELTS 1"></label>
-    <div class="row" style="gap:10px"><label class="grow"><div class="lbl">📣 Link bài tập (để nhắc)</div><input type="url" id="cL" value="${esc(code ? S(clsRow(code).hwLink) : '')}" placeholder="https://yumienglish.github.io/…"></label>
+    <div class="row" style="gap:10px"><label class="grow"><div class="lbl">📣 Link bài tập (để nhắc)</div><input type="url" id="cL" value="${esc(code ? S(clsRow(code).hwLink) : '')}" placeholder="https:\/\/yumienglish.github.io/…"></label>
       <label style="width:128px"><div class="lbl">Ngày làm BT</div><select id="cW"><option value="">Tự tính${code && autoHwDay(code) != null ? ' (' + WDS[autoHwDay(code)] + ')' : ''}</option>${[1, 2, 3, 4, 5, 6, 0].map(d => `<option value="${WDS[d]}" ${code && WD_KEY[nrm(clsRow(code).hwDay).replace(/\s+/g, '')] === d ? 'selected' : ''}>${WD[d]}</option>`).join('')}</select></label></div>
     <div class="lbl">Sticker</div><div class="emos" id="cE">${EMO_SET.map(e => `<button data-e="${e}" class="${e === emo ? 'on' : ''}">${e}</button>`).join('')}</div>
     <div class="lbl">Màu lớp (dùng ở Lịch, Giáo án, Học phí)</div><div class="sws" id="cS">${SWATCH.map(([b, f]) => `<button data-b="${b}" data-f="${f}" style="background:${b};color:${f}">A</button>`).join('')}</div>
@@ -1793,7 +1793,7 @@ function feeAskModal(name) {
       ${READONLY ? '' : `<div class="lbl" style="margin-top:8px">🏦 Thông tin chuyển khoản <span class="muted small">(lưu cho mọi lần nhắc)</span></div>
         <div class="row" style="gap:6px"><input type="text" id="faB" class="grow" value="${esc(bank)}" placeholder="VD: Vietcombank 0123456789 – NGUYEN THI MAI"><button class="btn sm mint" id="faBok" type="button">Lưu</button></div>`}
       <div class="row wrapf" style="gap:6px;margin-top:14px">
-        ${z ? `<a class="btn mint" id="faZ" href="https://zalo.me/${z}" target="_blank" rel="noopener">💬 Chép + mở Zalo PH</a>` : `<span class="small muted">Chưa có SĐT phụ huynh (thêm ở tab Học sinh → ✏️ Sửa)</span>`}
+        ${z ? `<a class="btn mint" id="faZ" href="https:\/\/zalo.me/${z}" target="_blank" rel="noopener">💬 Chép + mở Zalo PH</a>` : `<span class="small muted">Chưa có SĐT phụ huynh (thêm ở tab Học sinh → ✏️ Sửa)</span>`}
         <button class="btn ${z ? 'ghost' : ''}" id="faC" type="button">📋 Chép tin</button><button class="btn ghost" id="faX" type="button">Đóng</button></div></div>`;
     const msg = () => $('#faT').value;
     $('#faC').addEventListener('click', () => copyText(msg(), '📋 Đã chép tin nhắc học phí – dán vào Zalo phụ huynh'));
