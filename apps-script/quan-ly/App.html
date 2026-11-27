@@ -22,7 +22,12 @@ body{margin:0;color:var(--ink);font-family:Nunito,system-ui,sans-serif;font-size
 button,input,select,textarea{font:inherit;color:inherit}
 a{color:var(--pink-ink)}
 .wrap{max-width:none;margin:0 auto;padding:0 16px}
-@media (min-width:900px){.wrap{padding:0 24px}}
+@media (min-width:900px){ /* laptop: bảng (Lịch, Giáo án, Học phí, Bài tập) rộng hết; Trang chủ 2 cột; màn chữ gọn giữa cho dễ đọc */
+  .wrap{padding:0 24px}
+  body[data-v="narrow"] .wrap{max-width:1040px}
+  body[data-v="home"] .wrap{max-width:1320px}
+  .hcols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 26px;align-items:start}
+}
 .stk{display:inline-block;filter:drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff) drop-shadow(0 2px 3px rgba(120,60,80,.25))}
 .demo{background:var(--lav-soft);color:var(--lav-ink);font-size:13px;padding:7px 0;border-bottom:1.5px dashed var(--lav)}
 .demo .wrap{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
@@ -879,7 +884,7 @@ document.addEventListener('click', e => { // nút trong thẻ nhắc (Trang ch�
 function viewHome() {
   setTab('home', wdName(TODAY) + ', ' + dmy(TODAY));
   const today = sessOn(TODAY);
-  let h = `<h2><span class="stk">🧸</span>Hôm nay dạy ${today.length} buổi</h2>`;
+  let h = `<div class="hcols"><div><h2><span class="stk">🧸</span>Hôm nay dạy ${today.length} buổi</h2>`; // laptop: trái = hôm nay, phải = chuẩn bị / ghi chú / học phí
   h += today.map(homeCard).join('') || `<div class="card empty"><span class="big stk">🌈</span>Hôm nay cô được nghỉ!</div>`;
   h += homeRemindCard();
   { const E = luckyEarned(); const rd = luckyStudents(E).filter(s => luckyOf(s.name, E).can > 0);
@@ -895,7 +900,7 @@ function viewHome() {
     if (isTest(l)) tests.push(tag + ': ' + esc(firstLine(l.lesson || l.content)));
   });
   const li = a => '<ul class="list">' + a.map(x => `<li>${x}</li>`).join('') + '</ul>';
-  h += `<h2><span class="stk">🗒️</span>Cần chuẩn bị 7 ngày tới</h2><div class="card tape">
+  h += `</div><div><h2><span class="stk">🗒️</span>Cần chuẩn bị 7 ngày tới</h2><div class="card tape">
     <h3>📝 Buổi chưa soạn giáo án <span class="badge b-bad">${noPlan.length}</span></h3>${noPlan.length ? li(noPlan) : '<div class="muted">Đủ giáo án rồi 👍</div>'}
     <h3 style="margin-top:12px">🧪 Kiểm tra / ôn tập sắp tới</h3>${tests.length ? li(tests) : '<div class="muted small">Không có</div>'}
     <h3 style="margin-top:12px">🖨️ File cần in</h3>${prints.length ? li(prints) : '<div class="muted small">Không có</div>'}</div>`;
@@ -904,7 +909,7 @@ function viewHome() {
   const owe = ym => STUDENTS.filter(s => feeLine(s, ym) && !isPaid(s.name, ym)).length;
   const low = CLASSES.filter(c => CLASS_CFG[c].type === 'goi' && studentsOf(c).length && packCalc(c).left <= 2);
   h += `<h2><span class="stk">🍓</span>Học phí</h2><a class="card" href="#hocphi" style="display:block;text-decoration:none;color:inherit"><div class="row wrapf" style="gap:8px">
-    ${shownMonths().filter(ym => ym <= CUR_M).map(ym => `<span class="badge b-bad">${mLabel(ym)}: ${owe(ym)} em chưa đóng</span>`).join('')}${low.map(c => `<span class="badge b-warn">${c} còn ${packCalc(c).left} buổi</span>`).join('')}</div></a>`;
+    ${shownMonths().filter(ym => ym <= CUR_M).map(ym => `<span class="badge b-bad">${mLabel(ym)}: ${owe(ym)} em chưa đóng</span>`).join('')}${low.map(c => `<span class="badge b-warn">${c} còn ${packCalc(c).left} buổi</span>`).join('')}</div></a></div></div>`;
   V.innerHTML = h;
 }
 function homeCard(s) {
@@ -2032,6 +2037,7 @@ function route(keep) {
   const p = location.hash.replace(/^#/, '').split('/').map(decodeURIComponent);
   if (!keep && p[0] !== LAST) window.scrollTo(0, 0);
   LAST = p[0]; pruneTodos();
+  document.body.dataset.v = ['lich', 'giaoan', 'hocphi', 'baitap'].includes(p[0]) ? 'wide' : ['buoi', 'hs', 'lucky', 'baocao', 'nhac'].includes(p[0]) ? 'narrow' : 'home';
   if (!route.hw) { route.hw = true; setTimeout(() => { hwRefresh().then(n => { if (n && LAST === 'baitap') route(true); }).catch(() => {}); }, 1500); } // ghi bài mới mở ngay ngày mở
   if (p[0] === 'lich') viewLich(p[1]);
   else if (p[0] === 'buoi') viewBuoi(p[1], p[2]);
