@@ -21,7 +21,8 @@ body{margin:0;color:var(--ink);font-family:Nunito,system-ui,sans-serif;font-size
   background:var(--bg) radial-gradient(#ffd9e1 1.2px,transparent 1.6px) 0 0/24px 24px}
 button,input,select,textarea{font:inherit;color:inherit}
 a{color:var(--pink-ink)}
-.wrap{max-width:780px;margin:0 auto;padding:0 16px}
+.wrap{max-width:none;margin:0 auto;padding:0 16px}
+@media (min-width:900px){.wrap{padding:0 24px}}
 .stk{display:inline-block;filter:drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff) drop-shadow(0 2px 3px rgba(120,60,80,.25))}
 .demo{background:var(--lav-soft);color:var(--lav-ink);font-size:13px;padding:7px 0;border-bottom:1.5px dashed var(--lav)}
 .demo .wrap{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
